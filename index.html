@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kamen Rider Myth — Calendario de Waves</title>
+
+<!--
+  ============================================================================
+  KAMEN RIDER MYTH — CATALOGO DE WAVES  ·  v0.1 (version preliminar)
+  ============================================================================
+  Archivo unico: HTML5 + CSS3 (Grid/Flexbox) + Vanilla JS. Sin frameworks.
+
+  OBJETIVO
+    1. Saber CUANDO llega cada wave  -> el mes es la categoria raiz (acordeon).
+    2. Saber QUE EX faltan           -> checklist derivada, no manual.
+
+  DONDE EDITAR (lo unico que necesitas tocar para mantener la pagina):
+    · EX_CATALOG -> catalogo maestro de gimmicks EX (alimenta la checklist).
+    · PRODUCTS   -> productos: mes, precio, imagen y que EX contienen.
+    · MONTHS     -> etiqueta visible de cada mes.
+  Todo lo demas (grids, contadores, barras de progreso) se genera solo.
+
+  IMAGENES
+    El campo `img` apunta hoy a la ruta local del PNG para que la pagina
+    funcione tal cual. Sustituye ese valor por tu enlace directo de Google
+    Drive cuando lo tengas; no hay que tocar nada mas.
+  ============================================================================
+-->
+
+<style>
+/* ===========================================================================
+   1. TOKENS DE DISENO — cambiar aqui un color lo cambia en toda la pagina
+   =========================================================================== */
+:root{
+  /* Superficies (de mas profunda a mas elevada) */
+  --bg:            #0b0d12;
+  --surface-1:     #12151d;
+  --surface-2:     #181c26;
+  --surface-3:     #212636;
+  --border:        #2a3040;
+  --border-strong: #3a4256;
+
+  /* Texto */
+  --text:      #e8eaf0;
+  --text-dim:  #99a1b3;
+  --text-mute: #667085;
+
+  /* Acentos: oro = linea DX / marca Myth, cian = linea SG */
+  --dx:      #f0b429;
+  --dx-soft: rgba(240,180,41,.13);
+  --sg:      #35d0d8;
+  --sg-soft: rgba(53,208,216,.13);
+
+  /* Estados de producto */
+  --pending:    #667085;
+  --reserved:   #f0b429;
+  --owned:      #37d67a;
+  --owned-soft: rgba(55,214,122,.13);
+
+  /* Metricas */
+  --radius:   14px;
+  --radius-s: 9px;
+  --gap:      18px;
+  --panel-w:  400px;
+
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ===========================================================================
+   2. BASE
+   =========================================================================== */
+*,*::before,*::after{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; scroll-padding-top:140px; }
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{ font:inherit; color:inherit; cursor:pointer; border:none; background:none; }
+ul{ margin:0; padding:0; list-style:none; }
+img{ display:block; max-width:100%; }
+:focus-visible{ outline:2px solid var(--dx); outline-offset:2px; border-radius:4px; }
+
+/* Halo de fondo para que el dark no se sienta plano */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(240,180,41,.07), transparent 60%),
+    radial-gradient(760px 380px at 92% 4%, rgba(53,208,216,.06), transparent 60%);
+}
+
+/* ===========================================================================
+   3. CABECERA — titulo + progreso global + acceso a la checklist
+   =========================================================================== */
+.header{
+  position:sticky; top:0; z-index:40;
+  background:rgba(11,13,18,.86); backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.header__inner{
+  max-width:1560px; margin:0 auto; padding:14px 26px;
+  display:flex; align-items:center; gap:26px; flex-wrap:wrap;
+}
+.brand{ display:flex; flex-direction:column; gap:2px; margin-right:auto; }
+.brand__title{ margin:0; font-size:19px; font-weight:700; letter-spacing:.02em; }
+.brand__title span{ color:var(--dx); }
+.brand__sub{
+  font-size:11px; color:var(--text-mute);
+  letter-spacing:.09em; text-transform:uppercase;
+}
+
+/* Mini barras de progreso por linea, siempre visibles */
+.mini-stats{ display:flex; gap:12px; }
+.mini-stat{
+  min-width:136px; padding:9px 13px; border-radius:var(--radius-s);
+  background:var(--surface-1); border:1px solid var(--border);
+}
+.mini-stat__top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.mini-stat__label{ font-size:11px; font-weight:700; letter-spacing:.09em; }
+.mini-stat__count{ font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.mini-stat__bar{ height:4px; margin-top:7px; border-radius:99px; background:var(--surface-3); overflow:hidden; }
+.mini-stat__fill{ height:100%; border-radius:99px; width:0; transition:width .35s ease; }
+.mini-stat--dx .mini-stat__label{ color:var(--dx); }
+.mini-stat--dx .mini-stat__fill{ background:var(--dx); }
+.mini-stat--sg .mini-stat__label{ color:var(--sg); }
+.mini-stat--sg .mini-stat__fill{ background:var(--sg); }
+
+.btn-panel{
+  display:flex; align-items:center; gap:9px;
+  padding:10px 17px; border-radius:var(--radius-s);
+  background:var(--dx); color:#1a1405; font-weight:700; font-size:13px;
+  transition:filter .15s ease, transform .15s ease;
+}
+.btn-panel:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+
+/* ===========================================================================
+   4. ACORDEON DE MES (categoria raiz)
+   =========================================================================== */
+.main{ position:relative; z-index:1; max-width:1560px; margin:0 auto; padding:30px 26px 90px; }
+
+.month{
+  margin-bottom:16px; border-radius:var(--radius); overflow:hidden;
+  background:var(--surface-1); border:1px solid var(--border);
+}
+/* Resalta la wave mas proxima que aun no ha salido */
+.month--next{ border-color:rgba(240,180,41,.45); box-shadow:0 0 0 1px rgba(240,180,41,.12); }
+
+.month__head{
+  width:100%; display:flex; align-items:center; gap:16px;
+  padding:19px 22px; text-align:left;
+  background:linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  transition:background .18s ease;
+}
+.month__head:hover{ background:var(--surface-3); }
+
+.month__chevron{
+  flex:0 0 auto; width:20px; height:20px; color:var(--text-dim);
+  transition:transform .28s ease, color .28s ease;
+}
+.month[data-open="true"] .month__chevron{ transform:rotate(90deg); color:var(--dx); }
+
+.month__title{ font-size:20px; font-weight:700; }
+/* Tandas de salida del mes ("4 tandas: dias 5 · 12 · 19 · 26") */
+.month__drops{
+  font-size:11.5px; color:var(--text-mute); letter-spacing:.03em;
+  padding-left:14px; border-left:1px solid var(--border); white-space:nowrap;
+}
+.month__meta{ margin-left:auto; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+/* Mes cuyos lanzamientos ya pasaron: se atenua para que no compita visualmente */
+.month--past .month__title,
+.month--past .month__drops{ opacity:.6; }
+
+.chip{
+  padding:4px 11px; border-radius:99px; font-size:11px; font-weight:700;
+  letter-spacing:.05em; text-transform:uppercase; white-space:nowrap;
+  background:var(--surface-3); color:var(--text-dim); border:1px solid var(--border);
+}
+.chip--count{ color:var(--text); }
+.chip--next{ background:var(--dx-soft); color:var(--dx); border-color:rgba(240,180,41,.4); }
+.chip--done{ background:var(--owned-soft); color:var(--owned); border-color:rgba(55,214,122,.35); }
+
+/* Animacion con max-height: sin librerias y sin saltos de layout */
+.month__body{ max-height:0; overflow:hidden; transition:max-height .38s ease; }
+.month[data-open="true"] .month__body{ max-height:30000px; }
+.month__inner{ padding:6px 22px 26px; }
+
+/* ===========================================================================
+   5. SUBCATEGORIA + GRID DE TARJETAS
+   =========================================================================== */
+.subcat{ margin-top:24px; }
+.subcat__head{
+  display:flex; align-items:center; gap:12px; margin-bottom:14px;
+  padding-bottom:9px; border-bottom:1px solid var(--border);
+}
+.subcat__name{
+  font-size:12px; font-weight:700; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--text-dim);
+}
+.subcat__rule{ flex:1; }
+.subcat__n{ font-size:12px; color:var(--text-mute); font-variant-numeric:tabular-nums; }
+
+.grid{
+  display:grid; gap:var(--gap);
+  grid-template-columns:repeat(auto-fill, minmax(252px, 1fr));
+}
+
+/* ---- Tarjeta de producto ---- */
+.card{
+  display:flex; flex-direction:column;
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius); overflow:hidden;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.card:hover{
+  transform:translateY(-3px); border-color:var(--border-strong);
+  box-shadow:0 12px 28px rgba(0,0,0,.4);
+}
+.card[data-state="reserved"]{ border-color:rgba(240,180,41,.5); }
+.card[data-state="owned"]{ border-color:rgba(55,214,122,.5); }
+.card--flash{ animation:flash 1.6s ease; }
+@keyframes flash{
+  0%,100%{ box-shadow:0 0 0 0 rgba(240,180,41,0); }
+  20%    { box-shadow:0 0 0 3px rgba(240,180,41,.55); }
+}
+
+/* Zona de imagen: relacion fija para que el grid no baile con PNG dispares */
+.card__media{
+  position:relative; aspect-ratio:4/3; background:var(--surface-1);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.card__img{
+  width:100%; height:100%; object-fit:contain; padding:10px;
+  transition:transform .3s ease;
+}
+.card:hover .card__img{ transform:scale(1.045); }
+/* Placeholder visible mientras `img` este vacio o el archivo no cargue */
+.card__ph{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:8px;
+  color:var(--text-mute); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  background:repeating-linear-gradient(45deg,#141821,#141821 11px,#171c26 11px,#171c26 22px);
+}
+/* En cuanto la portada carga, fuera el placeholder: asi no se cuela el rayado
+   por los lados cuando la imagen no llena el recuadro (object-fit:contain). */
+.card__media.is-loaded .card__ph{ display:none; }
+
+/* Badges sobre la imagen */
+.card__badges{ position:absolute; top:9px; left:9px; display:flex; gap:6px; flex-wrap:wrap; max-width:calc(100% - 18px); }
+.badge{
+  padding:3px 8px; border-radius:6px; font-size:10px; font-weight:800;
+  letter-spacing:.07em; text-transform:uppercase; backdrop-filter:blur(6px);
+}
+.badge--dx{ background:var(--dx-soft); color:var(--dx); box-shadow:inset 0 0 0 1px rgba(240,180,41,.4); }
+.badge--sg{ background:var(--sg-soft); color:var(--sg); box-shadow:inset 0 0 0 1px rgba(53,208,216,.4); }
+.badge--pb{ background:rgba(190,120,255,.15); color:#c79bff; box-shadow:inset 0 0 0 1px rgba(190,120,255,.4); }
+.badge--random{ background:rgba(255,255,255,.09); color:var(--text-dim); box-shadow:inset 0 0 0 1px var(--border-strong); }
+/* Fecha o precio aun no anunciados por Bandai */
+.badge--est{ background:rgba(255,138,76,.15); color:#ff9f6b; box-shadow:inset 0 0 0 1px rgba(255,138,76,.4); }
+/* Producto que pertenece a mas de una subcategoria (figura + gimmick) */
+.badge--cross{ background:rgba(120,160,255,.15); color:#9db6ff; box-shadow:inset 0 0 0 1px rgba(120,160,255,.4); }
+
+/* Marca de obtenido, esquina superior derecha */
+.card__tick{
+  position:absolute; top:9px; right:9px; width:24px; height:24px; border-radius:50%;
+  display:none; align-items:center; justify-content:center;
+  background:var(--owned); color:#05230f; font-size:14px; font-weight:900;
+}
+.card[data-state="owned"] .card__tick{ display:flex; }
+
+.card__body{ padding:13px 14px 14px; display:flex; flex-direction:column; gap:11px; flex:1; }
+.card__title{ font-size:13.5px; font-weight:600; line-height:1.35; }
+.card__row{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-top:auto; }
+.card__price{ font-size:15px; font-weight:700; color:var(--dx); font-variant-numeric:tabular-nums; }
+.card__price--tbd{ color:var(--text-mute); font-size:12px; font-weight:500; font-style:italic; }
+.card__date{
+  font-size:11px; font-weight:600; color:var(--text-dim);
+  white-space:nowrap; text-transform:uppercase; letter-spacing:.04em;
+}
+/* Ya salio: se apaga para que destaque lo que aun esta por venir */
+.card__date--past{ color:var(--text-mute); font-weight:500; text-decoration:line-through; }
+
+/* ---- Selector de estado: Pendiente / Reservado / Obtenido ---- */
+.states{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:4px;
+  padding:3px; background:var(--surface-1);
+  border:1px solid var(--border); border-radius:8px;
+}
+.state-btn{
+  padding:6px 4px; border-radius:6px; font-size:10.5px; font-weight:700;
+  letter-spacing:.04em; color:var(--text-mute); text-align:center;
+  transition:background .15s ease, color .15s ease;
+}
+.state-btn:hover{ background:var(--surface-3); color:var(--text-dim); }
+.state-btn[aria-pressed="true"]{ color:#0b0d12; }
+.state-btn[data-state="pending"][aria-pressed="true"]{ background:var(--pending); color:#e8eaf0; }
+.state-btn[data-state="reserved"][aria-pressed="true"]{ background:var(--reserved); }
+.state-btn[data-state="owned"][aria-pressed="true"]{ background:var(--owned); }
+
+/* ===========================================================================
+   6. SUB-ACORDEON "VER POSIBLES CONTENIDOS" (Random Box)
+   Se usa <details>/<summary> nativo: accesible y sin JS extra.
+   =========================================================================== */
+.contents{
+  border:1px dashed var(--border-strong); border-radius:var(--radius-s);
+  background:var(--surface-1); overflow:hidden;
+}
+.contents__toggle{
+  display:flex; align-items:center; gap:8px; padding:8px 11px;
+  font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--text-dim); cursor:pointer; list-style:none;
+  transition:background .15s ease, color .15s ease;
+}
+.contents__toggle::-webkit-details-marker{ display:none; }
+.contents__toggle:hover{ background:var(--surface-3); color:var(--text); }
+.contents__arrow{ margin-left:auto; transition:transform .25s ease; }
+.contents[open] .contents__arrow{ transform:rotate(90deg); }
+.contents__list{ padding:4px 10px 11px; display:flex; flex-direction:column; gap:5px; }
+.contents__item{
+  display:flex; align-items:center; gap:8px;
+  padding:5px 7px; border-radius:6px; font-size:12px;
+  background:var(--surface-2);
+}
+/* Miniatura reservada para cuando cargues la imagen de cada EX */
+.contents__thumb{
+  flex:0 0 auto; width:26px; height:26px; border-radius:5px;
+  background:var(--surface-3); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; color:var(--text-mute);
+}
+.contents__name{ flex:1; min-width:0; }
+.contents__dot{ flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:var(--text-mute); }
+.contents__item--owned .contents__dot{ background:var(--owned); }
+.contents__item--owned .contents__name{ color:var(--owned); }
+.contents__note{
+  padding:0 11px 10px; font-size:10.5px; color:var(--text-mute); line-height:1.45;
+}
+
+/* ===========================================================================
+   6b. DESPLEGABLE DE GALERIA + VISOR
+   =========================================================================== */
+.gal{
+  border:1px solid var(--border); border-radius:var(--radius-s);
+  background:var(--surface-1); overflow:hidden;
+}
+.gal__toggle{
+  display:flex; align-items:center; gap:8px; padding:8px 11px;
+  font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--text-dim); cursor:pointer; list-style:none;
+  transition:background .15s ease, color .15s ease;
+}
+.gal__toggle::-webkit-details-marker{ display:none; }
+.gal__toggle:hover{ background:var(--surface-3); color:var(--text); }
+.gal__n{
+  padding:1px 6px; border-radius:99px; font-size:10px;
+  background:var(--surface-3); color:var(--text-dim);
+}
+.gal__arrow{ margin-left:auto; transition:transform .25s ease; }
+.gal[open] .gal__arrow{ transform:rotate(90deg); }
+
+/* Tira horizontal: ocupa poco alto y no descoloca la tarjeta al abrirse */
+.gal__strip{
+  display:flex; gap:6px; padding:8px 10px 10px;
+  overflow-x:auto; scroll-snap-type:x mandatory;
+}
+.gal__strip::-webkit-scrollbar{ height:6px; }
+.gal__strip::-webkit-scrollbar-thumb{ background:var(--surface-3); border-radius:9px; }
+.gal__thumb{
+  position:relative; flex:0 0 auto; width:62px; height:62px; padding:0;
+  border-radius:6px; overflow:hidden; scroll-snap-align:start;
+  background:var(--surface-3); border:1px solid var(--border);
+  transition:border-color .15s ease, transform .15s ease;
+}
+.gal__thumb:hover{ border-color:var(--dx); transform:translateY(-2px); }
+.gal__thumb img{ width:100%; height:100%; object-fit:cover; }
+.gal__tag{
+  position:absolute; left:0; right:0; bottom:0; padding:1px 0;
+  font-size:8px; font-weight:700; letter-spacing:.04em;
+  background:rgba(0,0,0,.66); color:#e8eaf0;
+}
+
+/* --- Visor --- */
+.viewer{
+  position:fixed; inset:0; z-index:80;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(5,7,11,.94); backdrop-filter:blur(6px);
+  opacity:0; visibility:hidden; transition:opacity .22s ease, visibility .22s ease;
+}
+.viewer[data-open="true"]{ opacity:1; visibility:visible; }
+.viewer__img{
+  max-width:88vw; max-height:82vh; object-fit:contain;
+  border-radius:8px; box-shadow:0 24px 60px rgba(0,0,0,.6);
+}
+.viewer__bar{
+  position:absolute; top:0; left:0; right:0;
+  display:flex; align-items:center; gap:14px; padding:14px 18px;
+  background:linear-gradient(180deg, rgba(0,0,0,.65), transparent);
+}
+.viewer__title{ font-size:13px; font-weight:700; letter-spacing:.03em; }
+.viewer__count{ font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.viewer__close{
+  margin-left:auto; width:34px; height:34px; border-radius:8px;
+  font-size:22px; color:var(--text-dim); background:rgba(255,255,255,.06);
+}
+.viewer__close:hover{ background:var(--surface-3); color:var(--text); }
+.viewer__nav{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:46px; height:70px; border-radius:8px; font-size:30px; line-height:1;
+  color:var(--text-dim); background:rgba(255,255,255,.06);
+  transition:background .15s ease, color .15s ease;
+}
+.viewer__nav:hover{ background:var(--surface-3); color:var(--text); }
+.viewer__prev{ left:14px; }
+.viewer__next{ right:14px; }
+
+@media (max-width: 720px){
+  .viewer__img{ max-width:96vw; max-height:74vh; }
+  .viewer__nav{ width:38px; height:56px; font-size:24px; }
+  .viewer__prev{ left:6px; }
+  .viewer__next{ right:6px; }
+}
+
+/* ===========================================================================
+   7. PANEL LATERAL — CHECKLIST DE EX
+   =========================================================================== */
+.backdrop{
+  position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6);
+  opacity:0; visibility:hidden; transition:opacity .25s ease, visibility .25s ease;
+}
+.backdrop[data-open="true"]{ opacity:1; visibility:visible; }
+
+.panel{
+  position:fixed; top:0; right:0; z-index:60;
+  width:var(--panel-w); max-width:100%; height:100%;
+  display:flex; flex-direction:column;
+  background:var(--surface-1); border-left:1px solid var(--border);
+  transform:translateX(102%); transition:transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:-18px 0 44px rgba(0,0,0,.5);
+}
+.panel[data-open="true"]{ transform:translateX(0); }
+
+.panel__head{ padding:18px 20px 14px; border-bottom:1px solid var(--border); }
+.panel__top{ display:flex; align-items:center; gap:12px; }
+.panel__title{ margin:0; font-size:16px; font-weight:700; }
+.panel__close{ margin-left:auto; width:30px; height:30px; border-radius:7px; color:var(--text-dim); font-size:18px; }
+.panel__close:hover{ background:var(--surface-3); color:var(--text); }
+.panel__hint{ margin:8px 0 0; font-size:11.5px; color:var(--text-mute); line-height:1.45; }
+
+.panel__filter{ display:flex; align-items:center; gap:8px; margin-top:13px; font-size:12px; color:var(--text-dim); cursor:pointer; }
+.panel__filter input{ accent-color:var(--dx); width:15px; height:15px; cursor:pointer; }
+
+.panel__body{ flex:1; overflow-y:auto; padding:8px 20px 40px; }
+.panel__body::-webkit-scrollbar{ width:9px; }
+.panel__body::-webkit-scrollbar-thumb{ background:var(--surface-3); border-radius:9px; }
+
+/* Bloque por linea (DX / SG) */
+.ex-line{ margin-top:20px; }
+.ex-line__head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.ex-line__name{ font-size:13px; font-weight:800; letter-spacing:.12em; }
+.ex-line--dx .ex-line__name{ color:var(--dx); }
+.ex-line--sg .ex-line__name{ color:var(--sg); }
+.ex-line__count{ margin-left:auto; font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.ex-line__bar{ height:5px; border-radius:99px; background:var(--surface-3); overflow:hidden; margin-bottom:14px; }
+.ex-line__fill{ height:100%; width:0; border-radius:99px; transition:width .35s ease; }
+.ex-line--dx .ex-line__fill{ background:var(--dx); }
+.ex-line--sg .ex-line__fill{ background:var(--sg); }
+
+/* Grupo por tipo de EX */
+.ex-group{ margin-bottom:16px; }
+.ex-group__head{
+  display:flex; align-items:baseline; gap:8px; margin-bottom:7px;
+  font-size:10.5px; font-weight:700; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--text-mute);
+}
+.ex-group__n{ margin-left:auto; font-variant-numeric:tabular-nums; }
+
+.ex-item{
+  width:100%; display:flex; align-items:flex-start; gap:9px; text-align:left;
+  padding:7px 9px; border-radius:7px; margin-bottom:3px;
+  transition:background .15s ease;
+}
+.ex-item:hover{ background:var(--surface-2); }
+.ex-item__dot{
+  flex:0 0 auto; margin-top:5px; width:8px; height:8px; border-radius:50%;
+  background:var(--surface-3); box-shadow:inset 0 0 0 1px var(--border-strong);
+}
+.ex-item--owned .ex-item__dot{ background:var(--owned); box-shadow:none; }
+.ex-item--partial .ex-item__dot{ background:var(--reserved); box-shadow:none; }
+.ex-item__main{ flex:1; min-width:0; }
+.ex-item__name{ font-size:12.5px; color:var(--text-dim); }
+.ex-item--owned .ex-item__name,
+.ex-item--partial .ex-item__name{ color:var(--text); }
+/* Sub-marcas de variante (std / special ver. ...) */
+.ex-item__vars{ display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.var-chip{
+  padding:2px 6px; border-radius:5px; font-size:9.5px; font-weight:700;
+  letter-spacing:.04em; text-transform:uppercase;
+  background:var(--surface-3); color:var(--text-mute);
+}
+.var-chip--owned{ background:var(--owned-soft); color:var(--owned); }
+
+.panel__empty{ padding:22px 4px; text-align:center; font-size:12px; color:var(--text-mute); }
+
+/* ===========================================================================
+   8. RESPONSIVE
+   =========================================================================== */
+@media (max-width: 1080px){
+  .header__inner{ gap:14px; }
+  .mini-stats{ order:3; width:100%; }
+  .mini-stat{ flex:1; min-width:0; }
+}
+@media (max-width: 720px){
+  .main{ padding:20px 14px 70px; }
+  .header__inner{ padding:12px 14px; }
+  .month__inner{ padding:4px 13px 20px; }
+  .month__head{ padding:15px 14px; gap:11px; }
+  .month__title{ font-size:17px; }
+  .month__drops{ display:none; }
+  .month__meta{ width:100%; margin-left:0; }
+  .grid{ grid-template-columns:repeat(auto-fill, minmax(158px, 1fr)); gap:12px; }
+  .panel{ width:100%; }
+  .brand__sub{ display:none; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ==========================================================================
+     CABECERA
+     ========================================================================== -->
+<header class="header">
+  <div class="header__inner">
+    <div class="brand">
+      <h1 class="brand__title">KAMEN RIDER <span>MYTH</span></h1>
+      <span class="brand__sub">Calendario de waves &amp; checklist EX</span>
+    </div>
+
+    <!-- Progreso global por linea; se rellena desde JS -->
+    <div class="mini-stats" id="miniStats"></div>
+
+    <button class="btn-panel" id="openPanel" aria-haspopup="dialog">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+      Checklist EX
+    </button>
+  </div>
+</header>
+
+<!-- ==========================================================================
+     CATALOGO — se genera por completo desde JS
+     ========================================================================== -->
+<main class="main" id="catalog"></main>
+
+<!-- ==========================================================================
+     VISOR DE GALERIA — superposicion, no una segunda pagina
+     ========================================================================== -->
+<div class="viewer" id="viewer" data-open="false" role="dialog" aria-modal="true">
+  <div class="viewer__bar">
+    <span class="viewer__title"></span>
+    <span class="viewer__count"></span>
+    <button class="viewer__close" aria-label="Cerrar galeria">&times;</button>
+  </div>
+  <button class="viewer__nav viewer__prev" aria-label="Anterior">&#8249;</button>
+  <img class="viewer__img" alt="">
+  <button class="viewer__nav viewer__next" aria-label="Siguiente">&#8250;</button>
+</div>
+
+<!-- ==========================================================================
+     PANEL LATERAL: CHECKLIST DE EX
+     ========================================================================== -->
+<div class="backdrop" id="backdrop" data-open="false"></div>
+
+<aside class="panel" id="panel" data-open="false" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+  <div class="panel__head">
+    <div class="panel__top">
+      <h2 class="panel__title" id="panelTitle">Checklist de EX</h2>
+      <button class="panel__close" id="closePanel" aria-label="Cerrar checklist">&times;</button>
+    </div>
+    <p class="panel__hint">
+      Se actualiza sola: marca un producto como <strong>Obtenido</strong> y sus EX
+      se cuentan aqui. DX y SG se llevan por separado porque cada linea tiene
+      piezas exclusivas.
+    </p>
+    <label class="panel__filter">
+      <input type="checkbox" id="hideOwned"> Ocultar los que ya tengo
+    </label>
+  </div>
+  <div class="panel__body" id="panelBody"></div>
+</aside>
+
+<script>
+"use strict";
+
+/* ===========================================================================
+   BLOQUE 1 · CONFIGURACION
+   =========================================================================== */
+
+/* Orden fijo de subcategorias dentro de cada mes.
+   Si una no tiene productos ese mes, simplemente no se dibuja.
+   (Por eso SHF puede quedarse aqui aunque hoy este vacia.) */
+const CATEGORY_ORDER = [
+  "TAF", "SOFT VINYL", "SHF", "SG RANDOM BOX",
+  "DX SETS", "DX RANDOM BOX", "DX DRIVERS", "BUCKLES SETS", "ARMAS"
+];
+
+/* Subcategorias cuyo contenido es sorpresa -> muestran "Ver posibles contenidos". */
+const RANDOM_BOX_CATEGORIES = ["SG RANDOM BOX", "DX RANDOM BOX"];
+
+/* Etiqueta visible de cada mes. La clave "AAAA-MM" ordena cronologicamente sola.
+   El mes de cada producto se deduce de su fecha, asi que esto es solo el rotulo:
+   si falta una clave, se genera automaticamente (ver monthLabel). */
+const MONTHS = {
+  "2026-07": "Julio 2026",
+  "2026-08": "Agosto 2026",
+  "2026-09": "Septiembre 2026",
+  "2026-10": "Octubre 2026",
+  "2026-11": "Noviembre 2026"
+};
+
+/* Nombres de mes para rotulos y fechas cortas. */
+const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                     "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const MONTH_ABBR  = ["ene","feb","mar","abr","may","jun",
+                     "jul","ago","sep","oct","nov","dic"];
+
+/* Tipos de EX; el orden aqui es el orden dentro del panel. */
+const EX_TYPES = {
+  "ride-ex":        "Ride Ex",
+  "legend-ride-ex": "Legend Ride Ex",
+  "seed-ex":        "Seed Ex",
+  "legend-seed-ex": "Legend Seed Ex",
+  "otros-ex":       "Otros Ex"
+};
+
+/* Lineas de la checklist. DX y SG van separadas a proposito:
+   SG saca piezas que nunca salen en DX y viceversa. */
+const EX_LINES = { DX: "LINEA DX", SG: "LINEA SG" };
+
+/* Estados de producto. Solo "owned" alimenta la checklist. */
+const STATES = { pending:"Pendiente", reserved:"Reservado", owned:"Obtenido" };
+
+/* Moneda usada para formatear precios. */
+const CURRENCY = { symbol:"¥", locale:"ja-JP" };
+
+
+/* ===========================================================================
+   BLOQUE 2 · CATALOGO MAESTRO DE EX  (fuente de verdad de la checklist)
+   ---------------------------------------------------------------------------
+   Cada entrada:
+     id       -> identificador unico, usado en `contains` de los productos
+     name     -> nombre visible
+     type     -> clave de EX_TYPES
+     line     -> "DX" o "SG"
+     variants -> OPCIONAL. Versiones de la MISMA pieza dentro de la misma linea
+                 (ej. estandar vs special ver.). Si se omite se asume una sola
+                 variante "std". La pieza cuenta UNA vez en el total; las
+                 variantes se ven como sub-marcas.
+   NOTA: una version SG nunca es variante de una DX. Va como entrada propia
+         con line:"SG".
+   =========================================================================== */
+const EX_CATALOG = [
+
+  /* ---------- DX · Ride Ex numerados ---------- */
+  { id:"ride-ex-1",        name:"Ride Ex 1",        type:"ride-ex", line:"DX" },
+  /* Ride Ex 1 Origin alude a un rider distinto que Ride Ex 1, aunque la
+     premisa sea la misma: va como pieza independiente, no como variante. */
+  { id:"ride-ex-1-origin", name:"Ride Ex 1 Origin", type:"ride-ex", line:"DX" },
+  { id:"ride-ex-4",  name:"Ride Ex 4",  type:"ride-ex", line:"DX",
+    variants:[ {id:"std", label:"Estandar"}, {id:"special", label:"Special ver."} ] },
+  { id:"ride-ex-6",  name:"Ride Ex 6",  type:"ride-ex", line:"DX" },
+  { id:"ride-ex-8",  name:"Ride Ex 8",  type:"ride-ex", line:"DX" },
+  { id:"ride-ex-10", name:"Ride Ex 10", type:"ride-ex", line:"DX" },
+  { id:"ride-ex-11", name:"Ride Ex 11", type:"ride-ex", line:"DX",
+    variants:[ {id:"std", label:"Estandar"}, {id:"special", label:"Special ver."} ] },
+
+  /* ---------- DX · Legend Ride Ex ---------- */
+  { id:"kuuga-ride-ex",    name:"Kuuga Ride Ex",    type:"legend-ride-ex", line:"DX" },
+  { id:"ooz-ride-ex",      name:"Ooz Ride Ex",      type:"legend-ride-ex", line:"DX" },
+  { id:"zeztz-ride-ex",    name:"Zeztz Ride Ex",    type:"legend-ride-ex", line:"DX" },
+  { id:"agito-ride-ex",    name:"Agito Ride Ex",    type:"legend-ride-ex", line:"DX" },
+  { id:"gavv-ride-ex",     name:"Gavv Ride Ex",     type:"legend-ride-ex", line:"DX" },
+  { id:"revice-ride-ex",   name:"Revice Ride Ex",   type:"legend-ride-ex", line:"DX" },
+  { id:"gotchard-ride-ex", name:"Gotchard Ride Ex", type:"legend-ride-ex", line:"DX" },
+  { id:"build-ride-ex",    name:"Build Ride Ex",    type:"legend-ride-ex", line:"DX" },
+  { id:"faiz-ride-ex",     name:"Faiz Ride Ex",     type:"legend-ride-ex", line:"DX" },
+
+  /* ---------- DX · Seed Ex ---------- */
+  { id:"myceed-ex",           name:"Myceed Ex",           type:"seed-ex", line:"DX" },
+  { id:"zou-seed-ex",         name:"Zou Seed Ex",         type:"seed-ex", line:"DX" },
+  { id:"owl-seed-ex",         name:"Owl Seed Ex",         type:"seed-ex", line:"DX" },
+  { id:"taka-seed-ex",        name:"Taka Seed Ex",        type:"seed-ex", line:"DX" },
+  { id:"stag-beetle-seed-ex", name:"Stag Beetle Seed Ex", type:"seed-ex", line:"DX" },
+  { id:"crocodile-seed-ex",   name:"Crocodile Seed Ex",   type:"seed-ex", line:"DX" },
+  { id:"chameleon-seed-ex",   name:"Chameleon Seed Ex",   type:"seed-ex", line:"DX" },
+  { id:"armadillo-seed-ex",   name:"Armadillo Seed Ex",   type:"seed-ex", line:"DX" },
+  { id:"grasshopper-seed-ex", name:"Grasshopper Seed Ex", type:"seed-ex", line:"DX" },
+  { id:"giraffe-seed-ex",     name:"Giraffe Seed Ex",     type:"seed-ex", line:"DX" },
+  { id:"gorilla-seed-ex",     name:"Gorilla Seed Ex",     type:"seed-ex", line:"DX" },
+  { id:"reindeer-seed-ex",    name:"Reindeer Seed Ex",    type:"seed-ex", line:"DX" },
+  { id:"penguin-seed-ex",     name:"Penguin Seed Ex",     type:"seed-ex", line:"DX" },
+  { id:"panda-seed-ex",       name:"Panda Seed Ex",       type:"seed-ex", line:"DX" },
+  { id:"pillbug-seed-ex",     name:"Pillbug Seed Ex",     type:"seed-ex", line:"DX" },
+
+  /* ---------- DX · Legend Seed Ex ---------- */
+  { id:"no1-seed-ex", name:"No. 1 Seed Ex", type:"legend-seed-ex", line:"DX" },
+
+  /* ---------- DX · Otros Ex ---------- */
+  { id:"ridewatter-ex", name:"Ridewatter Ex", type:"otros-ex", line:"DX" },
+
+  /* ---------- SG · linea propia ---------- */
+  { id:"sg-ride-ex-4",       name:"Ride Ex 4 (SG ver.)",  type:"ride-ex",        line:"SG" },
+  { id:"sg-zio-ride-ex",     name:"Zi-O Ride Ex (SG)",    type:"legend-ride-ex", line:"SG" },
+  { id:"sg-zeroone-ride-ex", name:"ZeroOne Ride Ex (SG)", type:"legend-ride-ex", line:"SG" },
+  { id:"sg-kaixa-seed-ex",   name:"Kaixa Seed Ex (SG)",   type:"legend-seed-ex", line:"SG" },
+  { id:"sg-garren-seed-ex",  name:"Garren Seed Ex (SG)",  type:"legend-seed-ex", line:"SG" },
+  { id:"sg-diend-seed-ex",   name:"DiEnd Seed Ex (SG)",   type:"legend-seed-ex", line:"SG" }
+];
+
+
+/* ===========================================================================
+   BLOQUE 3 · PRODUCTOS
+   ---------------------------------------------------------------------------
+   Fuentes de datos:
+     · NOMBRES  -> los nombres de los PNG, extraidos a mano de Bandai. Mandan
+                   ellos: el xlsx transcribe algunos mal (Dad/Maoh/Lido/Tigre
+                   por Datt/Mao/Rido/Tigul, "Mys Edge" por MY-TH EDGE).
+     · FECHAS Y PRECIOS -> Kamen_Rider_Myth_datos_imagenes.xlsx.
+
+   Cada producto:
+     id        -> unico (se usa para guardar tu estado en localStorage)
+     title     -> nombre visible; igual al del PNG, sin el sufijo
+                  "-contenidos" (esa info ya vive en `contains`)
+     category  -> una de CATEGORY_ORDER
+     date      -> "AAAA-MM-DD". El mes del acordeon se deduce de aqui:
+                  no hay que escribirlo aparte.
+     dateType  -> "release" (normal) | "preorder" (Premium Bandai).
+                  Para P-Bandai usa la fecha de PREORDER: cuenta como el
+                  release de los productos regulares.
+     estimated -> OPCIONAL. true = fecha o precio aun sin confirmar; la
+                  tarjeta lo avisa con un badge para no confundirlo con dato firme.
+     price     -> yenes con IVA incluido, o null si aun no se anuncia
+     img       -> ruta local hoy; cambiala por tu enlace de Google Drive
+     contains  -> EX incluidos. Formato "exId" o "exId@variante".
+                  Marcar el producto como Obtenido marca TODOS estos EX.
+   =========================================================================== */
+const PRODUCTS = [
+
+  /* =================== JULIO 2026 =================== */
+  { id:"sv-myth", title:"RIDER HERO SERIES KAMEN RIDER MYTH", category:"SOFT VINYL",
+    date:"2026-07-25", dateType:"release", price:880,
+    img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MYTH/01-thumb.webp",
+    gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MYTH/01.webp",
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MYTH/02.webp"],contains:[] },
+
+  /* =================== AGOSTO 2026 =================== */
+  { id:"dx-legend-set-00", title:"DX LEGEND RIDER EX SET 00", category:"DX SETS",
+    date:"2026-08-29", dateType:"release", price:1540,
+    img:"DX SETS/DX LEGEND RIDER EX SET 00/01-thumb.webp",
+    gallery:["DX SETS/DX LEGEND RIDER EX SET 00/01.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 00/02.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 00/03.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 00/04.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 00/05.webp"],contains:["zeztz-ride-ex","no1-seed-ex"] },
+
+  /* =================== SEPTIEMBRE 2026 =================== */
+  /* --- Tanda del 5 --- */
+  { id:"dx-myth-driver", title:"DX MY-TH DRIVER", category:"DX DRIVERS",
+    date:"2026-09-05", dateType:"release", price:7920,
+    img:"DX DRIVERS/DX MY-TH DRIVER/PACKAGE-thumb.webp",
+    gallery:["DX DRIVERS/DX MY-TH DRIVER/PACKAGE.webp",
+              "DX DRIVERS/DX MY-TH DRIVER/01.webp",
+              "DX DRIVERS/DX MY-TH DRIVER/02.webp",
+              "DX DRIVERS/DX MY-TH DRIVER/03.webp",
+              "DX DRIVERS/DX MY-TH DRIVER/04.webp",
+              "DX DRIVERS/DX MY-TH DRIVER/05.webp",
+              "DX DRIVERS/DX MY-TH DRIVER/06.webp",
+              "DX DRIVERS/DX MY-TH DRIVER/07.webp"],contains:["ride-ex-1"] },
+
+  { id:"dx-myth-driver-rid-set", title:"DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET", category:"DX DRIVERS",
+    date:"2026-09-05", dateType:"release", price:10670,
+    img:"DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/PACKAGE-thumb.webp",
+    gallery:["DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/PACKAGE.webp",
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/01.webp",
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/02.webp",
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/03.webp",
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/04.webp",
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/05.webp",
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/06.webp",
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/07.webp",
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-ex-1"] },
+
+  { id:"dx-myth-driver-narikiri", title:"DX MY-TH DRIVER SPECIAL NARIKIRI SET", category:"DX DRIVERS",
+    date:"2026-09-05", dateType:"release", price:14960,
+    img:"DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE-thumb.webp",
+    gallery:["DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/01.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/02.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/03.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/04.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/05.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/06.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/07.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/08.webp",
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/09.webp"],contains:["ride-ex-1","ride-ex-4@std","ride-ex-1-origin"] },
+
+  { id:"dx-myth-edge", title:"DX MY-TH EDGE", category:"ARMAS",
+    date:"2026-09-05", dateType:"release", price:5830,
+    img:"ARMAS/DX MY-TH EDGE/PACKAGE-thumb.webp",
+    gallery:["ARMAS/DX MY-TH EDGE/PACKAGE.webp",
+              "ARMAS/DX MY-TH EDGE/01.webp",
+              "ARMAS/DX MY-TH EDGE/02.webp",
+              "ARMAS/DX MY-TH EDGE/03.webp",
+              "ARMAS/DX MY-TH EDGE/04.webp",
+              "ARMAS/DX MY-TH EDGE/05.webp",
+              "ARMAS/DX MY-TH EDGE/06.webp"],contains:["zou-seed-ex"] },
+
+  { id:"dx-hammer-bone-buckle", title:"DX HAMMER BONE BUCKLE", category:"BUCKLES SETS",
+    date:"2026-09-05", dateType:"release", price:2750,
+    img:"BUCKLES SETS/DX HAMMER BONE BUCKLE/PACKAGE-thumb.webp",
+    gallery:["BUCKLES SETS/DX HAMMER BONE BUCKLE/PACKAGE.webp",
+              "BUCKLES SETS/DX HAMMER BONE BUCKLE/01.webp",
+              "BUCKLES SETS/DX HAMMER BONE BUCKLE/02.webp",
+              "BUCKLES SETS/DX HAMMER BONE BUCKLE/03.webp",
+              "BUCKLES SETS/DX HAMMER BONE BUCKLE/04.webp",
+              "BUCKLES SETS/DX HAMMER BONE BUCKLE/05.webp",
+              "BUCKLES SETS/DX HAMMER BONE BUCKLE/06.webp"],contains:[] },
+
+  { id:"dx-rider-ex-set-01", title:"DX RIDER EX SET 01", category:"DX SETS",
+    date:"2026-09-05", dateType:"release", price:2200,
+    img:"DX SETS/DX RIDER EX SET 01/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX RIDER EX SET 01/PACKAGE.webp",
+              "DX SETS/DX RIDER EX SET 01/01.webp",
+              "DX SETS/DX RIDER EX SET 01/02.webp",
+              "DX SETS/DX RIDER EX SET 01/03.webp",
+              "DX SETS/DX RIDER EX SET 01/04.webp",
+              "DX SETS/DX RIDER EX SET 01/05.webp",
+              "DX SETS/DX RIDER EX SET 01/06.webp",
+              "DX SETS/DX RIDER EX SET 01/07.webp"],contains:["ride-ex-8","kuuga-ride-ex","stag-beetle-seed-ex"] },
+
+  { id:"dx-legend-set-01", title:"DX LEGEND RIDER EX SET 01", category:"DX SETS",
+    date:"2026-09-05", dateType:"release", price:1540,
+    img:"DX SETS/DX LEGEND RIDER EX SET 01/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX LEGEND RIDER EX SET 01/PACKAGE.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 01/01.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 01/02.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 01/03.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 01/04.webp"],contains:["agito-ride-ex","gavv-ride-ex"] },
+
+  { id:"dx-expack", title:"DX EXPACK", category:"DX SETS",
+    date:"2026-09-05", dateType:"release", price:3080,
+    img:"DX SETS/DX EXPACK/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX EXPACK/PACKAGE.webp",
+              "DX SETS/DX EXPACK/01.webp",
+              "DX SETS/DX EXPACK/02.webp",
+              "DX SETS/DX EXPACK/03.webp",
+              "DX SETS/DX EXPACK/04.webp",
+              "DX SETS/DX EXPACK/05.webp",
+              "DX SETS/DX EXPACK/06.webp"],contains:["build-ride-ex"] },
+
+  /* Caso especial: es figura Y gimmick a la vez (interactua con el Driver),
+     asi que pertenece de verdad a DX SETS y a TAF. Por eso su PNG esta en las
+     dos carpetas. `alsoIn` lo hace aparecer en ambas subcategorias siendo un
+     unico producto: un solo estado, y cuenta una sola vez en el mes. */
+  { id:"dx-ridewatter-ex", title:"DX RIDEWATTER EX", category:"DX SETS", alsoIn:["TAF"],
+    date:"2026-09-05", dateType:"release", price:3630,
+    img:"DX SETS/DX Ridewatter Ex/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX Ridewatter Ex/PACKAGE.webp",
+              "DX SETS/DX Ridewatter Ex/01.webp",
+              "DX SETS/DX Ridewatter Ex/02.webp",
+              "DX SETS/DX Ridewatter Ex/03.webp",
+              "DX SETS/DX Ridewatter Ex/04.webp",
+              "DX SETS/DX Ridewatter Ex/05.webp",
+              "DX SETS/DX Ridewatter Ex/06.webp",
+              "DX SETS/DX Ridewatter Ex/07.webp",
+              "DX SETS/DX Ridewatter Ex/08.webp",
+              "DX SETS/DX Ridewatter Ex/09.webp"],contains:["ridewatter-ex"] },
+
+  { id:"taf-myth", title:"TAF KAMEN RIDER MYTH", category:"TAF",
+    date:"2026-09-05", dateType:"release", price:4180,
+    img:"TAF/TAF KAMEN RIDER MYTH/PACKAGE-thumb.webp",
+    gallery:["TAF/TAF KAMEN RIDER MYTH/PACKAGE.webp",
+              "TAF/TAF KAMEN RIDER MYTH/01.webp",
+              "TAF/TAF KAMEN RIDER MYTH/02.webp",
+              "TAF/TAF KAMEN RIDER MYTH/03.webp",
+              "TAF/TAF KAMEN RIDER MYTH/04.webp",
+              "TAF/TAF KAMEN RIDER MYTH/05.webp",
+              "TAF/TAF KAMEN RIDER MYTH/06.webp",
+              "TAF/TAF KAMEN RIDER MYTH/07.webp",
+              "TAF/TAF KAMEN RIDER MYTH/08.webp",
+              "TAF/TAF KAMEN RIDER MYTH/09.webp"],contains:["myceed-ex"] },
+
+  { id:"taf-mao", title:"TAF KAMEN RIDER MAO", category:"TAF",
+    date:"2026-09-05", dateType:"release", price:4400,
+    img:"TAF/TAF KAMEN RIDER MAO/PACKAGE-thumb.webp",
+    gallery:["TAF/TAF KAMEN RIDER MAO/PACKAGE.webp",
+              "TAF/TAF KAMEN RIDER MAO/01.webp",
+              "TAF/TAF KAMEN RIDER MAO/02.webp",
+              "TAF/TAF KAMEN RIDER MAO/03.webp",
+              "TAF/TAF KAMEN RIDER MAO/04.webp",
+              "TAF/TAF KAMEN RIDER MAO/05.webp",
+              "TAF/TAF KAMEN RIDER MAO/06.webp",
+              "TAF/TAF KAMEN RIDER MAO/07.webp",
+              "TAF/TAF KAMEN RIDER MAO/08.webp",
+              "TAF/TAF KAMEN RIDER MAO/09.webp"],contains:[] },
+
+  { id:"sv-datt", title:"RIDER HERO SERIES KAMEN RIDER DATT", category:"SOFT VINYL",
+    date:"2026-09-05", dateType:"release", price:990,
+    img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/01-thumb.webp",
+    gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/01.webp",
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/02.webp"],contains:[] },
+
+  { id:"sv-mao", title:"RIDER HERO SERIES KAMEN RIDER MAO", category:"SOFT VINYL",
+    date:"2026-09-05", dateType:"release", price:990,
+    img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAO/01-thumb.webp",
+    gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAO/01.webp",
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAO/02.webp"],contains:[] },
+
+  { id:"sv-rido", title:"RIDER HERO SERIES KAMEN RIDER RIDO", category:"SOFT VINYL",
+    date:"2026-09-05", dateType:"release", price:990,
+    img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RIDO/01-thumb.webp",
+    gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RIDO/01.webp",
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RIDO/02.webp"],contains:[] },
+
+  /* --- Tanda del 12 --- */
+  { id:"dx-slashbone-buckle", title:"DX SLASHBONE BUCKLE & RIDE EX 4 SET", category:"BUCKLES SETS",
+    date:"2026-09-12", dateType:"release", price:3520,
+    img:"BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/PACKAGE-thumb.webp",
+    gallery:["BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/PACKAGE.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/01.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/02.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/03.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/04.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/05.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/06.webp"],contains:["ride-ex-4@std"] },
+
+  { id:"dx-hokokuro", title:"DX HOKOKURO", category:"DX SETS",
+    date:"2026-09-12", dateType:"release", price:3850,
+    img:"DX SETS/DX HOKOKURO/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX HOKOKURO/PACKAGE.webp",
+              "DX SETS/DX HOKOKURO/01.webp",
+              "DX SETS/DX HOKOKURO/02.webp",
+              "DX SETS/DX HOKOKURO/03.webp",
+              "DX SETS/DX HOKOKURO/04.webp",
+              "DX SETS/DX HOKOKURO/05.webp",
+              "DX SETS/DX HOKOKURO/06.webp",
+              "DX SETS/DX HOKOKURO/07.webp"],contains:["owl-seed-ex"] },
+
+  { id:"taf-datt", title:"TAF KAMEN RIDER DATT", category:"TAF",
+    date:"2026-09-12", dateType:"release", price:4400,
+    img:"TAF/TAF KAMEN RIDER DATT/PACKAGE-thumb.webp",
+    gallery:["TAF/TAF KAMEN RIDER DATT/PACKAGE.webp",
+              "TAF/TAF KAMEN RIDER DATT/01.webp",
+              "TAF/TAF KAMEN RIDER DATT/02.webp",
+              "TAF/TAF KAMEN RIDER DATT/03.webp",
+              "TAF/TAF KAMEN RIDER DATT/04.webp",
+              "TAF/TAF KAMEN RIDER DATT/05.webp",
+              "TAF/TAF KAMEN RIDER DATT/06.webp",
+              "TAF/TAF KAMEN RIDER DATT/07.webp",
+              "TAF/TAF KAMEN RIDER DATT/08.webp",
+              "TAF/TAF KAMEN RIDER DATT/09.webp"],contains:[] },
+
+  /* --- Tanda del 19 --- */
+  { id:"taf-rido", title:"TAF KAMEN RIDER RIDO", category:"TAF",
+    date:"2026-09-19", dateType:"release", price:4400,
+    img:"TAF/TAF KAMEN RIDER RIDO/PACKAGE-thumb.webp",
+    gallery:["TAF/TAF KAMEN RIDER RIDO/PACKAGE.webp",
+              "TAF/TAF KAMEN RIDER RIDO/01.webp",
+              "TAF/TAF KAMEN RIDER RIDO/02.webp",
+              "TAF/TAF KAMEN RIDER RIDO/03.webp",
+              "TAF/TAF KAMEN RIDER RIDO/04.webp",
+              "TAF/TAF KAMEN RIDER RIDO/05.webp",
+              "TAF/TAF KAMEN RIDER RIDO/06.webp",
+              "TAF/TAF KAMEN RIDER RIDO/07.webp",
+              "TAF/TAF KAMEN RIDER RIDO/08.webp",
+              "TAF/TAF KAMEN RIDER RIDO/09.webp"],contains:[] },
+
+  /* --- Tanda del 26 --- */
+  { id:"dx-random-box-01", title:"DX RIDER EX RANDOM BOX 01", category:"DX RANDOM BOX",
+    date:"2026-09-26", dateType:"release", price:770,
+    img:"DX RANDOM BOX/DX RIDER EX RANDOM BOX 01/PACKAGE-thumb.webp",
+    gallery:["DX RANDOM BOX/DX RIDER EX RANDOM BOX 01/PACKAGE.webp",
+              "DX RANDOM BOX/DX RIDER EX RANDOM BOX 01/01.webp",
+              "DX RANDOM BOX/DX RIDER EX RANDOM BOX 01/02.webp"],contains:["ride-ex-4@special","crocodile-seed-ex","chameleon-seed-ex",
+              "armadillo-seed-ex","grasshopper-seed-ex","giraffe-seed-ex"] },
+
+  { id:"dx-myth-phone", title:"DX MY-TH PHONE", category:"DX SETS",
+    date:"2026-09-26", dateType:"release", price:4400,
+    img:"DX SETS/DX MY-TH PHONE/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX MY-TH PHONE/PACKAGE.webp",
+              "DX SETS/DX MY-TH PHONE/01.webp",
+              "DX SETS/DX MY-TH PHONE/02.webp",
+              "DX SETS/DX MY-TH PHONE/03.webp",
+              "DX SETS/DX MY-TH PHONE/04.webp",
+              "DX SETS/DX MY-TH PHONE/05.webp"],contains:["faiz-ride-ex"] },
+
+  /* La hoja oficial de Bandai Shokugan no trae fecha ni precio: ambos son
+     estimados (septiembre, alineado con la Random Box DX). Cambialos cuando
+     se anuncien y quita `estimated`. */
+  { id:"sg-random-box-01", title:"SG RIDER EX RANDOM BOX 01", category:"SG RANDOM BOX",
+    date:"2026-09-26", dateType:"release", price:550, estimated:true,
+    img:"SG RANDOM BOX/SG RIDER EX RANDOM BOX 01/PACKAGE-thumb.webp",
+    gallery:["SG RANDOM BOX/SG RIDER EX RANDOM BOX 01/PACKAGE.webp",
+              "SG RANDOM BOX/SG RIDER EX RANDOM BOX 01/01.webp"],contains:["sg-ride-ex-4","sg-zio-ride-ex","sg-zeroone-ride-ex",
+              "sg-kaixa-seed-ex","sg-garren-seed-ex","sg-diend-seed-ex"] },
+
+  /* =================== OCTUBRE 2026 =================== */
+  /* --- Tanda del 3 --- */
+  { id:"dx-zodiac-weapons-01", title:"DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01", category:"ARMAS",
+    date:"2026-10-03", dateType:"release", price:4400,
+    img:"ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/01-thumb.webp",
+    gallery:["ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/01.webp",
+              "ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/02.webp"],contains:[] },
+
+  { id:"dx-bite-bone-buckle", title:"DX BITE BONE BUCKLE & RIDE EX 6 SET", category:"BUCKLES SETS",
+    date:"2026-10-03", dateType:"release", price:3520,
+    img:"BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/PACKAGE-thumb.webp",
+    gallery:["BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/PACKAGE.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/01.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/02.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/03.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/04.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/05.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/06.webp"],contains:["ride-ex-6"] },
+
+  { id:"dx-shot-bone-buckle", title:"DX SHOT BONE BUCKLE & RIDE EX 10 SET", category:"BUCKLES SETS",
+    date:"2026-10-03", dateType:"release", price:3520,
+    img:"BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/PACKAGE-thumb.webp",
+    gallery:["BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/PACKAGE.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/01.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/02.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/03.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/04.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/05.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/06.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/07.webp"],contains:["ride-ex-10"] },
+
+  { id:"dx-rider-ex-set-02", title:"DX RIDER EX SET 02", category:"DX SETS",
+    date:"2026-10-03", dateType:"release", price:2200,
+    img:"DX SETS/DX RIDER EX SET 02/01-thumb.webp",
+    gallery:["DX SETS/DX RIDER EX SET 02/01.webp"],contains:["ride-ex-11@std","ooz-ride-ex","taka-seed-ex"] },
+
+  { id:"dx-legend-set-02", title:"DX LEGEND RIDER EX SET 02", category:"DX SETS",
+    date:"2026-10-03", dateType:"release", price:1540,
+    img:"DX SETS/DX LEGEND RIDER EX SET 02/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX LEGEND RIDER EX SET 02/PACKAGE.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 02/01.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 02/02.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 02/03.webp",
+              "DX SETS/DX LEGEND RIDER EX SET 02/04.webp"],contains:["revice-ride-ex","gotchard-ride-ex"] },
+
+  { id:"taf-jao", title:"TAF KAMEN RIDER JAO", category:"TAF",
+    date:"2026-10-03", dateType:"release", price:4620,
+    img:"TAF/TAF KAMEN RIDER JAO/PACKAGE-thumb.webp",
+    gallery:["TAF/TAF KAMEN RIDER JAO/PACKAGE.webp",
+              "TAF/TAF KAMEN RIDER JAO/01.webp",
+              "TAF/TAF KAMEN RIDER JAO/02.webp",
+              "TAF/TAF KAMEN RIDER JAO/03.webp",
+              "TAF/TAF KAMEN RIDER JAO/04.webp",
+              "TAF/TAF KAMEN RIDER JAO/05.webp",
+              "TAF/TAF KAMEN RIDER JAO/06.webp",
+              "TAF/TAF KAMEN RIDER JAO/07.webp",
+              "TAF/TAF KAMEN RIDER JAO/08.webp",
+              "TAF/TAF KAMEN RIDER JAO/09.webp"],contains:[] },
+
+  { id:"taf-vanken", title:"TAF KAMEN RIDER VANKEN", category:"TAF",
+    date:"2026-10-03", dateType:"release", price:4400,
+    img:"TAF/TAF KAMEN RIDER VANKEN/01-thumb.webp",
+    gallery:["TAF/TAF KAMEN RIDER VANKEN/01.webp",
+              "TAF/TAF KAMEN RIDER VANKEN/02.webp",
+              "TAF/TAF KAMEN RIDER VANKEN/03.webp",
+              "TAF/TAF KAMEN RIDER VANKEN/04.webp",
+              "TAF/TAF KAMEN RIDER VANKEN/05.webp",
+              "TAF/TAF KAMEN RIDER VANKEN/06.webp",
+              "TAF/TAF KAMEN RIDER VANKEN/07.webp",
+              "TAF/TAF KAMEN RIDER VANKEN/08.webp"],contains:[] },
+
+  { id:"sv-jao", title:"RIDER HERO SERIES KAMEN RIDER JAO", category:"SOFT VINYL",
+    date:"2026-10-03", dateType:"release", price:990,
+    img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/01-thumb.webp",
+    gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/01.webp",
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/02.webp"],contains:[] },
+
+  /* --- Tanda del 17 --- */
+  { id:"taf-muton", title:"TAF KAMEN RIDER MUTON", category:"TAF",
+    date:"2026-10-17", dateType:"release", price:4400,
+    img:"TAF/TAF KAMEN RIDER MUTON/01-thumb.webp",
+    gallery:["TAF/TAF KAMEN RIDER MUTON/01.webp",
+              "TAF/TAF KAMEN RIDER MUTON/02.webp",
+              "TAF/TAF KAMEN RIDER MUTON/03.webp",
+              "TAF/TAF KAMEN RIDER MUTON/04.webp",
+              "TAF/TAF KAMEN RIDER MUTON/05.webp",
+              "TAF/TAF KAMEN RIDER MUTON/06.webp",
+              "TAF/TAF KAMEN RIDER MUTON/07.webp",
+              "TAF/TAF KAMEN RIDER MUTON/08.webp"],contains:[] },
+
+  /* --- Tanda del 24 --- */
+  { id:"dx-random-box-02", title:"DX RIDER EX RANDOM BOX 02", category:"DX RANDOM BOX",
+    date:"2026-10-24", dateType:"release", price:770,
+    img:"DX RANDOM BOX/DX RIDER EX RANDOM BOX 02/01-thumb.webp",
+    gallery:["DX RANDOM BOX/DX RIDER EX RANDOM BOX 02/01.webp"],contains:["ride-ex-11@special","gorilla-seed-ex","reindeer-seed-ex",
+              "penguin-seed-ex","panda-seed-ex","pillbug-seed-ex"] },
+
+  /* =================== NOVIEMBRE 2026 =================== */
+  { id:"sv-tigul", title:"RIDER HERO SERIES KAMEN RIDER TIGUL", category:"SOFT VINYL",
+    date:"2026-11-07", dateType:"release", price:990,
+    img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/01-thumb.webp",
+    gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/01.webp",
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/02.webp"],contains:[] }
+];
+
+/* El mes de cada producto se deriva de su fecha una sola vez, al cargar.
+   Asi solo hay una fuente de verdad (`date`) y no se pueden desincronizar. */
+PRODUCTS.forEach(p => { p.month = p.date.slice(0, 7); });
+
+
+/* ===========================================================================
+   BLOQUE 4 · ESTADO PERSISTENTE
+   Guardamos solo lo minimo: estado por producto + preferencias de UI.
+   La checklist NUNCA se guarda: se deriva de los productos en cada render.
+   =========================================================================== */
+const STORAGE_KEY = "krmyth-catalog-v1";
+
+let state = {
+  products: {},                             // { productId: "pending"|"reserved"|"owned" }
+  ui: { openMonths: [], hideOwned: false }   // acordeones abiertos y filtro del panel
+};
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const saved = JSON.parse(raw);
+      state.products = saved.products || {};
+      state.ui = Object.assign(state.ui, saved.ui || {});
+    }
+  }catch(e){
+    console.warn("No se pudo leer el estado guardado; empezamos limpio.", e);
+  }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    console.warn("No se pudo guardar el estado.", e);
+  }
+}
+
+const getProductState = id => state.products[id] || "pending";
+
+
+/* ===========================================================================
+   BLOQUE 5 · INDICES Y DERIVADOS
+   =========================================================================== */
+
+/* Una referencia a EX puede venir como "ride-ex-4" o "ride-ex-4@special".
+   Normalizamos siempre a "id@variante" para poder comparar sin ambiguedad. */
+function normalizeRef(ref){
+  return ref.includes("@") ? ref : ref + "@std";
+}
+function splitRef(ref){
+  const [id, variant] = normalizeRef(ref).split("@");
+  return { id, variant };
+}
+
+/* Mapa id -> objeto EX, para buscar en O(1). */
+const EX_BY_ID = EX_CATALOG.reduce((map, ex) => { map[ex.id] = ex; return map; }, {});
+
+/* Subcategorias en las que aparece un producto. Casi siempre es una;
+   los productos "puente" (figura + gimmick) declaran las demas en `alsoIn`. */
+function categoriesOf(p){
+  return [p.category].concat(p.alsoIn || []);
+}
+
+/* Variantes de un EX (si no declara ninguna, tiene una sola: "std"). */
+function variantsOf(ex){
+  return ex.variants && ex.variants.length ? ex.variants : [{ id:"std", label:"Estandar" }];
+}
+
+/* Mapa "exId@variante" -> productos que la incluyen.
+   Sirve para el salto desde la checklist al producto que trae la pieza. */
+const SOURCES = {};
+PRODUCTS.forEach(p => {
+  p.contains.forEach(ref => {
+    const key = normalizeRef(ref);
+    (SOURCES[key] = SOURCES[key] || []).push(p);
+  });
+});
+
+/* Conjunto de variantes obtenidas, derivado de los productos marcados.
+   Un producto "Obtenido" marca TODOS los EX que declara (incluidas las
+   random box: se asume caja completa). */
+function ownedVariantSet(){
+  const owned = new Set();
+  PRODUCTS.forEach(p => {
+    if(getProductState(p.id) === "owned"){
+      p.contains.forEach(ref => owned.add(normalizeRef(ref)));
+    }
+  });
+  return owned;
+}
+
+/* Estado de una pieza: "owned" (todas sus variantes), "partial" (algunas)
+   o "missing". Para el contador global basta con tener una variante. */
+function exStatus(ex, owned){
+  const vars = variantsOf(ex);
+  const have = vars.filter(v => owned.has(ex.id + "@" + v.id)).length;
+  if(have === 0) return "missing";
+  return have === vars.length ? "owned" : "partial";
+}
+
+/* Progreso de una linea: piezas conseguidas / piezas totales. */
+function lineProgress(line, owned){
+  const items = EX_CATALOG.filter(ex => ex.line === line);
+  const got = items.filter(ex => exStatus(ex, owned) !== "missing").length;
+  return { got, total: items.length, pct: items.length ? (got / items.length) * 100 : 0 };
+}
+
+
+/* ===========================================================================
+   BLOQUE 6 · UTILIDADES
+   =========================================================================== */
+
+/* Escapa texto antes de inyectarlo en HTML (los titulos vienen de datos). */
+function esc(str){
+  return String(str).replace(/[&<>"']/g, c => (
+    { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]
+  ));
+}
+
+function formatPrice(value){
+  if(value === null || value === undefined) return null;
+  return CURRENCY.symbol + value.toLocaleString(CURRENCY.locale);
+}
+
+/* Rotulo de un mes: usa MONTHS si existe, si no lo genera de la clave. */
+function monthLabel(key){
+  if(MONTHS[key]) return MONTHS[key];
+  const [y, m] = key.split("-");
+  return MONTH_NAMES[Number(m) - 1] + " " + y;
+}
+
+/* "2026-09-05" -> "5 sep" (el ano se sobreentiende por el acordeon). */
+function formatDay(date){
+  const [, m, d] = date.split("-");
+  return Number(d) + " " + MONTH_ABBR[Number(m) - 1];
+}
+
+/* Hoy a medianoche, para comparar fechas sin que la hora estorbe. */
+function today(){
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  return t;
+}
+function parseDate(str){
+  const [y, m, d] = str.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+/* Dias que faltan para una fecha (negativo si ya paso). */
+function daysUntil(str){
+  return Math.round((parseDate(str) - today()) / 86400000);
+}
+
+/* Meses ordenados cronologicamente + cual es la proxima wave pendiente. */
+function sortedMonthKeys(){
+  return [...new Set(PRODUCTS.map(p => p.month))].sort();
+}
+
+/* Proxima wave = el primer mes que todavia tiene algun lanzamiento por venir. */
+function nextWaveKey(){
+  const upcoming = PRODUCTS
+    .filter(p => daysUntil(p.date) >= 0)
+    .map(p => p.month)
+    .sort();
+  return upcoming[0] || null;
+}
+
+/* Fechas de lanzamiento distintas dentro de un mes, ordenadas. */
+function dropDates(monthKey){
+  return [...new Set(PRODUCTS.filter(p => p.month === monthKey).map(p => p.date))].sort();
+}
+
+
+/* ===========================================================================
+   BLOQUE 7 · RENDER — CATALOGO
+   =========================================================================== */
+const catalogEl = document.getElementById("catalog");
+
+function renderCatalog(){
+  const months  = sortedMonthKeys();
+  const nextKey = nextWaveKey();
+
+  catalogEl.innerHTML = months.map(key => monthHTML(key, key === nextKey)).join("");
+  bindCatalogEvents();
+}
+
+function monthHTML(key, isNext){
+  const products = PRODUCTS.filter(p => p.month === key);
+  const ownedN   = products.filter(p => getProductState(p.id) === "owned").length;
+  const isOpen   = state.ui.openMonths.includes(key);
+  const complete = ownedN === products.length && products.length > 0;
+
+  /* Tandas de salida del mes: septiembre, por ejemplo, tiene cuatro. */
+  const drops    = dropDates(key);
+  const dropsTxt = drops.map(d => Number(d.split("-")[2])).join(" · ");
+  const past     = daysUntil(drops[drops.length - 1]) < 0;
+
+  /* Cuenta atras solo en la proxima wave: es el dato que se viene a buscar. */
+  let countdown = "";
+  if(isNext){
+    const next = drops.find(d => daysUntil(d) >= 0);
+    const n    = next ? daysUntil(next) : null;
+    const txt  = n === 0 ? "Sale hoy" : n === 1 ? "Manana" : "En " + n + " dias";
+    countdown  = `<span class="chip chip--next">Proxima wave · ${esc(txt)}</span>`;
+  }
+
+  /* Subcategorias en orden fijo; se omiten las vacias.
+     Un producto con `alsoIn` sale en varias, pero sigue siendo uno solo. */
+  const body = CATEGORY_ORDER
+    .map(cat => {
+      const items = products.filter(p => categoriesOf(p).includes(cat));
+      return items.length ? subcatHTML(cat, items) : "";
+    })
+    .join("");
+
+  return `
+  <section class="month${isNext ? " month--next" : ""}${past ? " month--past" : ""}"
+           data-month="${esc(key)}" data-open="${isOpen}">
+    <button class="month__head" aria-expanded="${isOpen}" aria-controls="body-${esc(key)}">
+      <svg class="month__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+      <span class="month__title">${esc(monthLabel(key))}</span>
+      <span class="month__drops" title="Fechas de salida de este mes">
+        ${drops.length > 1 ? esc(drops.length + " tandas: dias " + dropsTxt) : esc("Dia " + dropsTxt)}
+      </span>
+      <span class="month__meta">
+        ${countdown}
+        ${complete ? '<span class="chip chip--done">Completo</span>' : ""}
+        <span class="chip chip--count">${ownedN}/${products.length} productos</span>
+      </span>
+    </button>
+    <div class="month__body" id="body-${esc(key)}">
+      <div class="month__inner">${body}</div>
+    </div>
+  </section>`;
+}
+
+function subcatHTML(category, items){
+  /* Dentro de una subcategoria mandan las fechas: primero lo que sale antes. */
+  const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date));
+  return `
+  <section class="subcat">
+    <header class="subcat__head">
+      <span class="subcat__name">${esc(category)}</span>
+      <span class="subcat__rule"></span>
+      <span class="subcat__n">${items.length}</span>
+    </header>
+    <div class="grid">${sorted.map(p => cardHTML(p, category)).join("")}</div>
+  </section>`;
+}
+
+/* `inCategory` es la subcategoria donde se esta dibujando esta copia.
+   Un producto cruzado (alsoIn) se dibuja mas de una vez: todas las copias
+   comparten estado via data-pid, pero cada una necesita su propio DOM id. */
+function cardHTML(p, inCategory){
+  const st       = getProductState(p.id);
+  const owned    = ownedVariantSet();
+  const isRandom = RANDOM_BOX_CATEGORIES.includes(p.category);
+  const isSG     = p.category.startsWith("SG");
+  const price    = formatPrice(p.price);
+
+  /* Las otras subcategorias a las que pertenece, para avisarlo en la tarjeta. */
+  const otras    = categoriesOf(p).filter(c => c !== inCategory);
+  const domId    = "card-" + p.id + "--" + inCategory.replace(/\s+/g, "-").toLowerCase();
+
+  /* Badges de linea / Premium Bandai / caja sorpresa / dato sin confirmar */
+  const badges = [
+    isSG ? '<span class="badge badge--sg">SG</span>' : '<span class="badge badge--dx">DX</span>',
+    p.dateType === "preorder" ? '<span class="badge badge--pb">P-Bandai</span>' : "",
+    isRandom ? '<span class="badge badge--random">Random</span>' : "",
+    p.estimated ? '<span class="badge badge--est">Estimado</span>' : "",
+    otras.length ? `<span class="badge badge--cross" title="Tambien listado en ${esc(otras.join(", "))}">+ ${esc(otras.join(" / "))}</span>` : ""
+  ].join("");
+
+  /* Botones de estado */
+  const stateBtns = Object.entries(STATES).map(([keyState, label]) => `
+    <button class="state-btn" data-state="${keyState}" data-product="${esc(p.id)}"
+            aria-pressed="${st === keyState}">${esc(label)}</button>`).join("");
+
+  /* Portada: SIN loading="lazy" a proposito.
+     Las tarjetas viven dentro del acordeon, que arranca con max-height:0; el
+     navegador las considera fuera de vista y con lazy no las pide hasta que
+     hay un scroll, asi que al abrir un mes se veia "Imagen pendiente" hasta
+     mover el cursor. Son 62 KB cada una (2 MB las 34): se cargan de una.
+     `onload` retira el placeholder; `onerror` lo deja a la vista. */
+  const media = p.img
+    ? `<img class="card__img" src="${esc(p.img)}" alt="${esc(p.title)}" decoding="async"
+            onload="this.closest('.card__media').classList.add('is-loaded')"
+            onerror="this.style.display='none'">`
+    : "";
+
+  return `
+  <article class="card" data-state="${st}" data-pid="${esc(p.id)}" id="${esc(domId)}">
+    <div class="card__media">
+      <div class="card__ph">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.6" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+        </svg>
+        Imagen pendiente
+      </div>
+      ${media}
+      <div class="card__badges">${badges}</div>
+      <div class="card__tick" aria-hidden="true">&#10003;</div>
+    </div>
+
+    <div class="card__body">
+      <h3 class="card__title">${esc(p.title)}</h3>
+
+      ${galleryHTML(p)}
+      ${isRandom ? randomContentsHTML(p, owned) : ""}
+
+      <div class="card__row">
+        ${price
+          ? `<span class="card__price">${esc(price)}</span>`
+          : `<span class="card__price card__price--tbd">Precio por confirmar</span>`}
+        <span class="card__date${daysUntil(p.date) < 0 ? " card__date--past" : ""}">
+          ${p.dateType === "preorder" ? "Preorder " : ""}${esc(formatDay(p.date))}
+        </span>
+      </div>
+
+      <div class="states" role="group" aria-label="Estado de ${esc(p.title)}">${stateBtns}</div>
+    </div>
+  </article>`;
+}
+
+/* ---------------------------------------------------------------------------
+   Desplegable "Ver galeria" — todo en la misma pagina, sin navegar.
+   La portada WebP ya se ve al cargar; las fotos a tamano completo NO se
+   descargan hasta que se abre el desplegable: las <img> se crean sin `src`
+   y solo se rellenan en el evento `toggle`. Con 204 fotos de ~1 MB, esa
+   diferencia es toda la diferencia.
+   --------------------------------------------------------------------------- */
+function galleryHTML(p){
+  const fotos = p.gallery || [];
+  if(fotos.length < 2) return "";        // con una sola foto no hay nada que recorrer
+
+  const miniaturas = fotos.map((ruta, i) => {
+    const nombre = ruta.split("/").pop().replace(/\.[^.]+$/, "");
+    return `
+      <button class="gal__thumb" data-full="${esc(ruta)}" data-i="${i}"
+              aria-label="Ver ${esc(nombre)} de ${esc(p.title)}">
+        <img data-src="${esc(ruta)}" alt="" loading="lazy">
+        <span class="gal__tag">${esc(nombre)}</span>
+      </button>`;
+  }).join("");
+
+  return `
+  <details class="gal">
+    <summary class="gal__toggle">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+      </svg>
+      Ver galeria
+      <span class="gal__n">${fotos.length}</span>
+      <svg class="gal__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
+           stroke-linejoin="round" aria-hidden="true">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </summary>
+    <div class="gal__strip">${miniaturas}</div>
+  </details>`;
+}
+
+/* ---------------------------------------------------------------------------
+   Sub-acordeon "Ver posibles contenidos" de las Random Box.
+   Estructura lista para crecer: cada fila ya reserva un hueco de miniatura
+   (.contents__thumb) donde luego puedes poner la imagen del EX.
+   --------------------------------------------------------------------------- */
+function randomContentsHTML(p, owned){
+  const rows = p.contains.map(ref => {
+    const { id, variant } = splitRef(ref);
+    const ex = EX_BY_ID[id];
+    if(!ex) return "";                       // referencia huerfana: la ignoramos
+
+    const isOwned = owned.has(normalizeRef(ref));
+    const vLabel  = variantsOf(ex).length > 1
+      ? " · " + (variantsOf(ex).find(v => v.id === variant) || {}).label
+      : "";
+
+    return `
+      <li class="contents__item${isOwned ? " contents__item--owned" : ""}">
+        <!-- Hueco de miniatura: sustituir por <img src="..."> cuando la tengas -->
+        <span class="contents__thumb" aria-hidden="true">EX</span>
+        <span class="contents__name">${esc(ex.name + vLabel)}</span>
+        <span class="contents__dot" aria-hidden="true"></span>
+      </li>`;
+  }).join("");
+
+  return `
+  <details class="contents">
+    <summary class="contents__toggle">
+      Ver posibles contenidos
+      <svg class="contents__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
+           stroke-linejoin="round" aria-hidden="true">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </summary>
+    <ul class="contents__list">${rows}</ul>
+    <p class="contents__note">
+      ${p.contains.length} piezas posibles. Marcar la caja como Obtenida las
+      cuenta todas en la checklist.
+    </p>
+  </details>`;
+}
+
+
+/* ===========================================================================
+   BLOQUE 8 · RENDER — CHECKLIST DE EX (panel lateral)
+   =========================================================================== */
+const panelBody = document.getElementById("panelBody");
+const miniStats = document.getElementById("miniStats");
+
+function renderChecklist(){
+  const owned = ownedVariantSet();
+
+  /* --- Mini barras de la cabecera --- */
+  miniStats.innerHTML = Object.keys(EX_LINES).map(line => {
+    const pr = lineProgress(line, owned);
+    return `
+      <div class="mini-stat mini-stat--${line.toLowerCase()}">
+        <div class="mini-stat__top">
+          <span class="mini-stat__label">EX ${esc(line)}</span>
+          <span class="mini-stat__count">${pr.got}/${pr.total}</span>
+        </div>
+        <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${pr.pct}%"></div></div>
+      </div>`;
+  }).join("");
+
+  /* --- Cuerpo del panel: una seccion por linea, agrupada por tipo --- */
+  panelBody.innerHTML = Object.entries(EX_LINES).map(([line, label]) => {
+    const pr = lineProgress(line, owned);
+
+    const groups = Object.entries(EX_TYPES).map(([type, typeLabel]) => {
+      const all = EX_CATALOG.filter(ex => ex.line === line && ex.type === type);
+      if(!all.length) return "";
+
+      const visible = state.ui.hideOwned
+        ? all.filter(ex => exStatus(ex, owned) !== "owned")
+        : all;
+      if(!visible.length) return "";
+
+      const gotN = all.filter(ex => exStatus(ex, owned) !== "missing").length;
+
+      return `
+        <div class="ex-group">
+          <div class="ex-group__head">
+            <span>${esc(typeLabel)}</span>
+            <span class="ex-group__n">${gotN}/${all.length}</span>
+          </div>
+          ${visible.map(ex => exItemHTML(ex, owned)).join("")}
+        </div>`;
+    }).join("");
+
+    return `
+      <section class="ex-line ex-line--${line.toLowerCase()}">
+        <div class="ex-line__head">
+          <span class="ex-line__name">${esc(label)}</span>
+          <span class="ex-line__count">${pr.got}/${pr.total}</span>
+        </div>
+        <div class="ex-line__bar"><div class="ex-line__fill" style="width:${pr.pct}%"></div></div>
+        ${groups || '<p class="panel__empty">Todo conseguido en esta linea.</p>'}
+      </section>`;
+  }).join("");
+
+  bindChecklistEvents();
+}
+
+function exItemHTML(ex, owned){
+  const status = exStatus(ex, owned);
+  const vars   = variantsOf(ex);
+
+  /* Las sub-marcas de variante solo aparecen si la pieza tiene mas de una. */
+  const chips = vars.length > 1
+    ? `<div class="ex-item__vars">${vars.map(v => {
+         const has = owned.has(ex.id + "@" + v.id);
+         return `<span class="var-chip${has ? " var-chip--owned" : ""}">${esc(v.label)}</span>`;
+       }).join("")}</div>`
+    : "";
+
+  /* Al pulsar, saltamos al primer producto que trae la pieza. */
+  const source = (SOURCES[ex.id + "@" + vars[0].id] || [])[0];
+
+  return `
+    <button class="ex-item ex-item--${status}" data-goto="${source ? esc(source.id) : ""}">
+      <span class="ex-item__dot" aria-hidden="true"></span>
+      <span class="ex-item__main">
+        <span class="ex-item__name">${esc(ex.name)}</span>
+        ${chips}
+      </span>
+    </button>`;
+}
+
+
+/* ===========================================================================
+   BLOQUE 9 · EVENTOS
+   =========================================================================== */
+
+/* --- Acordeones de mes y botones de estado --- */
+function bindCatalogEvents(){
+
+  /* Abrir/cerrar mes */
+  catalogEl.querySelectorAll(".month__head").forEach(head => {
+    head.addEventListener("click", () => {
+      const section = head.closest(".month");
+      const key     = section.dataset.month;
+      const open    = section.dataset.open !== "true";
+
+      section.dataset.open = open;
+      head.setAttribute("aria-expanded", open);
+
+      state.ui.openMonths = open
+        ? [...new Set([...state.ui.openMonths, key])]
+        : state.ui.openMonths.filter(k => k !== key);
+      saveState();
+    });
+  });
+
+  /* Galeria: las fotos pesadas solo se piden al abrir el desplegable. */
+  catalogEl.querySelectorAll("details.gal").forEach(det => {
+    det.addEventListener("toggle", () => {
+      if(!det.open) return;
+      det.querySelectorAll("img[data-src]").forEach(img => {
+        img.src = img.dataset.src;
+        img.removeAttribute("data-src");
+      });
+    });
+  });
+
+  /* Clic en una miniatura -> visor a tamano completo, sin salir de la pagina. */
+  catalogEl.querySelectorAll(".gal__thumb").forEach(thumb => {
+    thumb.addEventListener("click", () => {
+      const card  = thumb.closest(".card");
+      const fotos = [...card.querySelectorAll(".gal__thumb")].map(t => t.dataset.full);
+      openViewer(fotos, Number(thumb.dataset.i),
+                 card.querySelector(".card__title").textContent);
+    });
+  });
+
+  /* Clic en la portada -> abre el visor desde la primera foto. */
+  catalogEl.querySelectorAll(".card__media").forEach(media => {
+    const card = media.closest(".card");
+    const det  = card.querySelector("details.gal");
+    if(!det) return;
+    media.style.cursor = "zoom-in";
+    media.addEventListener("click", () => {
+      const fotos = [...card.querySelectorAll(".gal__thumb")].map(t => t.dataset.full);
+      openViewer(fotos, 0, card.querySelector(".card__title").textContent);
+    });
+  });
+
+  /* Cambiar estado de un producto -> re-render de la checklist */
+  catalogEl.querySelectorAll(".state-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id       = btn.dataset.product;
+      const newState = btn.dataset.state;
+
+      /* Volver a pulsar el estado activo lo devuelve a "pending". */
+      state.products[id] = (getProductState(id) === newState) ? "pending" : newState;
+      saveState();
+
+      updateCardUI(id);
+      renderChecklist();
+      updateMonthCounters();
+    });
+  });
+}
+
+/* Refresca solo la tarjeta tocada: evita re-dibujar el catalogo entero
+   (y evita que se cierren los <details> abiertos). */
+function updateCardUI(id){
+  const st      = getProductState(id);
+  const product = PRODUCTS.find(p => p.id === id);
+  const owned   = ownedVariantSet();
+
+  /* querySelectorAll, no getElementById: un producto cruzado tiene varias
+     tarjetas en pantalla y todas deben reflejar el mismo estado. */
+  document.querySelectorAll(`[data-pid="${id}"]`).forEach(card => {
+    card.dataset.state = st;
+    card.querySelectorAll(".state-btn").forEach(b => {
+      b.setAttribute("aria-pressed", b.dataset.state === st);
+    });
+
+    /* Los puntos verdes del panel de contenidos siguen al estado de la caja. */
+    if(product && RANDOM_BOX_CATEGORIES.includes(product.category)){
+      card.querySelectorAll(".contents__item").forEach((li, i) => {
+        const ref = product.contains[i];
+        li.classList.toggle("contents__item--owned", ref && owned.has(normalizeRef(ref)));
+      });
+    }
+  });
+}
+
+/* Actualiza el contador "x/y productos" de cada mes sin re-render completo. */
+function updateMonthCounters(){
+  sortedMonthKeys().forEach(key => {
+    const section = catalogEl.querySelector(`.month[data-month="${key}"]`);
+    if(!section) return;
+
+    const items = PRODUCTS.filter(p => p.month === key);
+    const got   = items.filter(p => getProductState(p.id) === "owned").length;
+
+    const chip = section.querySelector(".chip--count");
+    if(chip) chip.textContent = `${got}/${items.length} productos`;
+
+    /* Chip "Completo": se anade o se quita segun toque. */
+    const meta = section.querySelector(".month__meta");
+    const done = meta.querySelector(".chip--done");
+    if(got === items.length && items.length > 0){
+      if(!done){
+        const chipDone = document.createElement("span");
+        chipDone.className = "chip chip--done";
+        chipDone.textContent = "Completo";
+        meta.insertBefore(chipDone, chip);
+      }
+    }else if(done){
+      done.remove();
+    }
+  });
+}
+
+/* --- Clicks dentro de la checklist: saltar al producto de origen --- */
+function bindChecklistEvents(){
+  panelBody.querySelectorAll(".ex-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const productId = item.dataset.goto;
+      if(productId) goToProduct(productId);
+    });
+  });
+}
+
+/* Abre el mes que corresponda, cierra el panel y resalta la tarjeta. */
+function goToProduct(productId){
+  const product = PRODUCTS.find(p => p.id === productId);
+  if(!product) return;
+
+  if(!state.ui.openMonths.includes(product.month)){
+    state.ui.openMonths.push(product.month);
+    saveState();
+    const section = catalogEl.querySelector(`.month[data-month="${product.month}"]`);
+    if(section){
+      section.dataset.open = "true";
+      section.querySelector(".month__head").setAttribute("aria-expanded", "true");
+    }
+  }
+
+  togglePanel(false);
+
+  /* Pequeno retardo: deja que el acordeon termine de expandirse. */
+  setTimeout(() => {
+    /* Si el producto esta cruzado en varias subcategorias, saltamos a la primera. */
+    const card = document.querySelector(`[data-pid="${productId}"]`);
+    if(!card) return;
+    card.scrollIntoView({ behavior:"smooth", block:"center" });
+    card.classList.remove("card--flash");
+    void card.offsetWidth;                  // reinicia la animacion
+    card.classList.add("card--flash");
+  }, 340);
+}
+
+/* ---------------------------------------------------------------------------
+   VISOR DE GALERIA
+   Superposicion sobre el propio catalogo: no hay segunda pagina ni navegacion.
+   Flechas o teclado para recorrer, Esc para cerrar.
+   --------------------------------------------------------------------------- */
+const viewerEl = document.getElementById("viewer");
+let viewerFotos = [];
+let viewerIdx   = 0;
+
+function openViewer(fotos, idx, titulo){
+  if(!fotos.length) return;
+  viewerFotos = fotos;
+  viewerIdx   = idx;
+  viewerEl.querySelector(".viewer__title").textContent = titulo;
+  showViewerImage();
+  viewerEl.dataset.open = "true";
+  document.body.style.overflow = "hidden";
+}
+
+function showViewerImage(){
+  const ruta   = viewerFotos[viewerIdx];
+  const nombre = ruta.split("/").pop().replace(/\.[^.]+$/, "");
+  viewerEl.querySelector(".viewer__img").src = ruta;
+  viewerEl.querySelector(".viewer__count").textContent =
+    `${nombre} · ${viewerIdx + 1}/${viewerFotos.length}`;
+}
+
+function moveViewer(paso){
+  viewerIdx = (viewerIdx + paso + viewerFotos.length) % viewerFotos.length;
+  showViewerImage();
+}
+
+function closeViewer(){
+  viewerEl.dataset.open = "false";
+  viewerEl.querySelector(".viewer__img").src = "";   // libera memoria
+  document.body.style.overflow = "";
+}
+
+viewerEl.querySelector(".viewer__close").addEventListener("click", closeViewer);
+viewerEl.querySelector(".viewer__prev").addEventListener("click", () => moveViewer(-1));
+viewerEl.querySelector(".viewer__next").addEventListener("click", () => moveViewer(1));
+viewerEl.addEventListener("click", e => {
+  if(e.target === viewerEl) closeViewer();          // clic en el fondo
+});
+document.addEventListener("keydown", e => {
+  if(viewerEl.dataset.open !== "true") return;
+  if(e.key === "Escape")     closeViewer();
+  if(e.key === "ArrowLeft")  moveViewer(-1);
+  if(e.key === "ArrowRight") moveViewer(1);
+});
+
+/* --- Apertura/cierre del panel lateral --- */
+const panelEl    = document.getElementById("panel");
+const backdropEl = document.getElementById("backdrop");
+
+function togglePanel(open){
+  panelEl.dataset.open    = open;
+  backdropEl.dataset.open = open;
+  document.body.style.overflow = open ? "hidden" : "";
+}
+
+document.getElementById("openPanel").addEventListener("click", () => togglePanel(true));
+document.getElementById("closePanel").addEventListener("click", () => togglePanel(false));
+backdropEl.addEventListener("click", () => togglePanel(false));
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && panelEl.dataset.open === "true") togglePanel(false);
+});
+
+/* --- Filtro "ocultar los que ya tengo" --- */
+const hideOwnedEl = document.getElementById("hideOwned");
+hideOwnedEl.addEventListener("change", () => {
+  state.ui.hideOwned = hideOwnedEl.checked;
+  saveState();
+  renderChecklist();
+});
+
+
+/* ===========================================================================
+   BLOQUE 10 · ARRANQUE
+   =========================================================================== */
+function init(){
+  loadState();
+
+  /* Primera visita: dejamos abierta la proxima wave para que se vea el contenido. */
+  if(!state.ui.openMonths.length){
+    const next = nextWaveKey() || sortedMonthKeys()[0];
+    if(next) state.ui.openMonths = [next];
+  }
+
+  hideOwnedEl.checked = !!state.ui.hideOwned;
+
+  renderCatalog();
+  renderChecklist();
+}
+
+init();
+</script>
+</body>
+</html>

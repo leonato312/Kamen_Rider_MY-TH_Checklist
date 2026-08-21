@@ -1,0 +1,27 @@
+# ============================================================================
+# QUE SE SUBE Y QUE NO
+# ============================================================================
+# Se despliega solo lo derivado (.webp) + index.html  ->  ~40 MB
+# Todo lo de abajo se queda en local.
+# ----------------------------------------------------------------------------
+
+# FICHA/ es la base de datos: capturas de Bandai a resolucion original, de
+# donde se sacan contenidos, mes y precio. Se consulta ANTES de actualizar la
+# pagina. No se publica y no se le generan .webp a proposito, para no perder
+# resolucion al leer los datos.
+FICHA/
+**/FICHA/
+
+# Fotos originales de las galerias (218 MB). La pagina usa los .webp de 1600 px
+# generados a partir de ellas; estas son el maestro y se quedan en local.
+*.jpg
+*.jpeg
+*.png
+
+# Hoja de apoyo con fechas y precios
+*.xlsx
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
