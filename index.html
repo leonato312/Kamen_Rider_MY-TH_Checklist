@@ -313,7 +313,14 @@ body::before{
 .contents__toggle::-webkit-details-marker{ display:none; }
 .contents__toggle:hover{ background:var(--surface-3); color:var(--text); }
 .contents__arrow{ margin-left:auto; transition:transform .25s ease; }
+.contents__toggle .contents__n{ margin-left:2px; }
 .contents[open] .contents__arrow{ transform:rotate(90deg); }
+/* Los Eggs garantizados van con borde continuo; las cajas sorpresa, punteado */
+.contents--fijo{ border-style:solid; border-color:var(--border); }
+.contents__n{
+  padding:1px 6px; border-radius:99px; font-size:10px;
+  background:var(--surface-3); color:var(--text-dim);
+}
 .contents__list{ padding:4px 10px 11px; display:flex; flex-direction:column; gap:5px; }
 .contents__item{
   display:flex; align-items:center; gap:8px;
@@ -1526,7 +1533,7 @@ function cardHTML(p, inCategory){
     <div class="card__body">
       <h3 class="card__title">${esc(p.title)}</h3>
 
-      ${isRandom ? randomContentsHTML(p, owned) : ""}
+      ${contentsHTML(p, owned)}
 
       <div class="card__row">
         ${price
@@ -1543,11 +1550,20 @@ function cardHTML(p, inCategory){
 }
 
 /* ---------------------------------------------------------------------------
-   Sub-acordeon "Ver posibles contenidos" de las Random Box.
-   Estructura lista para crecer: cada fila ya reserva un hueco de miniatura
-   (.contents__thumb) donde luego puedes poner la imagen de la pieza.
+   Desplegable con los Eggs de un producto. Lo usa cualquier producto que
+   traiga alguno, no solo las cajas sorpresa.
+
+   La diferencia entre unos y otros es real y se nota en el texto: en una caja
+   sorpresa los Eggs son POSIBLES —te toca uno— mientras que en un set vienen
+   GARANTIZADOS. Llamarlos igual daria a entender que un set es una loteria.
+
+   Cada fila reserva un hueco de miniatura (.contents__thumb) para cuando haya
+   imagen de cada pieza.
    --------------------------------------------------------------------------- */
-function randomContentsHTML(p, owned){
+function contentsHTML(p, owned){
+  if(!p.contains.length) return "";
+  const esSorpresa = RANDOM_BOX_CATEGORIES.includes(p.category);
+  const n = p.contains.length;
   const rows = p.contains.map(ref => {
     const { id, variant } = splitRef(ref);
     const ex = EGGS_BY_ID[id];
@@ -1567,10 +1583,21 @@ function randomContentsHTML(p, owned){
       </li>`;
   }).join("");
 
+  const titulo = esSorpresa
+    ? "Ver posibles contenidos"
+    : (n === 1 ? "Egg incluido" : "Eggs incluidos");
+
+  const nota = esSorpresa
+    ? `${n} piezas posibles. Marcar la caja como Obtenida las cuenta todas
+       en la checklist.`
+    : `Marcar como Obtenido cuenta ${n === 1 ? "esta pieza" : "estas " + n + " piezas"}
+       en la checklist.`;
+
   return `
-  <details class="contents">
+  <details class="contents${esSorpresa ? "" : " contents--fijo"}">
     <summary class="contents__toggle">
-      Ver posibles contenidos
+      ${esc(titulo)}
+      <span class="contents__n">${n}</span>
       <svg class="contents__arrow" width="13" height="13" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
            stroke-linejoin="round" aria-hidden="true">
@@ -1578,10 +1605,7 @@ function randomContentsHTML(p, owned){
       </svg>
     </summary>
     <ul class="contents__list">${rows}</ul>
-    <p class="contents__note">
-      ${p.contains.length} piezas posibles. Marcar la caja como Obtenida las
-      cuenta todas en la checklist.
-    </p>
+    <p class="contents__note">${nota}</p>
   </details>`;
 }
 
@@ -1754,8 +1778,8 @@ function updateCardUI(id){
       b.setAttribute("aria-pressed", b.dataset.state === st);
     });
 
-    /* Los puntos verdes del panel de contenidos siguen al estado de la caja. */
-    if(product && RANDOM_BOX_CATEGORIES.includes(product.category)){
+    /* Los puntos verdes del desplegable siguen al estado del producto. */
+    if(product){
       card.querySelectorAll(".contents__item").forEach((li, i) => {
         const ref = product.contains[i];
         li.classList.toggle("contents__item--owned", ref && owned.has(normalizeRef(ref)));
