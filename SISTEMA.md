@@ -116,6 +116,13 @@ MY-TH & RID SET, y ese absorbía al Driver suelto y al Hammer Bone Buckle, tener
 el Narikiri los cubre los cuatro. Cada set declara solo lo que absorbe
 directamente.
 
+**Y se verifica solo.** En los productos donde esto ocurre —Drivers y Buckles—
+se lista además el contenido no coleccionable en `componentes`. La auditoría
+compara contenidos y **deduce** qué caja absorbe a cuál, avisando tanto de la
+cobertura que falta declarar como de la declarada que el contenido no respalda.
+La declaración sigue moviendo la interfaz; los contenidos la vigilan. Se llegó
+aquí después de equivocarse dos veces deduciendo la cadena a ojo.
+
 Al documentar una caja hay que anotar **todo lo que trae**, no solo los
 coleccionables: un set que incluye un buckle deja sin sentido comprar ese buckle
 suelto, y eso es fácil pasarlo por alto cuando la atención está en el gimmick

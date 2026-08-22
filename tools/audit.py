@@ -168,6 +168,62 @@ for r in sorted(raices, key=lambda x: titulos[x]):
 
 print(u'')
 print(u'==============================================================')
+print(u' 3b. COBERTURA DEDUCIDA DE LOS CONTENIDOS')
+print(u'==============================================================')
+print(u'  Compara el contenido real de cada caja en vez de fiarse de lo que')
+print(u'  declaramos. Solo opina sobre productos con `componentes`.')
+print(u'')
+
+componentes, contiene = {}, {}
+for m in re.finditer(r'\{ id:"([a-z0-9-]+)", title:"([^"]*)"(.*?)contains:\[([^\]]*)\]',
+                     s_html, re.S):
+    pid, cuerpo, cont = m.group(1), m.group(3), m.group(4)
+    c = re.search(r'componentes:\[([^\]]*)\]', cuerpo)
+    if c:
+        componentes[pid] = set(re.findall(r'"([^"]+)"', c.group(1)))
+    # los Eggs cuentan como contenido: se normaliza la variante
+    contiene[pid] = set(x if '@' in x else x + '@std'
+                        for x in re.findall(r'"([^"]+)"', cont))
+
+def total(pid):
+    return componentes.get(pid, set()) | contiene.get(pid, set())
+
+# Cierre transitivo de lo declarado, para comparar manzanas con manzanas
+def declarado(pid, vistos=None):
+    vistos = vistos or set()
+    res = set()
+    for h in reemplaza.get(pid, []):
+        if h in vistos: continue
+        res.add(h); res |= declarado(h, vistos | {h})
+    return res
+
+evaluables = sorted(componentes)
+print(u'  %-46s %s' % (u'PRODUCTO', u'CONTENIDO COMPLETO'))
+for pid in evaluables:
+    print(u'  %-46s %s' % (titulos[pid][:46], u', '.join(sorted(total(pid)))[:60]))
+print(u'')
+
+for a in evaluables:
+    deducido = set(b for b in evaluables
+                   if b != a and total(b) and total(b) < total(a))   # subconjunto estricto
+    dec = declarado(a)
+    faltan = deducido - dec
+    sobran = set(b for b in dec if b in componentes) - deducido
+    for b in sorted(faltan):
+        flag(u'ALTO', titulos[a][:52],
+             u'contiene todo lo de "%s" pero no lo declara en `reemplaza`' % titulos[b])
+        print(u'  !! %s deberia cubrir a %s' % (titulos[a][:40], titulos[b][:40]))
+    for b in sorted(sobran):
+        flag(u'ALTO', titulos[a][:52],
+             u'declara cubrir "%s" pero su contenido no lo incluye' % titulos[b])
+        print(u'  !! %s NO contiene lo de %s' % (titulos[a][:40], titulos[b][:40]))
+
+if not any(p[2].startswith(u'contiene todo') or p[2].startswith(u'declara cubrir')
+           for p in problemas):
+    print(u'  La cadena declarada coincide con la deducida de los contenidos.')
+
+print(u'')
+print(u'==============================================================')
 print(u' 4. NOMENCLATURA Y DUPLICADOS')
 print(u'==============================================================')
 for cat in cats:

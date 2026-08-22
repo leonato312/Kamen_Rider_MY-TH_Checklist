@@ -60,6 +60,11 @@ para no perder detalle, y no se publican.
    —trae dentro el driver suelto, un buckle o un set anterior— declararlo con
    `reemplaza`. Basta con lo que absorbe **directamente**: las cadenas se
    resuelven solas.
+   En Drivers y Buckles, listar además en `componentes` las piezas que no son
+   Eggs (driver, buckles). Con eso `audit.py` **deduce** qué set absorbe a
+   cuál comparando contenidos y avisa si la declaración no cuadra. Es la red
+   de seguridad: deducir la cobertura a ojo ya falló dos veces.
+   TAF, SO-DO y los model kits no lo necesitan: nunca vienen dentro de otro set.
 5. Añadir su carpeta al diccionario `CARPETA` de `plan.py`.
 6. `python tools/build_all.py`.
 

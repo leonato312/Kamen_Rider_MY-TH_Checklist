@@ -622,6 +622,20 @@ const EGGS_TYPES = {
    SG saca piezas que nunca salen en DX y viceversa. */
 const EGGS_LINES = { DX: "LINEA DX", SG: "LINEA SG" };
 
+/* Piezas que NO son Eggs y por tanto no entran en la checklist, pero que sí
+   determinan si un producto suelto sigue haciendo falta cuando viene dentro
+   de un set. Se declaran en el campo `componentes` y solo las lee
+   tools/audit.py, para verificar el arbol de `reemplaza`.
+   Por ahora solo Drivers y Buckles: TAF, SO-DO y los model kits nunca vienen
+   dentro de otro set, asi que no hace falta catalogarlos. */
+const COMPONENTES = {
+  "driver-myth":       "MY-TH Driver (unidad principal)",
+  "buckle-hammerbone": "Hammerbone Buckle",
+  "buckle-slashbone":  "Slashbone Buckle",
+  "buckle-bitebone":   "Bite Bone Buckle",
+  "buckle-shotbone":   "Shot Bone Buckle"
+};
+
 /* Estados de producto. Solo "owned" alimenta la checklist. */
 const STATES = { pending:"Pendiente", reserved:"Reservado", owned:"Obtenido" };
 
@@ -739,6 +753,11 @@ const EGGS_CATALOG = [
                   Para P-Bandai usa la fecha de PREORDER: cuenta como el
                   release de los productos regulares.
      price     -> yenes con IVA incluido, o null si aun no se anuncia
+     componentes -> OPCIONAL. Piezas que NO son Eggs y trae la caja (ver
+                  COMPONENTES). Junto con `contains` forman el contenido
+                  completo. La pagina no lo usa: sirve para que la auditoria
+                  DEDUZCA que set absorbe a cual comparando contenidos, en vez
+                  de fiarse de lo que declaramos a mano.
      reemplaza -> OPCIONAL. Productos que dejan de hacer falta si tienes este,
                   porque vienen dentro de la caja. Se declara en el set que
                   absorbe, no en el absorbido: asi sacar un set nuevo es tocar
@@ -807,6 +826,7 @@ const PRODUCTS = [
   /* --- Tanda del 5 --- */
   { id:"dx-myth-driver", title:"DX MY-TH DRIVER", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:7920,
+    componentes:["driver-myth"],
     img:"DX DRIVERS/DX MY-TH DRIVER/PACKAGE-thumb.webp",
     gallery:["DX DRIVERS/DX MY-TH DRIVER/PACKAGE.webp",
               "DX DRIVERS/DX MY-TH DRIVER/01.webp",
@@ -822,6 +842,7 @@ const PRODUCTS = [
   { id:"dx-myth-driver-rid-set", title:"DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:10670,
     reemplaza:["dx-myth-driver","dx-hammer-bone-buckle"],
+    componentes:["driver-myth","buckle-hammerbone"],
     img:"DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/PACKAGE-thumb.webp",
     gallery:["DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/PACKAGE.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/01.webp",
@@ -840,6 +861,7 @@ const PRODUCTS = [
   { id:"dx-myth-driver-narikiri", title:"DX MY-TH DRIVER SPECIAL NARIKIRI SET", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:14960,
     reemplaza:["dx-myth-driver-rid-set","dx-slashbone-buckle"],
+    componentes:["driver-myth","buckle-hammerbone","buckle-slashbone"],
     img:"DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE-thumb.webp",
     gallery:["DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE.webp",
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/01.webp",
@@ -865,6 +887,7 @@ const PRODUCTS = [
 
   { id:"dx-hammer-bone-buckle", title:"DX HAMMER BONE BUCKLE", category:"BUCKLES SETS",
     date:"2026-09-05", dateType:"release", price:2750,
+    componentes:["buckle-hammerbone"],
     img:"BUCKLES SETS/DX HAMMER BONE BUCKLE/PACKAGE-thumb.webp",
     gallery:["BUCKLES SETS/DX HAMMER BONE BUCKLE/PACKAGE.webp",
               "BUCKLES SETS/DX HAMMER BONE BUCKLE/01.webp",
@@ -1018,6 +1041,7 @@ const PRODUCTS = [
   /* --- Tanda del 12 --- */
   { id:"dx-slashbone-buckle", title:"DX SLASHBONE BUCKLE & RIDE EGGS 4 SET", category:"BUCKLES SETS",
     date:"2026-09-12", dateType:"release", price:3520,
+    componentes:["buckle-slashbone"],
     img:"BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/PACKAGE-thumb.webp",
     gallery:["BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/PACKAGE.webp",
               "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/01.webp",
@@ -1107,6 +1131,7 @@ const PRODUCTS = [
 
   { id:"dx-bite-bone-buckle", title:"DX BITE BONE BUCKLE & RIDE EGGS 6 SET", category:"BUCKLES SETS",
     date:"2026-10-03", dateType:"release", price:3520,
+    componentes:["buckle-bitebone"],
     img:"BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/PACKAGE-thumb.webp",
     gallery:["BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/PACKAGE.webp",
               "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/01.webp",
@@ -1118,6 +1143,7 @@ const PRODUCTS = [
 
   { id:"dx-shot-bone-buckle", title:"DX SHOT BONE BUCKLE & RIDE EGGS 10 SET", category:"BUCKLES SETS",
     date:"2026-10-03", dateType:"release", price:3520,
+    componentes:["buckle-shotbone"],
     img:"BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/PACKAGE-thumb.webp",
     gallery:["BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/PACKAGE.webp",
               "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/01.webp",
