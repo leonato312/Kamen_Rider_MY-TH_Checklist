@@ -125,6 +125,10 @@ body::before{
 .mini-stat--dx .mini-stat__fill{ background:var(--dx); }
 .mini-stat--sg .mini-stat__label{ color:var(--sg); }
 .mini-stat--sg .mini-stat__fill{ background:var(--sg); }
+/* Las de categoria van en gris: los Eggs son el gimmick y deben destacar */
+.mini-stat--prod{ min-width:104px; }
+.mini-stat--prod .mini-stat__label{ color:var(--text-dim); }
+.mini-stat--prod .mini-stat__fill{ background:var(--text-dim); }
 
 .btn-panel{
   display:flex; align-items:center; gap:9px;
@@ -436,6 +440,13 @@ body::before{
 .eggs-line__name{ font-size:13px; font-weight:800; letter-spacing:.12em; }
 .eggs-line--dx .eggs-line__name{ color:var(--dx); }
 .eggs-line--sg .eggs-line__name{ color:var(--sg); }
+.eggs-line--prod .eggs-line__name{ color:var(--text); }
+.eggs-line--prod .eggs-line__fill{ background:var(--text-dim); }
+.panel__sep{
+  margin:26px 0 4px; padding-top:16px; border-top:1px solid var(--border);
+  font-size:10px; font-weight:700; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--text-mute);
+}
 .eggs-line__count{ margin-left:auto; font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
 .eggs-line__bar{ height:5px; border-radius:99px; background:var(--surface-3); overflow:hidden; margin-bottom:14px; }
 .eggs-line__fill{ height:100%; width:0; border-radius:99px; transition:width .35s ease; }
@@ -635,6 +646,18 @@ const COMPONENTES = {
   "buckle-bitebone":   "Bite Bone Buckle",
   "buckle-shotbone":   "Shot Bone Buckle"
 };
+
+/* Categorias que ademas de tarjetas tienen su propia checklist en el panel.
+   A diferencia de los Eggs —que estan repartidos por sets y cajas sorpresa—
+   aqui cada producto ES la pieza, asi que la checklist es la lista de la
+   categoria. Sirve para verlos todos juntos sin recorrer cinco meses.
+   Un producto cubierto por otro cuenta como conseguido: si el Narikiri trae
+   el Hammerbone, lo tienes, aunque no compraras la caja suelta. */
+const PRODUCT_CHECKLISTS = [
+  { cat:"TAF",          label:"TAF" },
+  { cat:"SG SO-DO",     label:"SO-DO" },
+  { cat:"BUCKLES SETS", label:"BUCKLES" }
+];
 
 /* Estados de producto. Solo "owned" alimenta la checklist. */
 const STATES = { pending:"Pendiente", reserved:"Reservado", owned:"Obtenido" };
@@ -1405,6 +1428,14 @@ function eggsStatus(ex, owned){
   return have === vars.length ? "owned" : "partial";
 }
 
+/* Progreso de una categoria con checklist de productos. */
+function catProgress(cat, cubiertos){
+  const items = PRODUCTS.filter(p => categoriesOf(p).includes(cat));
+  const got   = items.filter(p => isResolved(p, cubiertos)).length;
+  return { items, got, total: items.length,
+           pct: items.length ? (got / items.length) * 100 : 0 };
+}
+
 /* Progreso de una linea: piezas conseguidas / piezas totales. */
 function lineProgress(line, owned){
   const items = EGGS_CATALOG.filter(ex => ex.line === line);
@@ -1718,10 +1749,24 @@ function renderChecklist(){
         </div>
         <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${pr.pct}%"></div></div>
       </div>`;
+  }).join("") + PRODUCT_CHECKLISTS.map(({ cat, label }) => {
+    const pr = catProgress(cat, coveredMap());
+    if(!pr.total) return "";
+    return `
+      <div class="mini-stat mini-stat--prod">
+        <div class="mini-stat__top">
+          <span class="mini-stat__label">${esc(label)}</span>
+          <span class="mini-stat__count">${pr.got}/${pr.total}</span>
+        </div>
+        <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${pr.pct}%"></div></div>
+      </div>`;
   }).join("");
 
-  /* --- Cuerpo del panel: una seccion por linea, agrupada por tipo --- */
-  panelBody.innerHTML = Object.entries(EGGS_LINES).map(([line, label]) => {
+  /* --- Cuerpo del panel: primero los Eggs por linea, luego las categorias
+         que se rastrean producto a producto --- */
+  const cubiertos = coveredMap();
+
+  const eggs = Object.entries(EGGS_LINES).map(([line, label]) => {
     const pr = lineProgress(line, owned);
 
     const groups = Object.entries(EGGS_TYPES).map(([type, typeLabel]) => {
@@ -1756,7 +1801,57 @@ function renderChecklist(){
       </section>`;
   }).join("");
 
+  const porProducto = PRODUCT_CHECKLISTS.map(({ cat, label }) => {
+    const pr = catProgress(cat, cubiertos);
+    if(!pr.total) return "";                       // categoria aun sin productos
+
+    const visible = state.ui.hideOwned
+      ? pr.items.filter(p => !isResolved(p, cubiertos))
+      : pr.items;
+
+    /* Por fecha: asi la lista sigue el orden en que van saliendo. */
+    const filas = [...visible]
+      .sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title))
+      .map(p => productItemHTML(p, cubiertos)).join("");
+
+    return `
+      <section class="eggs-line eggs-line--prod">
+        <div class="eggs-line__head">
+          <span class="eggs-line__name">${esc(label)}</span>
+          <span class="eggs-line__count">${pr.got}/${pr.total}</span>
+        </div>
+        <div class="eggs-line__bar"><div class="eggs-line__fill" style="width:${pr.pct}%"></div></div>
+        ${filas || '<p class="panel__empty">Todo conseguido en esta categoria.</p>'}
+      </section>`;
+  }).join("");
+
+  panelBody.innerHTML = eggs +
+    (porProducto ? `<div class="panel__sep">Por producto</div>${porProducto}` : "");
+
   bindChecklistEvents();
+}
+
+/* Fila de producto. Misma estructura que la de un Egg para que el panel se
+   lea igual: punto de estado, nombre y salto al producto al pulsar. */
+function productItemHTML(p, cubiertos){
+  const tengo    = getProductState(p.id) === "owned";
+  const cubierto = !tengo && !!cubiertos[p.id];
+  /* Cubierto cuenta como conseguido: la pieza esta en tus manos aunque no
+     compraras esa caja. El matiz de por donde te llego va en la etiqueta. */
+  const estado   = (tengo || cubierto) ? "owned" : "missing";
+  const via      = cubierto
+    ? `<span class="eggs-item__vars"><span class="var-chip var-chip--owned"
+         >Viene en ${esc(cubiertos[p.id][0].title)}</span></span>`
+    : "";
+  return `
+    <div class="eggs-item eggs-item--${estado}" data-goto="${esc(p.id)}"
+         role="button" tabindex="0">
+      <span class="eggs-item__dot" aria-hidden="true"></span>
+      <span class="eggs-item__main">
+        <span class="eggs-item__name">${esc(p.title)}</span>
+        ${via}
+      </span>
+    </div>`;
 }
 
 function eggsItemHTML(ex, owned){
