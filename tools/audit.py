@@ -6,7 +6,10 @@ Que comprueba, por orden de importancia:
   1. Que index.html y el disco digan lo mismo. Es lo unico que puede romper
      el sitio publicado, asi que va primero.
   2. Que cada producto tenga portada y una numeracion sana.
-  3. Nomenclatura y duplicados.
+  3. El arbol de `reemplaza`: que set absorbe a cuales, resuelto en cadena.
+     Sirve para comprobar de un vistazo que un set especial cubre lo que
+     debe, sin ir producto por producto. Detecta ciclos e ids inexistentes.
+  4. Nomenclatura y duplicados.
 
 Que NO comprueba: el contenido de FICHA/. Esas carpetas son material de
 consulta, de formato libre y no publicable — una hoja puede cubrir una
@@ -21,6 +24,8 @@ HTML      = os.path.join(BASE, u'index.html')
 FICHA_DIR = u'FICHA'
 IMG_EXT   = ('.jpg', '.jpeg', '.png')      # solo originales; los .webp son derivados
 OMITIR    = ('tools',)
+
+s_html = io.open(HTML, encoding='utf-8').read()
 
 problemas = []
 def flag(sev, ruta, motivo):
@@ -127,7 +132,43 @@ for cat in cats:
 
 print(u'')
 print(u'==============================================================')
-print(u' 3. NOMENCLATURA Y DUPLICADOS')
+print(u' 3. QUE ABSORBE CADA SET   (campo `reemplaza`, transitivo)')
+print(u'==============================================================')
+
+titulos, reemplaza = {}, {}
+for m in re.finditer(r'\{ id:"([a-z0-9-]+)", title:"([^"]*)"(.*?)contains:', s_html, re.S):
+    pid, tit, cuerpo = m.group(1), m.group(2), m.group(3)
+    titulos[pid] = tit
+    r = re.search(r'reemplaza:\[([^\]]*)\]', cuerpo)
+    reemplaza[pid] = re.findall(r'"([^"]+)"', r.group(1)) if r else []
+
+def rama(pid, nivel, vistos, out):
+    for hijo in reemplaza.get(pid, []):
+        if hijo in vistos:
+            out.append(u'   %s! CICLO -> %s' % (u'  ' * nivel, hijo))
+            flag(u'ALTO', hijo, u'ciclo en `reemplaza`')
+            continue
+        if hijo not in titulos:
+            out.append(u'   %s! id inexistente -> %s' % (u'  ' * nivel, hijo))
+            flag(u'ALTO', pid, u'`reemplaza` apunta a "%s", que no existe' % hijo)
+            continue
+        out.append(u'   %s+- %s' % (u'  ' * nivel, titulos[hijo][:60]))
+        rama(hijo, nivel + 1, vistos | {hijo}, out)
+
+raices = [p for p in reemplaza if reemplaza[p]
+          and not any(p in v for v in reemplaza.values())]
+if not raices:
+    print(u'  ningun set absorbe a otro')
+for r in sorted(raices, key=lambda x: titulos[x]):
+    print(u'  %s' % titulos[r][:66])
+    out = []
+    rama(r, 0, {r}, out)
+    for l in out: print(l)
+    print(u'      cubre %d producto(s) en total' % len(out))
+
+print(u'')
+print(u'==============================================================')
+print(u' 4. NOMENCLATURA Y DUPLICADOS')
 print(u'==============================================================')
 for cat in cats:
     if cat != cat.upper():

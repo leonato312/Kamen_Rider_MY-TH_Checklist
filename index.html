@@ -833,11 +833,13 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/07.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-eggs-1"] },
 
-  /* Edicion limitada: trae el Driver y el Hammer Bone Buckle, asi que es un
-     upgrade del MY-TH & RID SET y lo absorbe entero. */
+  /* Edicion limitada. Es upgrade de dos sets a la vez: el MY-TH & RID SET
+     (que a su vez trae el Driver suelto y el Hammer Bone Buckle) y el
+     SLASHBONE BUCKLE & RIDE EGGS 4 SET. Solo hay que declarar esos dos:
+     lo que ellos absorbian se hereda por la cadena. */
   { id:"dx-myth-driver-narikiri", title:"DX MY-TH DRIVER SPECIAL NARIKIRI SET", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:14960,
-    reemplaza:["dx-myth-driver-rid-set","dx-myth-driver","dx-hammer-bone-buckle"],
+    reemplaza:["dx-myth-driver-rid-set","dx-slashbone-buckle"],
     img:"DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE-thumb.webp",
     gallery:["DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE.webp",
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/01.webp",
