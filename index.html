@@ -603,7 +603,11 @@ body::before{
    (Por eso SHF puede quedarse aqui aunque hoy este vacia.) */
 const CATEGORY_ORDER = [
   "TAF", "SOFT VINYL", "SHF", "SG RANDOM BOX",
-  "DX SETS", "DX RANDOM BOX", "DX DRIVERS", "BUCKLES SETS", "ARMAS"
+  "DX SETS", "DX RANDOM BOX", "DX DRIVERS", "BUCKLES SETS", "ARMAS",
+  /* Gimmicks de revista, campana o exclusivos de tienda. Procedencia rara:
+     algunos no tienen precio (son premio), pero todos tienen fecha. Una sola
+     imagen por producto, sin subcarpeta de galeria. */
+  "RIDE-SEED EX PROMOCIONALES"
 ];
 
 /* Subcategorias cuyo contenido es sorpresa -> muestran "Ver posibles contenidos". */
@@ -664,7 +668,10 @@ const CURRENCY = { symbol:"¥", locale:"ja-JP" };
 const EX_CATALOG = [
 
   /* ---------- DX · Ride Ex numerados ---------- */
-  { id:"ride-ex-1",        name:"Ride Ex 1",        type:"ride-ex", line:"DX" },
+  { id:"ride-ex-1",        name:"Ride Ex 1",        type:"ride-ex", line:"DX",
+    variants:[ {id:"std", label:"Estandar"},
+               {id:"special", label:"Special ver."},   /* furoku Televi-Kun */
+               {id:"gold", label:"Gold ver."} ] },     /* premio Scratch Carddass */
   /* Ride Ex 1 Origin alude a un rider distinto que Ride Ex 1, aunque la
      premisa sea la misma: va como pieza independiente, no como variante. */
   { id:"ride-ex-1-origin", name:"Ride Ex 1 Origin", type:"ride-ex", line:"DX" },
@@ -688,7 +695,15 @@ const EX_CATALOG = [
   { id:"faiz-ride-ex",     name:"Faiz Ride Ex",     type:"legend-ride-ex", line:"DX" },
 
   /* ---------- DX · Seed Ex ---------- */
-  { id:"myceed-ex",           name:"Myceed Ex",           type:"seed-ex", line:"DX" },
+  /* OJO: asumo que "Myceed Ex" (del TAF Myth) y el "Mys Seed Ex" de los sets
+     de tienda son la MISMA pieza, y que las de tienda son versiones suyas.
+     Si resultan ser piezas distintas, hay que sacarlas a entradas propias. */
+  { id:"myceed-ex",           name:"Myceed Ex / Mys Seed Ex", type:"seed-ex", line:"DX",
+    variants:[ {id:"std", label:"Estandar"},
+               {id:"tokyo", label:"KR Store Tokyo ver."},
+               {id:"nagoya", label:"KR Store Nagoya ver."} ] },
+  { id:"hato-seed-ex",        name:"Hato Seed Ex",        type:"seed-ex", line:"DX" },
+  { id:"koala-seed-ex",       name:"Koala Seed Ex",       type:"seed-ex", line:"DX" },
   { id:"zou-seed-ex",         name:"Zou Seed Ex",         type:"seed-ex", line:"DX" },
   { id:"owl-seed-ex",         name:"Owl Seed Ex",         type:"seed-ex", line:"DX" },
   { id:"taka-seed-ex",        name:"Taka Seed Ex",        type:"seed-ex", line:"DX" },
@@ -1103,6 +1118,42 @@ const PRODUCTS = [
     gallery:["DX RANDOM BOX/DX RIDER EX RANDOM BOX 02/01.webp"],contains:["ride-ex-11@special","gorilla-seed-ex","reindeer-seed-ex",
               "penguin-seed-ex","panda-seed-ex","pillbug-seed-ex"] },
 
+  /* ---- Promocionales de septiembre ----
+     Sin subcarpeta: una sola imagen por producto, que hace de portada. */
+  { id:"promo-store-tokyo", title:"DX RIDER EX KAMEN RIDER STORE TOKYO SET",
+    category:"RIDE-SEED EX PROMOCIONALES",
+    date:"2026-09-05", dateType:"release", price:1650,
+    img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Mys Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex-thumb.webp",
+    gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Mys Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex.webp"],
+    contains:["myceed-ex@tokyo","hato-seed-ex"] },
+
+  { id:"promo-store-nagoya", title:"DX RIDER EX KAMEN RIDER STORE NAGOYA SET",
+    category:"RIDE-SEED EX PROMOCIONALES",
+    date:"2026-09-05", dateType:"release", price:1650,
+    img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Mys Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex-thumb.webp",
+    gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Mys Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex.webp"],
+    contains:["myceed-ex@nagoya","koala-seed-ex"] },
+
+  /* Premio de la campana Scratch: no se compra, no tiene precio.
+     Reparto de tarjetas en tres rondas: 5 sep, 17 oct y 5 dic de 2026.
+     Se toma la primera como fecha; las otras dos quedan aqui anotadas. */
+  { id:"promo-scratch", title:"SCRATCH CARDDASS",
+    category:"RIDE-SEED EX PROMOCIONALES",
+    date:"2026-09-05", dateType:"release", price:null,
+    priceLabel:"Premio de campaña",
+    img:"RIDE-SEED EX PROMOCIONALES/SCRATCH CARDDASS-Ride Ex 1 (Gold ver.)-thumb.webp",
+    gallery:["RIDE-SEED EX PROMOCIONALES/SCRATCH CARDDASS-Ride Ex 1 (Gold ver.).webp"],
+    contains:["ride-ex-1@gold"] },
+
+  /* Furoku de la revista Televi-Kun. El precio es el de la revista. */
+  { id:"promo-televi-kun", title:"TELEVI-KUN",
+    category:"RIDE-SEED EX PROMOCIONALES",
+    date:"2026-09-30", dateType:"release", price:2090,
+    priceLabel:"Precio de la revista",
+    img:"RIDE-SEED EX PROMOCIONALES/TELEVI-KUN-Ride Ex 1 (Special ver.)-thumb.webp",
+    gallery:["RIDE-SEED EX PROMOCIONALES/TELEVI-KUN-Ride Ex 1 (Special ver.).webp"],
+    contains:["ride-ex-1@special"] },
+
   /* =================== NOVIEMBRE 2026 =================== */
   { id:"sv-tigul", title:"RIDER HERO SERIES KAMEN RIDER TIGUL", category:"SOFT VINYL",
     date:"2026-11-07", dateType:"release", price:990,
@@ -1428,8 +1479,8 @@ function cardHTML(p, inCategory){
 
       <div class="card__row">
         ${price
-          ? `<span class="card__price">${esc(price)}</span>`
-          : `<span class="card__price card__price--tbd">Precio por confirmar</span>`}
+          ? `<span class="card__price"${p.priceLabel ? ` title="${esc(p.priceLabel)}"` : ""}>${esc(price)}</span>`
+          : `<span class="card__price card__price--tbd">${esc(p.priceLabel || "Precio por confirmar")}</span>`}
         <span class="card__date${daysUntil(p.date) < 0 ? " card__date--past" : ""}">
           ${p.dateType === "preorder" ? "Preorder " : ""}${esc(formatDay(p.date))}
         </span>
@@ -1657,15 +1708,22 @@ function bindCatalogEvents(){
     });
   });
 
-  /* Clic en la portada -> abre el visor desde la primera foto. */
+  /* Clic en la portada -> abre el visor desde la primera foto.
+     Los productos de una sola imagen (promocionales) no tienen desplegable,
+     asi que en ese caso las fotos salen de `gallery` en vez del DOM: sin esto
+     su unica imagen no se podria ver a tamano completo. */
   catalogEl.querySelectorAll(".card__media").forEach(media => {
-    const card = media.closest(".card");
-    const det  = card.querySelector("details.gal");
-    if(!det) return;
+    const card    = media.closest(".card");
+    const product = PRODUCTS.find(p => p.id === card.dataset.pid);
+    const fotos   = card.querySelector("details.gal")
+      ? null                                   // se leen del DOM al hacer clic
+      : (product && product.gallery || []);
+    if(fotos && !fotos.length) return;         // sin imagenes: nada que abrir
+
     media.style.cursor = "zoom-in";
     media.addEventListener("click", () => {
-      const fotos = [...card.querySelectorAll(".gal__thumb")].map(t => t.dataset.full);
-      openViewer(fotos, 0, card.querySelector(".card__title").textContent);
+      const lista = fotos || [...card.querySelectorAll(".gal__thumb")].map(t => t.dataset.full);
+      openViewer(lista, 0, card.querySelector(".card__title").textContent);
     });
   });
 
