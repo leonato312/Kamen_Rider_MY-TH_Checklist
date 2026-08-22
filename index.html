@@ -425,7 +425,23 @@ body::before{
 .panel__title{ margin:0; font-size:16px; font-weight:700; }
 .panel__close{ margin-left:auto; width:30px; height:30px; border-radius:7px; color:var(--text-dim); font-size:18px; }
 .panel__close:hover{ background:var(--surface-3); color:var(--text); }
-.panel__hint{ margin:8px 0 0; font-size:11.5px; color:var(--text-mute); line-height:1.45; }
+.panel__hint{ margin:8px 0 0; font-size:11.5px; color:var(--text-mute); line-height:1.45; min-height:32px; }
+
+/* Pestanas: una checklist independiente por linea de coleccion */
+.panel__tabs{
+  display:flex; gap:4px; margin-top:14px; padding:3px;
+  background:var(--surface-1); border:1px solid var(--border); border-radius:9px;
+}
+.panel__tab{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:7px 4px; border-radius:6px;
+  font-size:11px; font-weight:700; letter-spacing:.03em; color:var(--text-mute);
+  transition:background .15s ease, color .15s ease;
+}
+.panel__tab:hover{ background:var(--surface-3); color:var(--text-dim); }
+.panel__tab[aria-selected="true"]{ background:var(--surface-3); color:var(--text); }
+.panel__tab[aria-selected="true"] .panel__tab-n{ color:var(--dx); }
+.panel__tab-n{ font-size:10px; font-weight:600; color:var(--text-mute); font-variant-numeric:tabular-nums; }
 
 .panel__filter{ display:flex; align-items:center; gap:8px; margin-top:13px; font-size:12px; color:var(--text-dim); cursor:pointer; }
 .panel__filter input{ accent-color:var(--dx); width:15px; height:15px; cursor:pointer; }
@@ -533,7 +549,7 @@ body::before{
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
       </svg>
-      Checklist Eggs
+      Checklists
     </button>
   </div>
 </header>
@@ -565,14 +581,16 @@ body::before{
 <aside class="panel" id="panel" data-open="false" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
   <div class="panel__head">
     <div class="panel__top">
-      <h2 class="panel__title" id="panelTitle">Checklist Eggs</h2>
+      <h2 class="panel__title" id="panelTitle">Checklist</h2>
       <button class="panel__close" id="closePanel" aria-label="Cerrar checklist">&times;</button>
     </div>
-    <p class="panel__hint">
-      Se actualiza sola: marca un producto como <strong>Obtenido</strong> y sus EGGS
-      se cuentan aqui. DX y SG se llevan por separado porque cada linea tiene
-      piezas exclusivas.
-    </p>
+
+    <!-- Una checklist independiente por linea de coleccion: hay quien colecciona
+         solo SO-DO, solo TAF o solo Buckles, y quien lleva dos cuentas a la vez.
+         El panel recuerda en cual estabas. -->
+    <div class="panel__tabs" id="panelTabs" role="tablist"></div>
+
+    <p class="panel__hint" id="panelHint"></p>
     <label class="panel__filter">
       <input type="checkbox" id="hideOwned"> Ocultar los que ya tengo
     </label>
@@ -646,6 +664,19 @@ const COMPONENTES = {
   "buckle-bitebone":   "Bite Bone Buckle",
   "buckle-shotbone":   "Shot Bone Buckle"
 };
+
+/* Las pestanas del panel, en orden. "eggs" es la de los gimmicks, que se
+   subdivide en lineas DX y SG; el resto son checklists de producto. */
+const CHECKLIST_TABS = [
+  { id:"eggs",           label:"Eggs",
+    hint:"Marca un producto como <strong>Obtenido</strong> y sus Eggs se cuentan aqui. DX y SG van por separado porque cada linea tiene piezas exclusivas." },
+  { id:"TAF",            label:"TAF",
+    hint:"Las figuras TAF de la temporada. Se marcan desde su tarjeta en el catalogo." },
+  { id:"SG SO-DO",       label:"SO-DO",
+    hint:"Los kits SO-DO. Cada personaje son dos cajas, la A y la B." },
+  { id:"BUCKLES SETS",   label:"Buckles",
+    hint:"Los Bone Buckles. Uno que venga dentro de un set que tengas cuenta como conseguido." }
+];
 
 /* Categorias que ademas de tarjetas tienen su propia checklist en el panel.
    A diferencia de los Eggs —que estan repartidos por sets y cajas sorpresa—
@@ -1301,7 +1332,7 @@ const STORAGE_KEY = "krmyth-catalog-v1";
 
 let state = {
   products: {},                             // { productId: "pending"|"reserved"|"owned" }
-  ui: { openMonths: [], hideOwned: false }   // acordeones abiertos y filtro del panel
+  ui: { openMonths: [], hideOwned: false, tab: "eggs" }   // acordeon, filtro y pestana
 };
 
 function loadState(){
@@ -1733,6 +1764,8 @@ function contentsHTML(p, owned){
    BLOQUE 8 · RENDER — CHECKLIST DE EGGS (panel lateral)
    =========================================================================== */
 const panelBody = document.getElementById("panelBody");
+const panelTabs = document.getElementById("panelTabs");
+const panelHint = document.getElementById("panelHint");
 const miniStats = document.getElementById("miniStats");
 
 function renderChecklist(){
@@ -1762,71 +1795,85 @@ function renderChecklist(){
       </div>`;
   }).join("");
 
-  /* --- Cuerpo del panel: primero los Eggs por linea, luego las categorias
-         que se rastrean producto a producto --- */
+  /* --- Pestanas: una checklist independiente por linea de coleccion --- */
   const cubiertos = coveredMap();
+  const activa    = CHECKLIST_TABS.find(t => t.id === state.ui.tab) || CHECKLIST_TABS[0];
 
-  const eggs = Object.entries(EGGS_LINES).map(([line, label]) => {
-    const pr = lineProgress(line, owned);
-
-    const groups = Object.entries(EGGS_TYPES).map(([type, typeLabel]) => {
-      const all = EGGS_CATALOG.filter(ex => ex.line === line && ex.type === type);
-      if(!all.length) return "";
-
-      const visible = state.ui.hideOwned
-        ? all.filter(ex => eggsStatus(ex, owned) !== "owned")
-        : all;
-      if(!visible.length) return "";
-
-      const gotN = all.filter(ex => eggsStatus(ex, owned) !== "missing").length;
-
-      return `
-        <div class="eggs-group">
-          <div class="eggs-group__head">
-            <span>${esc(typeLabel)}</span>
-            <span class="eggs-group__n">${gotN}/${all.length}</span>
-          </div>
-          ${visible.map(ex => eggsItemHTML(ex, owned)).join("")}
-        </div>`;
-    }).join("");
-
+  panelTabs.innerHTML = CHECKLIST_TABS.map(t => {
+    const pr = t.id === "eggs"
+      ? (() => { const l = Object.keys(EGGS_LINES).map(x => lineProgress(x, owned));
+                 return { got: l.reduce((n, x) => n + x.got, 0),
+                          total: l.reduce((n, x) => n + x.total, 0) }; })()
+      : catProgress(t.id, cubiertos);
+    if(!pr.total) return "";                     // categoria aun sin productos
+    const sel = t.id === activa.id;
     return `
-      <section class="eggs-line eggs-line--${line.toLowerCase()}">
-        <div class="eggs-line__head">
-          <span class="eggs-line__name">${esc(label)}</span>
-          <span class="eggs-line__count">${pr.got}/${pr.total}</span>
-        </div>
-        <div class="eggs-line__bar"><div class="eggs-line__fill" style="width:${pr.pct}%"></div></div>
-        ${groups || '<p class="panel__empty">Todo conseguido en esta linea.</p>'}
-      </section>`;
+      <button class="panel__tab" role="tab" aria-selected="${sel}" data-tab="${esc(t.id)}">
+        ${esc(t.label)}
+        <span class="panel__tab-n">${pr.got}/${pr.total}</span>
+      </button>`;
   }).join("");
 
-  const porProducto = PRODUCT_CHECKLISTS.map(({ cat, label }) => {
-    const pr = catProgress(cat, cubiertos);
-    if(!pr.total) return "";                       // categoria aun sin productos
+  panelHint.innerHTML = activa.hint;
+  document.getElementById("panelTitle").textContent = "Checklist " + activa.label;
 
+  if(activa.id === "eggs"){
+    /* Los Eggs se agrupan por linea y dentro por tipo. */
+    panelBody.innerHTML = Object.entries(EGGS_LINES).map(([line, label]) => {
+      const pr = lineProgress(line, owned);
+
+      const groups = Object.entries(EGGS_TYPES).map(([type, typeLabel]) => {
+        const all = EGGS_CATALOG.filter(ex => ex.line === line && ex.type === type);
+        if(!all.length) return "";
+
+        const visible = state.ui.hideOwned
+          ? all.filter(ex => eggsStatus(ex, owned) !== "owned")
+          : all;
+        if(!visible.length) return "";
+
+        const gotN = all.filter(ex => eggsStatus(ex, owned) !== "missing").length;
+        return `
+          <div class="eggs-group">
+            <div class="eggs-group__head">
+              <span>${esc(typeLabel)}</span>
+              <span class="eggs-group__n">${gotN}/${all.length}</span>
+            </div>
+            ${visible.map(ex => eggsItemHTML(ex, owned)).join("")}
+          </div>`;
+      }).join("");
+
+      return `
+        <section class="eggs-line eggs-line--${line.toLowerCase()}">
+          <div class="eggs-line__head">
+            <span class="eggs-line__name">${esc(label)}</span>
+            <span class="eggs-line__count">${pr.got}/${pr.total}</span>
+          </div>
+          <div class="eggs-line__bar"><div class="eggs-line__fill" style="width:${pr.pct}%"></div></div>
+          ${groups || '<p class="panel__empty">Todo conseguido en esta linea.</p>'}
+        </section>`;
+    }).join("");
+
+  }else{
+    /* Checklist de producto: cada producto de la categoria es una pieza. */
+    const pr = catProgress(activa.id, cubiertos);
     const visible = state.ui.hideOwned
       ? pr.items.filter(p => !isResolved(p, cubiertos))
       : pr.items;
 
-    /* Por fecha: asi la lista sigue el orden en que van saliendo. */
     const filas = [...visible]
       .sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title))
       .map(p => productItemHTML(p, cubiertos)).join("");
 
-    return `
+    panelBody.innerHTML = `
       <section class="eggs-line eggs-line--prod">
         <div class="eggs-line__head">
-          <span class="eggs-line__name">${esc(label)}</span>
+          <span class="eggs-line__name">${esc(activa.label.toUpperCase())}</span>
           <span class="eggs-line__count">${pr.got}/${pr.total}</span>
         </div>
         <div class="eggs-line__bar"><div class="eggs-line__fill" style="width:${pr.pct}%"></div></div>
         ${filas || '<p class="panel__empty">Todo conseguido en esta categoria.</p>'}
       </section>`;
-  }).join("");
-
-  panelBody.innerHTML = eggs +
-    (porProducto ? `<div class="panel__sep">Por producto</div>${porProducto}` : "");
+  }
 
   bindChecklistEvents();
 }
@@ -2030,6 +2077,15 @@ function updateMonthCounters(){
 
 /* --- Clicks dentro de la checklist: saltar al producto de origen --- */
 function bindChecklistEvents(){
+  panelTabs.querySelectorAll(".panel__tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.ui.tab = btn.dataset.tab;
+      saveState();
+      renderChecklist();
+      panelBody.scrollTop = 0;      // cada checklist empieza por arriba
+    });
+  });
+
   panelBody.querySelectorAll(".eggs-item").forEach(item => {
     item.addEventListener("click", e => {
       /* Si el clic cae en una sub-marca, manda el producto de esa version. */
