@@ -5,7 +5,9 @@ import io, os, re, unicodedata
 import os as _os
 BASE = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 FICHA_DIR = u'FICHA'
-IMG_EXT = ('.jpg', '.jpeg', '.png', '.webp', '.gif')
+# Solo los originales. Los .webp los genera build_all.py a partir de estos;
+# contarlos duplicaba cada numero y hacia ver huecos donde no los hay.
+IMG_EXT = ('.jpg', '.jpeg', '.png', '.gif')
 
 problemas = []      # (severidad, ruta, motivo)
 def flag(sev, ruta, motivo):
@@ -14,7 +16,8 @@ def flag(sev, ruta, motivo):
 def mb(n):
     return n / 1048576.0
 
-cats = sorted([d for d in os.listdir(BASE)
+OMITIR = ('tools',)   # no es una categoria del catalogo
+cats = sorted([d for d in os.listdir(BASE) if d not in OMITIR
                if os.path.isdir(os.path.join(BASE, d)) and not d.startswith('.')])
 
 print(u'==============================================================')
@@ -162,14 +165,14 @@ for cat in cats:
         partes = re.split(u'\\s-\\s|-(?=[A-Z][a-z])', stem, 1)
         base = partes[0].strip()
         if base != base.upper():
-            flag(u'MEDIO', u'%s/FICHA/%s' % (cat, f),
-                 u'nombre de producto con minusculas: "%s"' % base)
+            flag(u'BAJO', u'%s/FICHA/%s' % (cat, f),
+                 u'estilo: minusculas en el nombre: "%s"' % base)
         if u' - ' not in stem and len(partes) > 1:
             flag(u'BAJO', u'%s/FICHA/%s' % (cat, f),
                  u'separador pegado; se recomienda " - " por MY-TH')
     for p in inventario[cat]['prods']:
         if p != p.upper():
-            flag(u'MEDIO', u'%s/%s/' % (cat, p), u'carpeta de producto con minusculas')
+            flag(u'BAJO', u'%s/%s/' % (cat, p), u'estilo: minusculas en el nombre')  # informativo
 
 print(u'')
 print(u'==============================================================')
