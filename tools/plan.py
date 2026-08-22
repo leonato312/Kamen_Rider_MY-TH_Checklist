@@ -11,37 +11,41 @@ HTML = os.path.join(BASE, u'index.html')
 CARPETA = {
  'dx-myth-edge':            u'ARMAS/DX MY-TH EDGE',
  'dx-zodiac-weapons-01':    u'ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01',
- 'dx-bite-bone-buckle':     u'BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET',
+ 'dx-bite-bone-buckle':     u'BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET',
  'dx-hammer-bone-buckle':   u'BUCKLES SETS/DX HAMMER BONE BUCKLE',
- 'dx-shot-bone-buckle':     u'BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET',
- 'dx-slashbone-buckle':     u'BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET',
+ 'dx-shot-bone-buckle':     u'BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET',
+ 'dx-slashbone-buckle':     u'BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET',
  'dx-myth-driver':          u'DX DRIVERS/DX MY-TH DRIVER',
  'dx-myth-driver-rid-set':  u'DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET',
  'dx-myth-driver-narikiri': u'DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET',
- 'dx-random-box-01':        u'DX RANDOM BOX/DX RIDER EX RANDOM BOX 01',
- 'dx-random-box-02':        u'DX RANDOM BOX/DX RIDER EX RANDOM BOX 02',
+ 'dx-random-box-01':        u'DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01',
+ 'dx-random-box-02':        u'DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 02',
  'dx-expack':               u'DX SETS/DX EXPACK',
  'dx-hokokuro':             u'DX SETS/DX HOKOKURO',
- 'dx-legend-set-00':        u'DX SETS/DX LEGEND RIDER EX SET 00',
- 'dx-legend-set-01':        u'DX SETS/DX LEGEND RIDER EX SET 01',
- 'dx-legend-set-02':        u'DX SETS/DX LEGEND RIDER EX SET 02',
+ 'dx-legend-set-00':        u'DX SETS/DX LEGEND RIDER EGGS SET 00',
+ 'dx-legend-set-01':        u'DX SETS/DX LEGEND RIDER EGGS SET 01',
+ 'dx-legend-set-02':        u'DX SETS/DX LEGEND RIDER EGGS SET 02',
  'dx-myth-phone':           u'DX SETS/DX MY-TH PHONE',
- 'dx-rider-ex-set-01':      u'DX SETS/DX RIDER EX SET 01',
- 'dx-rider-ex-set-02':      u'DX SETS/DX RIDER EX SET 02',
- 'dx-ridewatter-ex':        u'DX SETS/DX Ridewatter Ex',
- 'sg-random-box-01':        u'SG RANDOM BOX/SG RIDER EX RANDOM BOX 01',
+ 'dx-rider-ex-set-01':      u'DX SETS/DX RIDER EGGS SET 01',
+ 'dx-rider-ex-set-02':      u'DX SETS/DX RIDER EGGS SET 02',
+ 'dx-ridewatter-ex':        u'DX SETS/DX Ridewatter Eggs',
+ 'sg-random-box-01':        u'SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01',
+ 'sg-sodo-myth':            u'SG SO-DO/SO-DO MY-TH',
+ 'sg-sodo-maou':            u'SG SO-DO/SO-DO MAOU',
+ 'sg-sodo-datt':            u'SG SO-DO/SO-DO DATT',
+ 'sg-sodo-rid':             u'SG SO-DO/SO-DO RID',
  'sv-datt':                 u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT',
  'sv-jao':                  u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO',
- 'sv-mao':                  u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAO',
- 'sv-myth':                 u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MYTH',
- 'sv-rido':                 u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RIDO',
+ 'sv-mao':                  u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU',
+ 'sv-myth':                 u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH',
+ 'sv-rido':                 u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID',
  'sv-tigul':                u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL',
  'taf-datt':                u'TAF/TAF KAMEN RIDER DATT',
  'taf-jao':                 u'TAF/TAF KAMEN RIDER JAO',
- 'taf-mao':                 u'TAF/TAF KAMEN RIDER MAO',
+ 'taf-mao':                 u'TAF/TAF KAMEN RIDER MAOU',
  'taf-muton':               u'TAF/TAF KAMEN RIDER MUTON',
- 'taf-myth':                u'TAF/TAF KAMEN RIDER MYTH',
- 'taf-rido':                u'TAF/TAF KAMEN RIDER RIDO',
+ 'taf-myth':                u'TAF/TAF KAMEN RIDER MY-TH',
+ 'taf-rido':                u'TAF/TAF KAMEN RIDER RID',
  'taf-vanken':              u'TAF/TAF KAMEN RIDER VANKEN',
 }
 
@@ -59,8 +63,10 @@ def plan():
         if not os.path.isdir(full):
             filas.append((pid, carpeta, None, [], u'CARPETA NO EXISTE'))
             continue
+        # Solo originales: los .webp son derivados y contarlos duplica
+        # cada numero, ademas de arrastrar los -thumb de la portada.
         files = [f for f in os.listdir(full)
-                 if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
+                 if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
         files.sort(key=orden)
         if not files:
             filas.append((pid, carpeta, None, [], u'VACIA'))

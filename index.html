@@ -256,8 +256,6 @@ body::before{
 .badge--sg{ background:var(--sg-soft); color:var(--sg); box-shadow:inset 0 0 0 1px rgba(53,208,216,.4); }
 .badge--pb{ background:rgba(190,120,255,.15); color:#c79bff; box-shadow:inset 0 0 0 1px rgba(190,120,255,.4); }
 .badge--random{ background:rgba(255,255,255,.09); color:var(--text-dim); box-shadow:inset 0 0 0 1px var(--border-strong); }
-/* Fecha o precio aun no anunciados por Bandai */
-.badge--est{ background:rgba(255,138,76,.15); color:#ff9f6b; box-shadow:inset 0 0 0 1px rgba(255,138,76,.4); }
 /* Producto que pertenece a mas de una subcategoria (figura + gimmick) */
 .badge--cross{ background:rgba(120,160,255,.15); color:#9db6ff; box-shadow:inset 0 0 0 1px rgba(120,160,255,.4); }
 
@@ -722,8 +720,6 @@ const EGGS_CATALOG = [
      dateType  -> "release" (normal) | "preorder" (Premium Bandai).
                   Para P-Bandai usa la fecha de PREORDER: cuenta como el
                   release de los productos regulares.
-     estimated -> OPCIONAL. true = fecha o precio aun sin confirmar; la
-                  tarjeta lo avisa con un badge para no confundirlo con dato firme.
      price     -> yenes con IVA incluido, o null si aun no se anuncia
      img       -> ruta local hoy; cambiala por tu enlace de Google Drive
      contains  -> EGGS incluidos. Formato "exId" o "exId@variante".
@@ -944,6 +940,51 @@ const PRODUCTS = [
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/01.webp",
               "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/02.webp"],contains:[] },
 
+  /* --- Tanda del 15: SO-DO (Shokugan) ---
+     装動 仮面ライダーマイス EGGS1 Feat. 装動 仮面ライダーゼッツ.
+     La ficha de Bandai solo dice "septiembre 2026" y sale a quincena, asi
+     que se fija el 15. Los tipos 9 y 10 siguen sin revelar y no se incluyen.
+     Cada personaje son dos cajas, la A y la B: ¥649 cada una.
+     No alimentan la checklist, igual que los model kits: son figuras de
+     montar, no los gimmicks que se usan con el Driver. */
+  { id:"sg-sodo-myth", title:"SO-DO MY-TH", category:"SG SO-DO",
+    date:"2026-09-15", dateType:"release", price:1298,
+    priceLabel:"¥649 por caja · tipos 1 y 2 (A y B)",
+    img:"SG SO-DO/SO-DO MY-TH/PACKAGE-thumb.webp",
+    gallery:["SG SO-DO/SO-DO MY-TH/PACKAGE.webp",
+             "SG SO-DO/SO-DO MY-TH/01.webp",
+             "SG SO-DO/SO-DO MY-TH/02.webp",
+             "SG SO-DO/SO-DO MY-TH/03.webp",
+             "SG SO-DO/SO-DO MY-TH/04.webp"],
+    contains:[] },
+
+  { id:"sg-sodo-maou", title:"SO-DO MAOU", category:"SG SO-DO",
+    date:"2026-09-15", dateType:"release", price:1298,
+    priceLabel:"¥649 por caja · tipos 3 y 4 (A y B)",
+    img:"SG SO-DO/SO-DO MAOU/01-thumb.webp",
+    gallery:["SG SO-DO/SO-DO MAOU/01.webp",
+             "SG SO-DO/SO-DO MAOU/02.webp",
+             "SG SO-DO/SO-DO MAOU/03.webp"],
+    contains:[] },
+
+  { id:"sg-sodo-datt", title:"SO-DO DATT", category:"SG SO-DO",
+    date:"2026-09-15", dateType:"release", price:1298,
+    priceLabel:"¥649 por caja · tipos 5 y 6 (A y B)",
+    img:"SG SO-DO/SO-DO DATT/01-thumb.webp",
+    gallery:["SG SO-DO/SO-DO DATT/01.webp",
+             "SG SO-DO/SO-DO DATT/02.webp",
+             "SG SO-DO/SO-DO DATT/03.webp"],
+    contains:[] },
+
+  { id:"sg-sodo-rid", title:"SO-DO RID", category:"SG SO-DO",
+    date:"2026-09-15", dateType:"release", price:1298,
+    priceLabel:"¥649 por caja · tipos 7 y 8 (A y B)",
+    img:"SG SO-DO/SO-DO RID/01-thumb.webp",
+    gallery:["SG SO-DO/SO-DO RID/01.webp",
+             "SG SO-DO/SO-DO RID/02.webp",
+             "SG SO-DO/SO-DO RID/03.webp"],
+    contains:[] },
+
   /* --- Tanda del 12 --- */
   { id:"dx-slashbone-buckle", title:"DX SLASHBONE BUCKLE & RIDE EGGS 4 SET", category:"BUCKLES SETS",
     date:"2026-09-12", dateType:"release", price:3520,
@@ -1018,9 +1059,9 @@ const PRODUCTS = [
 
   /* La hoja oficial de Bandai Shokugan no trae fecha ni precio: ambos son
      estimados (septiembre, alineado con la Random Box DX). Cambialos cuando
-     se anuncien y quita `estimated`. */
+     se anuncien. */
   { id:"sg-random-box-01", title:"SG RIDER EGGS RANDOM BOX 01", category:"SG RANDOM BOX",
-    date:"2026-09-26", dateType:"release", price:550, estimated:true,
+    date:"2026-09-26", dateType:"release", price:550,
     img:"SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/PACKAGE-thumb.webp",
     gallery:["SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/PACKAGE.webp",
               "SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/01.webp"],contains:["sg-ride-eggs-4","sg-zio-ride-eggs","sg-zeroone-ride-eggs",
@@ -1446,7 +1487,6 @@ function cardHTML(p, inCategory){
     isSG ? '<span class="badge badge--sg">SG</span>' : '<span class="badge badge--dx">DX</span>',
     p.dateType === "preorder" ? '<span class="badge badge--pb">P-Bandai</span>' : "",
     isRandom ? '<span class="badge badge--random">Random</span>' : "",
-    p.estimated ? '<span class="badge badge--est">Estimado</span>' : "",
     otras.length ? `<span class="badge badge--cross" title="Tambien listado en ${esc(otras.join(", "))}">+ ${esc(otras.join(" / "))}</span>` : ""
   ].join("");
 
