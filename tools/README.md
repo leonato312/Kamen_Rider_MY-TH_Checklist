@@ -53,8 +53,8 @@ para no perder detalle, y no se publican.
    luego `01.jpg`, `02.jpg`… correlativas y con cero delante.
 3. `python tools/audit.py` y comprobar que sale sin incidencias ALTO.
 4. Añadir el producto a `PRODUCTS` en `index.html` (id, título, categoría,
-   `date`, `price`, `contains`) y las piezas nuevas a `EX_CATALOG` si la wave
-   trae Ride Ex o Seed Ex inéditos.
+   `date`, `price`, `contains`) y las piezas nuevas a `EGGS_CATALOG` si la wave
+   trae Ride Eggs o Seed Eggs inéditos.
 5. Añadir su carpeta al diccionario `CARPETA` de `plan.py`.
 6. `python tools/build_all.py`.
 
@@ -65,10 +65,19 @@ no le genera nada y la tarjeta se queda sin imagen.
 
 ## Convenciones que sostienen todo esto
 
+- **La romanización sale de la caja, no de la transcripción.** Verificado en
+  las cajas de TAF: マイス es **MY-TH**, マオウ es **MAOU**, リド es **RID**.
+- Los gimmicks son **Eggs** (エグズ). Bandai los escribe **EGZ** en alfabeto
+  latino, pero se descartó por opaco.
 - **Portada = `PACKAGE` si existe, si no `01`.** Decisión deliberada.
 - Las carpetas van en MAYÚSCULAS. En Windows da igual, en el servidor no:
   una mayúscula mal puesta es una imagen rota solo en producción.
 - Nombre de ficha y nombre de carpeta deben coincidir **exactamente**.
   `audit.py` existe sobre todo para cazar eso.
-- El Ridewatter Ex tiene carpeta en `DX SETS` y en `TAF` por ser figura y
+- El Ridewatter Eggs tiene carpeta en `DX SETS` y en `TAF` por ser figura y
   gimmick a la vez. La web usa la de `DX SETS`, su categoría primaria.
+- **Excepción:** los productos de una sola imagen no llevan carpeta propia.
+  El archivo va suelto en la categoría, con el nombre completo incluidos sus
+  contenidos. Es el caso de `RIDE-SEED EGGS PROMOCIONALES` y de tres de los
+  cuatro `SG MODEL KITS`. `audit.py` los marcará como "sin ficha": es
+  esperado, no un fallo.
