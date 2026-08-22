@@ -833,10 +833,11 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/07.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-eggs-1"] },
 
-  /* Edicion limitada que incluye el Driver. */
+  /* Edicion limitada: trae el Driver y el Hammer Bone Buckle, asi que es un
+     upgrade del MY-TH & RID SET y lo absorbe entero. */
   { id:"dx-myth-driver-narikiri", title:"DX MY-TH DRIVER SPECIAL NARIKIRI SET", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:14960,
-    reemplaza:["dx-myth-driver"],
+    reemplaza:["dx-myth-driver-rid-set","dx-myth-driver","dx-hammer-bone-buckle"],
     img:"DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE-thumb.webp",
     gallery:["DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE.webp",
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/01.webp",
@@ -1305,9 +1306,24 @@ const EGGS_BY_ID = EGGS_CATALOG.reduce((map, ex) => { map[ex.id] = ex; return ma
    render: es derivado, nunca se guarda. */
 function coveredMap(){
   const mapa = {};
+  const porId = id => PRODUCTS.find(q => q.id === id);
+
+  /* Recorre la cadena: el Narikiri absorbe al MY-TH & RID SET, que a su vez
+     absorbia al Driver suelto. Asi cada set solo declara lo que absorbe
+     directamente y las cadenas se resuelven solas. `vistos` corta los ciclos
+     por si alguna vez se declaran dos que se absorben mutuamente. */
+  function marcar(origen, id, vistos){
+    if(vistos.has(id)) return;
+    vistos.add(id);
+    const lista = mapa[id] = mapa[id] || [];
+    if(!lista.includes(origen)) lista.push(origen);
+    const hijo = porId(id);
+    if(hijo) (hijo.reemplaza || []).forEach(sig => marcar(origen, sig, vistos));
+  }
+
   PRODUCTS.forEach(p => {
     if(getProductState(p.id) !== "owned") return;
-    (p.reemplaza || []).forEach(id => (mapa[id] = mapa[id] || []).push(p));
+    (p.reemplaza || []).forEach(id => marcar(p, id, new Set([p.id])));
   });
   return mapa;
 }

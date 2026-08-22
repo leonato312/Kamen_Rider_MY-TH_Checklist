@@ -111,7 +111,15 @@ que el problema que resolvía.
 **Productos que absorben a otros.** Un set deluxe suele traer dentro el producto
 base. Se declara con `reemplaza: ["id", ...]` **en el que absorbe**, no en el
 absorbido: cuando salga un driver nuevo se toca un sitio, en vez de editar todo
-lo que deja obsoleto. El producto cubierto no se marca como obtenido —no lo
+lo que deja obsoleto. **La cobertura es transitiva** — si el Narikiri absorbe al
+MY-TH & RID SET, y ese absorbía al Driver suelto y al Hammer Bone Buckle, tener
+el Narikiri los cubre los cuatro. Cada set declara solo lo que absorbe
+directamente.
+
+Al documentar una caja hay que anotar **todo lo que trae**, no solo los
+coleccionables: un set que incluye un buckle deja sin sentido comprar ese buckle
+suelto, y eso es fácil pasarlo por alto cuando la atención está en el gimmick
+principal. El producto cubierto no se marca como obtenido —no lo
 tienes— sino que se atenúa y avisa de en qué caja viene; sí cuenta en el
 contador del mes, que responde a "¿me queda algo por comprar?".
 

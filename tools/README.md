@@ -46,15 +46,20 @@ para no perder detalle, y no se publican.
 
 ## Añadir un producto
 
-1. Guardar la captura de Bandai en `CATEGORIA/FICHA/` con el nombre del
-   producto y, tras un guion, sus contenidos.
+1. Guardar la captura de Bandai en `CATEGORIA/FICHA/`. Anotar **todo** lo que
+   trae la caja, no solo los Eggs: los buckles y demás accesorios importan
+   porque un set que incluye un buckle deja sin sentido comprarlo suelto.
+   Si es un set especial, anotar también **qué otros sets abarca**.
 2. Crear `CATEGORIA/NOMBRE DEL PRODUCTO/` — **idéntico** al nombre de la ficha
    sin la parte de contenidos — y meter las fotos: `PACKAGE.jpg` si la hay,
    luego `01.jpg`, `02.jpg`… correlativas y con cero delante.
 3. `python tools/audit.py` y comprobar que sale sin incidencias ALTO.
 4. Añadir el producto a `PRODUCTS` en `index.html` (id, título, categoría,
    `date`, `price`, `contains`) y las piezas nuevas a `EGGS_CATALOG` si la wave
-   trae Ride Eggs o Seed Eggs inéditos.
+   trae Ride Eggs o Seed Eggs inéditos. Si el producto **absorbe** a otros
+   —trae dentro el driver suelto, un buckle o un set anterior— declararlo con
+   `reemplaza`. Basta con lo que absorbe **directamente**: las cadenas se
+   resuelven solas.
 5. Añadir su carpeta al diccionario `CARPETA` de `plan.py`.
 6. `python tools/build_all.py`.
 
