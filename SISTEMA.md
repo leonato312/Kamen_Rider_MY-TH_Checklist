@@ -137,7 +137,62 @@ puedes usar. Se catalogan, se marcan, pero no suman.
 
 ---
 
-## 4. La estructura de carpetas
+## 4. Las checklists
+
+Hay dos clases y **no funcionan igual**, aunque se vean parecidas:
+
+**Checklist de gimmicks** (los Eggs). La pieza está repartida entre sets, cajas
+sorpresa y exclusivas, así que ningún producto la representa. Se declara con
+`contains` en cada producto y el progreso se **deriva**: marcas la caja y las
+piezas se cuentan solas. Es la razón de ser del sistema.
+
+**Checklist de producto** (TAF, SO-DO, Buckles, Soft Vinyl). Aquí cada producto
+**es** la pieza, así que la checklist no deriva nada — es la lista de la
+categoría. Aporta otra cosa: ver todos juntos, porque el catálogo está ordenado
+por mes y si no habría que recorrer cinco meses. Se declara en
+`PRODUCT_CHECKLISTS` con la categoría, el rótulo y un `slug` para el color.
+
+### Cada una en su pestaña, no apiladas
+
+Se probaron primero como bloques dentro de un mismo panel y estaba mal: **hay
+coleccionistas que siguen solo una línea** —solo SO-DO, solo TAF, solo Buckles—
+y a esos, pasar por 41 Eggs para llegar a sus cuatro kits no les sirve de nada.
+Y hay quien lleva dos cuentas a la vez y quiere compararlas.
+
+Cada checklist es una pestaña independiente (`CHECKLIST_TABS`), con su contador
+en la solapa, su propio texto de ayuda, y el panel recuerda en cuál estabas.
+
+### El color no es decoración
+
+Cada checklist tiene un tono propio que se repite en los tres sitios donde
+aparece: la mini-barra de la cabecera, la solapa de su pestaña y el encabezado
+de su sección. Sirve para orientarse cuando hay cinco o seis.
+
+**Oro y cian se reservan a los Eggs**, que son el gimmick de la temporada; el
+resto usa tonos más suaves para no competir. Si las barras gritaran todas igual,
+la cabecera sería un semáforo y se perdería de un vistazo cuál importa.
+
+### Añadir una checklist nueva
+
+Tres pasos, todos en `index.html`:
+
+1. Entrada en `PRODUCT_CHECKLISTS` con `cat`, `label` y `slug`.
+2. Entrada en `CHECKLIST_TABS` con `id` (la categoría), `label` y `hint`.
+3. Un color en `:root` (`--slug`) y las cuatro reglas que lo aplican, siguiendo
+   el patrón de las que ya están.
+
+Una categoría sin productos no dibuja pestaña: se puede declarar antes de tener
+nada, como se hizo con `SHF`.
+
+### Un producto cubierto cuenta como conseguido
+
+Si el Narikiri trae el Hammerbone, en la checklist de Buckles sale en verde con
+la etiqueta de por dónde llegó. Ojo con la diferencia: en la **tarjeta** del
+catálogo, cubierto significa "no necesitas comprarlo" y se atenúa; en la
+**checklist**, significa "lo tienes" y se marca. Son dos preguntas distintas
+sobre el mismo hecho.
+
+## 5. La estructura de carpetas
 
 ```
 PROYECTO/
@@ -173,7 +228,7 @@ Es el fallo más traicionero de todo el sistema.
 
 ---
 
-## 5. Las imágenes
+## 6. Las imágenes
 
 Los originales pesan cientos de megas. Publicarlos tal cual es inviable: 34
 portadas a 1 MB son 36 MB solo para pintar la primera pantalla.
@@ -213,7 +268,7 @@ rompería todas las imágenes.
 
 ---
 
-## 6. Las herramientas
+## 7. Las herramientas
 
 Tres scripts de Python en `tools/`, con Pillow como única dependencia:
 
@@ -238,7 +293,7 @@ que 70 eran ruido, nadie los lee.
 
 ---
 
-## 7. Qué se publica y qué no
+## 8. Qué se publica y qué no
 
 ```
 se sube          index.html + los .webp + tools/          ~43 MB
@@ -257,7 +312,7 @@ es un fallo**, es que aún no ha republicado.
 
 ---
 
-## 8. Nomenclatura
+## 9. Nomenclatura
 
 **La romanización sale de la caja, no de la transcripción.** En Myth, tres nombres
 estaban mal durante semanas —MYTH, MAO y RIDO— hasta que las cajas de TAF
@@ -277,7 +332,7 @@ y caro una vez hay enlaces fuera.
 
 ---
 
-## 9. Levantar el repositorio de una temporada nueva
+## 10. Levantar el repositorio de una temporada nueva
 
 1. **Copiar `index.html` y `tools/`.** Vaciar `PRODUCTS` y `EGGS_CATALOG`, ajustar
    `CATEGORY_ORDER` a las líneas de juguete de la temporada y `EGGS_TYPES` /
@@ -296,10 +351,12 @@ Ver `tools/README.md` para el procedimiento detallado de cada wave.
 
 ---
 
-## 10. Lo que se probó y no funcionó
+## 11. Lo que se probó y no funcionó
 
 Vale más que la lista de aciertos, porque evita repetirlos.
 
+- **Checklists apiladas en un mismo panel.** Ver sección 4: quien colecciona una
+  sola línea no debería recorrer las demás para llegar a la suya.
 - **Desplegable de galería en la tarjeta.** Tira de miniaturas dentro de cada
   tarjeta: metía una fila de ruido en las 46. Se sustituyó por pulsar la portada,
   que abre un visor en superposición.
