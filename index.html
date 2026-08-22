@@ -717,16 +717,16 @@ const EX_CATALOG = [
   { id:"faiz-ride-ex",     name:"Faiz Ride Ex",     type:"legend-ride-ex", line:"DX" },
 
   /* ---------- DX · Seed Ex ---------- */
-  /* Los tres Mys Seed Ex comparten nombre pero son piezas DISTINTAS entre si,
+  /* Los tres Myth Seed Ex comparten nombre pero son piezas DISTINTAS entre si,
      con disenos propios: cuentan por separado y hacen falta las tres.
      `related` las enlaza en la checklist para no perderles el rastro.
      No usar `variants` aqui: eso es para reediciones de la MISMA pieza. */
-  { id:"myceed-ex",          name:"Myceed Ex (TAF)",                type:"seed-ex", line:"DX",
-    related:["mys-seed-ex-tokyo","mys-seed-ex-nagoya"] },
-  { id:"mys-seed-ex-tokyo",  name:"Mys Seed Ex (KR Store Tokyo)",   type:"seed-ex", line:"DX",
-    related:["myceed-ex","mys-seed-ex-nagoya"] },
-  { id:"mys-seed-ex-nagoya", name:"Mys Seed Ex (KR Store Nagoya)",  type:"seed-ex", line:"DX",
-    related:["myceed-ex","mys-seed-ex-tokyo"] },
+  { id:"myth-seed-ex-taf",          name:"Myth Seed Ex (TAF)",                type:"seed-ex", line:"DX",
+    related:["myth-seed-ex-tokyo","myth-seed-ex-nagoya"] },
+  { id:"myth-seed-ex-tokyo",  name:"Myth Seed Ex (KR Store Tokyo)",   type:"seed-ex", line:"DX",
+    related:["myth-seed-ex-taf","myth-seed-ex-nagoya"] },
+  { id:"myth-seed-ex-nagoya", name:"Myth Seed Ex (KR Store Nagoya)",  type:"seed-ex", line:"DX",
+    related:["myth-seed-ex-taf","myth-seed-ex-tokyo"] },
   { id:"hato-seed-ex",        name:"Hato Seed Ex",        type:"seed-ex", line:"DX" },
   { id:"koala-seed-ex",       name:"Koala Seed Ex",       type:"seed-ex", line:"DX" },
   { id:"zou-seed-ex",         name:"Zou Seed Ex",         type:"seed-ex", line:"DX" },
@@ -930,7 +930,7 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER MYTH/06.webp",
               "TAF/TAF KAMEN RIDER MYTH/07.webp",
               "TAF/TAF KAMEN RIDER MYTH/08.webp",
-              "TAF/TAF KAMEN RIDER MYTH/09.webp"],contains:["myceed-ex"] },
+              "TAF/TAF KAMEN RIDER MYTH/09.webp"],contains:["myth-seed-ex-taf"] },
 
   { id:"taf-mao", title:"TAF KAMEN RIDER MAO", category:"TAF",
     date:"2026-09-05", dateType:"release", price:4400,
@@ -1148,16 +1148,16 @@ const PRODUCTS = [
   { id:"promo-store-tokyo", title:"DX RIDER EX KAMEN RIDER STORE TOKYO SET",
     category:"RIDE-SEED EX PROMOCIONALES",
     date:"2026-09-05", dateType:"release", price:1650,
-    img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Mys Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex-thumb.webp",
-    gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Mys Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex.webp"],
-    contains:["mys-seed-ex-tokyo","hato-seed-ex"] },
+    img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Myth Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex-thumb.webp",
+    gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Myth Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex.webp"],
+    contains:["myth-seed-ex-tokyo","hato-seed-ex"] },
 
   { id:"promo-store-nagoya", title:"DX RIDER EX KAMEN RIDER STORE NAGOYA SET",
     category:"RIDE-SEED EX PROMOCIONALES",
     date:"2026-09-05", dateType:"release", price:1650,
-    img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Mys Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex-thumb.webp",
-    gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Mys Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex.webp"],
-    contains:["mys-seed-ex-nagoya","koala-seed-ex"] },
+    img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Myth Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex-thumb.webp",
+    gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Myth Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex.webp"],
+    contains:["myth-seed-ex-nagoya","koala-seed-ex"] },
 
   /* Premio de la campana Scratch: no se compra, no tiene precio.
      Reparto de tarjetas en tres rondas: 5 sep, 17 oct y 5 dic de 2026.
