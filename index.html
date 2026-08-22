@@ -564,7 +564,7 @@ body::before{
    Si una no tiene productos ese mes, simplemente no se dibuja.
    (Por eso SHF puede quedarse aqui aunque hoy este vacia.) */
 const CATEGORY_ORDER = [
-  "TAF", "SOFT VINYL", "SHF", "SG RANDOM BOX",
+  "TAF", "SOFT VINYL", "SHF", "MODEL KITS", "SG RANDOM BOX",
   "DX SETS", "DX RANDOM BOX", "DX DRIVERS", "BUCKLES SETS", "ARMAS",
   /* Gimmicks de revista, campana o exclusivos de tienda. Procedencia rara:
      algunos no tienen precio (son premio), pero todos tienen fecha. Una sola
@@ -741,6 +741,38 @@ const PRODUCTS = [
               "DX SETS/DX LEGEND RIDER EX SET 00/03.webp",
               "DX SETS/DX LEGEND RIDER EX SET 00/04.webp",
               "DX SETS/DX LEGEND RIDER EX SET 00/05.webp"],contains:["zeztz-ride-ex","no1-seed-ex"] },
+
+  /* ---- MY-TH FIRST KIT (Shokugan) ----
+     Los cuatro salen el mismo dia y al mismo precio: Bandai anuncia una sola
+     fecha y un solo precio para toda la coleccion, no uno por caja.
+     La caja avisa de que sus Ride Ex son exclusivos de esta serie y NO
+     funcionan con el DX MY-TH DRIVER, asi que no alimentan la checklist:
+     son miniaturas del kit, no los gimmicks de la temporada. */
+  { id:"kit-01", title:"MY-TH FIRST KIT 01", category:"MODEL KITS",
+    date:"2026-08-31", dateType:"release", price:418,
+    img:"MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE-thumb.webp",
+    gallery:["MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE.webp",
+             "MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/01.webp",
+             "MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/02.webp"],
+    contains:[] },
+
+  { id:"kit-02", title:"MY-TH FIRST KIT 02", category:"MODEL KITS",
+    date:"2026-08-31", dateType:"release", price:418,
+    img:"MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko)-thumb.webp",
+    gallery:["MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko).webp"],
+    contains:[] },
+
+  { id:"kit-03", title:"MY-TH FIRST KIT 03", category:"MODEL KITS",
+    date:"2026-08-31", dateType:"release", price:418,
+    img:"MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter-thumb.webp",
+    gallery:["MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter.webp"],
+    contains:[] },
+
+  { id:"kit-04", title:"MY-TH FIRST KIT 04", category:"MODEL KITS",
+    date:"2026-08-31", dateType:"release", price:418,
+    img:"MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi), Ride Ex 1 (Neko)-thumb.webp",
+    gallery:["MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi), Ride Ex 1 (Neko).webp"],
+    contains:[] },
 
   /* =================== SEPTIEMBRE 2026 =================== */
   /* --- Tanda del 5 --- */
