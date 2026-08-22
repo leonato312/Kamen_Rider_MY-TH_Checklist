@@ -564,7 +564,8 @@ body::before{
    Si una no tiene productos ese mes, simplemente no se dibuja.
    (Por eso SHF puede quedarse aqui aunque hoy este vacia.) */
 const CATEGORY_ORDER = [
-  "TAF", "SOFT VINYL", "SHF", "MODEL KITS", "SG RANDOM BOX",
+  /* Las tres SG van juntas: son todas Shokugan (seccion de golosinas). */
+  "TAF", "SOFT VINYL", "SHF", "SG MODEL KITS", "SG SO-DO", "SG RANDOM BOX",
   "DX SETS", "DX RANDOM BOX", "DX DRIVERS", "BUCKLES SETS", "ARMAS",
   /* Gimmicks de revista, campana o exclusivos de tienda. Procedencia rara:
      algunos no tienen precio (son premio), pero todos tienen fecha. Una sola
@@ -753,30 +754,30 @@ const PRODUCTS = [
      seccion de golosinas de tiendas de todo el pais, sin ser exclusivo.
      Precio Bandai: 380 yenes, 418 con impuestos (usamos el segundo, como
      en el resto del catalogo). Publico a partir de 3 anos. */
-  { id:"kit-01", title:"MY-TH FIRST KIT 01 - MYTH DRIVER & RIDE EX 1 (NEZUMI)", category:"MODEL KITS",
+  { id:"kit-01", title:"MY-TH FIRST KIT 01 - MYTH DRIVER & RIDE EX 1 (NEZUMI)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
-    img:"MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE-thumb.webp",
-    gallery:["MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE.webp",
-             "MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/01.webp",
-             "MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/02.webp"],
+    img:"SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE-thumb.webp",
+    gallery:["SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE.webp",
+             "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/01.webp",
+             "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/02.webp"],
     contains:[] },
 
-  { id:"kit-02", title:"MY-TH FIRST KIT 02 - MYTH DRIVER HAMMER ON & RIDE EX 1 (NEKO)", category:"MODEL KITS",
+  { id:"kit-02", title:"MY-TH FIRST KIT 02 - MYTH DRIVER HAMMER ON & RIDE EX 1 (NEKO)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
-    img:"MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko)-thumb.webp",
-    gallery:["MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko).webp"],
+    img:"SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko)-thumb.webp",
+    gallery:["SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko).webp"],
     contains:[] },
 
-  { id:"kit-03", title:"MY-TH FIRST KIT 03 - KAMEN RIDER MYTH & RIDEWATTER", category:"MODEL KITS",
+  { id:"kit-03", title:"MY-TH FIRST KIT 03 - KAMEN RIDER MYTH & RIDEWATTER", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
-    img:"MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter-thumb.webp",
-    gallery:["MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter.webp"],
+    img:"SG MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter-thumb.webp",
+    gallery:["SG MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter.webp"],
     contains:[] },
 
-  { id:"kit-04", title:"MY-TH FIRST KIT 04 - KAMEN RIDER RID & RIDE EX 1 (NEZUMI Y NEKO)", category:"MODEL KITS",
+  { id:"kit-04", title:"MY-TH FIRST KIT 04 - KAMEN RIDER RID & RIDE EX 1 (NEZUMI Y NEKO)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
-    img:"MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi y Neko)-thumb.webp",
-    gallery:["MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi y Neko).webp"],
+    img:"SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi y Neko)-thumb.webp",
+    gallery:["SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi y Neko).webp"],
     contains:[] },
 
   /* =================== SEPTIEMBRE 2026 =================== */
