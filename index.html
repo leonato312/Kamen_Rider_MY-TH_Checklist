@@ -57,6 +57,7 @@
   --taf:     #b78cff;
   --sodo:    #ff9f6b;
   --buckles: #ff8fab;
+  --vinyl:   #6fa8ff;
 
   /* Estados de producto */
   --pending:    #667085;
@@ -139,6 +140,8 @@ body::before{
 .mini-stat--sodo    .mini-stat__fill { background:var(--sodo); }
 .mini-stat--buckles .mini-stat__label{ color:var(--buckles); }
 .mini-stat--buckles .mini-stat__fill { background:var(--buckles); }
+.mini-stat--vinyl   .mini-stat__label{ color:var(--vinyl); }
+.mini-stat--vinyl   .mini-stat__fill { background:var(--vinyl); }
 
 .btn-panel{
   display:flex; align-items:center; gap:9px;
@@ -454,6 +457,7 @@ body::before{
 .panel__tab--taf[aria-selected="true"]     .panel__tab-n{ color:var(--taf); }
 .panel__tab--sodo[aria-selected="true"]    .panel__tab-n{ color:var(--sodo); }
 .panel__tab--buckles[aria-selected="true"] .panel__tab-n{ color:var(--buckles); }
+.panel__tab--vinyl[aria-selected="true"]   .panel__tab-n{ color:var(--vinyl); }
 .panel__tab-n{ font-size:10px; font-weight:600; color:var(--text-mute); font-variant-numeric:tabular-nums; }
 
 .panel__filter{ display:flex; align-items:center; gap:8px; margin-top:13px; font-size:12px; color:var(--text-dim); cursor:pointer; }
@@ -475,6 +479,8 @@ body::before{
 .eggs-line--sodo    .eggs-line__fill{ background:var(--sodo); }
 .eggs-line--buckles .eggs-line__name{ color:var(--buckles); }
 .eggs-line--buckles .eggs-line__fill{ background:var(--buckles); }
+.eggs-line--vinyl   .eggs-line__name{ color:var(--vinyl); }
+.eggs-line--vinyl   .eggs-line__fill{ background:var(--vinyl); }
 .panel__sep{
   margin:26px 0 4px; padding-top:16px; border-top:1px solid var(--border);
   font-size:10px; font-weight:700; letter-spacing:.14em;
@@ -692,7 +698,9 @@ const CHECKLIST_TABS = [
   { id:"SG SO-DO",       label:"SO-DO",
     hint:"Los kits SO-DO. Cada personaje son dos cajas, la A y la B." },
   { id:"BUCKLES SETS",   label:"Buckles",
-    hint:"Los Bone Buckles. Uno que venga dentro de un set que tengas cuenta como conseguido." }
+    hint:"Los Bone Buckles. Uno que venga dentro de un set que tengas cuenta como conseguido." },
+  { id:"SOFT VINYL",     label:"Vinyl",
+    hint:"Las figuras de vinilo blando de la Rider Hero Series." }
 ];
 
 /* Categorias que ademas de tarjetas tienen su propia checklist en el panel.
@@ -704,7 +712,8 @@ const CHECKLIST_TABS = [
 const PRODUCT_CHECKLISTS = [
   { cat:"TAF",          label:"TAF",     slug:"taf" },
   { cat:"SG SO-DO",     label:"SO-DO",   slug:"sodo" },
-  { cat:"BUCKLES SETS", label:"BUCKLES", slug:"buckles" }
+  { cat:"BUCKLES SETS", label:"BUCKLES", slug:"buckles" },
+  { cat:"SOFT VINYL",   label:"VINYL",   slug:"vinyl" }
 ];
 
 /* Estados de producto. Solo "owned" alimenta la checklist. */
