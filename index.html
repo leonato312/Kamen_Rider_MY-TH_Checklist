@@ -218,6 +218,17 @@ body::before{
 }
 .card[data-state="reserved"]{ border-color:rgba(240,180,41,.5); }
 .card[data-state="owned"]{ border-color:rgba(55,214,122,.5); }
+/* Producto que ya no hace falta porque viene dentro de otro que tienes.
+   Se atenua sin ocultarse: sigue siendo comprable si lo quieres suelto. */
+.card[data-covered="true"]{ border-color:rgba(120,160,255,.35); }
+.card[data-covered="true"] .card__media{ opacity:.5; }
+.card[data-covered="true"] .card__title{ color:var(--text-dim); }
+.card__covered{
+  margin:0; padding:6px 9px; border-radius:7px;
+  font-size:10.5px; line-height:1.4; font-weight:600;
+  background:rgba(120,160,255,.12); color:#9db6ff;
+  border:1px solid rgba(120,160,255,.3);
+}
 .card--flash{ animation:flash 1.6s ease; }
 @keyframes flash{
   0%,100%{ box-shadow:0 0 0 0 rgba(240,180,41,0); }
@@ -728,7 +739,11 @@ const EGGS_CATALOG = [
                   Para P-Bandai usa la fecha de PREORDER: cuenta como el
                   release de los productos regulares.
      price     -> yenes con IVA incluido, o null si aun no se anuncia
-     img       -> ruta local hoy; cambiala por tu enlace de Google Drive
+     reemplaza -> OPCIONAL. Productos que dejan de hacer falta si tienes este,
+                  porque vienen dentro de la caja. Se declara en el set que
+                  absorbe, no en el absorbido: asi sacar un set nuevo es tocar
+                  un solo sitio en vez de editar todo lo que deja obsoleto.
+     img       -> ruta local; relativa a la raiz del proyecto
      contains  -> EGGS incluidos. Formato "exId" o "exId@variante".
                   Marcar el producto como Obtenido marca TODOS estos EGGS.
    =========================================================================== */
@@ -802,8 +817,11 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER/06.webp",
               "DX DRIVERS/DX MY-TH DRIVER/07.webp"],contains:["ride-eggs-1"] },
 
+  /* La caja trae el Driver y el Hammer Bone Buckle, asi que comprarlo hace
+     innecesarios los dos sueltos. */
   { id:"dx-myth-driver-rid-set", title:"DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:10670,
+    reemplaza:["dx-myth-driver","dx-hammer-bone-buckle"],
     img:"DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/PACKAGE-thumb.webp",
     gallery:["DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/PACKAGE.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/01.webp",
@@ -815,8 +833,10 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/07.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-eggs-1"] },
 
+  /* Edicion limitada que incluye el Driver. */
   { id:"dx-myth-driver-narikiri", title:"DX MY-TH DRIVER SPECIAL NARIKIRI SET", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:14960,
+    reemplaza:["dx-myth-driver"],
     img:"DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE-thumb.webp",
     gallery:["DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/PACKAGE.webp",
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/01.webp",
@@ -1280,6 +1300,24 @@ function splitRef(ref){
 /* Mapa id -> objeto EGGS, para buscar en O(1). */
 const EGGS_BY_ID = EGGS_CATALOG.reduce((map, ex) => { map[ex.id] = ex; return map; }, {});
 
+/* Productos que ya no hacen falta porque vienen dentro de otro que tienes.
+   Devuelve id-cubierto -> [productos que lo cubren]. Se recalcula en cada
+   render: es derivado, nunca se guarda. */
+function coveredMap(){
+  const mapa = {};
+  PRODUCTS.forEach(p => {
+    if(getProductState(p.id) !== "owned") return;
+    (p.reemplaza || []).forEach(id => (mapa[id] = mapa[id] || []).push(p));
+  });
+  return mapa;
+}
+
+/* Un producto cuenta como resuelto si lo tienes O si viene en otro que tienes.
+   Es lo que quiere saber quien mira el catalogo: si le queda algo por comprar. */
+function isResolved(p, cubiertos){
+  return getProductState(p.id) === "owned" || !!cubiertos[p.id];
+}
+
 /* Subcategorias en las que aparece un producto. Casi siempre es una;
    los productos "puente" (figura + gimmick) declaran las demas en `alsoIn`. */
 function categoriesOf(p){
@@ -1410,7 +1448,8 @@ function renderCatalog(){
 
 function monthHTML(key, isNext){
   const products = PRODUCTS.filter(p => p.month === key);
-  const ownedN   = products.filter(p => getProductState(p.id) === "owned").length;
+  const cubiertos = coveredMap();
+  const ownedN    = products.filter(p => isResolved(p, cubiertos)).length;
   const isOpen   = state.ui.openMonths.includes(key);
   const complete = ownedN === products.length && products.length > 0;
 
@@ -1487,6 +1526,8 @@ function cardHTML(p, inCategory){
 
   /* Las otras subcategorias a las que pertenece, para avisarlo en la tarjeta. */
   const otras    = categoriesOf(p).filter(c => c !== inCategory);
+  const cubrenlo = coveredMap()[p.id] || [];
+  const cubierto = cubrenlo.length && st !== "owned";
   const domId    = "card-" + p.id + "--" + inCategory.replace(/\s+/g, "-").toLowerCase();
 
   /* Badges de linea / Premium Bandai / caja sorpresa / dato sin confirmar */
@@ -1515,7 +1556,8 @@ function cardHTML(p, inCategory){
     : "";
 
   return `
-  <article class="card" data-state="${st}" data-pid="${esc(p.id)}" id="${esc(domId)}">
+  <article class="card" data-state="${st}" data-pid="${esc(p.id)}" id="${esc(domId)}"
+           ${cubierto ? `data-covered="true"` : ""}>
     <div class="card__media">
       <div class="card__ph">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -1532,6 +1574,8 @@ function cardHTML(p, inCategory){
 
     <div class="card__body">
       <h3 class="card__title">${esc(p.title)}</h3>
+      ${cubierto ? `<p class="card__covered">Ya lo tienes: viene en ${
+          cubrenlo.map(o => esc(o.title)).join(" y ")}</p>` : ""}
 
       ${contentsHTML(p, owned)}
 
@@ -1757,6 +1801,7 @@ function bindCatalogEvents(){
       saveState();
 
       updateCardUI(id);
+      refreshCoverage();
       renderChecklist();
       updateMonthCounters();
     });
@@ -1788,14 +1833,42 @@ function updateCardUI(id){
   });
 }
 
+/* Marcar un set afecta a OTRAS tarjetas, no solo a la suya: las que quedan
+   cubiertas. Se actualizan en el sitio para no perder los desplegables
+   abiertos ni la posicion de scroll. */
+function refreshCoverage(){
+  const cubiertos = coveredMap();
+  PRODUCTS.forEach(p => {
+    const cubrenlo = cubiertos[p.id] || [];
+    const activo   = cubrenlo.length && getProductState(p.id) !== "owned";
+    document.querySelectorAll(`[data-pid="${p.id}"]`).forEach(card => {
+      if(activo) card.dataset.covered = "true"; else delete card.dataset.covered;
+
+      let aviso = card.querySelector(".card__covered");
+      if(activo){
+        const texto = "Ya lo tienes: viene en " + cubrenlo.map(o => o.title).join(" y ");
+        if(!aviso){
+          aviso = document.createElement("p");
+          aviso.className = "card__covered";
+          card.querySelector(".card__title").after(aviso);
+        }
+        aviso.textContent = texto;
+      }else if(aviso){
+        aviso.remove();
+      }
+    });
+  });
+}
+
 /* Actualiza el contador "x/y productos" de cada mes sin re-render completo. */
 function updateMonthCounters(){
   sortedMonthKeys().forEach(key => {
     const section = catalogEl.querySelector(`.month[data-month="${key}"]`);
     if(!section) return;
 
+    const cubiertos = coveredMap();
     const items = PRODUCTS.filter(p => p.month === key);
-    const got   = items.filter(p => getProductState(p.id) === "owned").length;
+    const got   = items.filter(p => isResolved(p, cubiertos)).length;
 
     const chip = section.querySelector(".chip--count");
     if(chip) chip.textContent = `${got}/${items.length} productos`;
