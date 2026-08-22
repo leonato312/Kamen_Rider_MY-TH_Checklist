@@ -13,11 +13,11 @@
 
   OBJETIVO
     1. Saber CUANDO llega cada wave  -> el mes es la categoria raiz (acordeon).
-    2. Saber QUE EX faltan           -> checklist derivada, no manual.
+    2. Saber QUE EGGS faltan           -> checklist derivada, no manual.
 
   DONDE EDITAR (lo unico que necesitas tocar para mantener la pagina):
-    · EX_CATALOG -> catalogo maestro de gimmicks EX (alimenta la checklist).
-    · PRODUCTS   -> productos: mes, precio, imagen y que EX contienen.
+    · EGGS_CATALOG -> catalogo maestro de gimmicks EGGS (alimenta la checklist).
+    · PRODUCTS   -> productos: mes, precio, imagen y que EGGS contienen.
     · MONTHS     -> etiqueta visible de cada mes.
   Todo lo demas (grids, contadores, barras de progreso) se genera solo.
 
@@ -322,7 +322,7 @@ body::before{
   padding:5px 7px; border-radius:6px; font-size:12px;
   background:var(--surface-2);
 }
-/* Miniatura reservada para cuando cargues la imagen de cada EX */
+/* Miniatura reservada para cuando cargues la imagen de cada EGGS */
 .contents__thumb{
   flex:0 0 auto; width:26px; height:26px; border-radius:5px;
   background:var(--surface-3); border:1px solid var(--border);
@@ -382,7 +382,7 @@ body::before{
 }
 
 /* ===========================================================================
-   7. PANEL LATERAL — CHECKLIST DE EX
+   7. PANEL LATERAL — CHECKLIST DE EGGS
    =========================================================================== */
 .backdrop{
   position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6);
@@ -415,44 +415,44 @@ body::before{
 .panel__body::-webkit-scrollbar-thumb{ background:var(--surface-3); border-radius:9px; }
 
 /* Bloque por linea (DX / SG) */
-.ex-line{ margin-top:20px; }
-.ex-line__head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-.ex-line__name{ font-size:13px; font-weight:800; letter-spacing:.12em; }
-.ex-line--dx .ex-line__name{ color:var(--dx); }
-.ex-line--sg .ex-line__name{ color:var(--sg); }
-.ex-line__count{ margin-left:auto; font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
-.ex-line__bar{ height:5px; border-radius:99px; background:var(--surface-3); overflow:hidden; margin-bottom:14px; }
-.ex-line__fill{ height:100%; width:0; border-radius:99px; transition:width .35s ease; }
-.ex-line--dx .ex-line__fill{ background:var(--dx); }
-.ex-line--sg .ex-line__fill{ background:var(--sg); }
+.eggs-line{ margin-top:20px; }
+.eggs-line__head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.eggs-line__name{ font-size:13px; font-weight:800; letter-spacing:.12em; }
+.eggs-line--dx .eggs-line__name{ color:var(--dx); }
+.eggs-line--sg .eggs-line__name{ color:var(--sg); }
+.eggs-line__count{ margin-left:auto; font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.eggs-line__bar{ height:5px; border-radius:99px; background:var(--surface-3); overflow:hidden; margin-bottom:14px; }
+.eggs-line__fill{ height:100%; width:0; border-radius:99px; transition:width .35s ease; }
+.eggs-line--dx .eggs-line__fill{ background:var(--dx); }
+.eggs-line--sg .eggs-line__fill{ background:var(--sg); }
 
-/* Grupo por tipo de EX */
-.ex-group{ margin-bottom:16px; }
-.ex-group__head{
+/* Grupo por tipo de EGGS */
+.eggs-group{ margin-bottom:16px; }
+.eggs-group__head{
   display:flex; align-items:baseline; gap:8px; margin-bottom:7px;
   font-size:10.5px; font-weight:700; letter-spacing:.13em;
   text-transform:uppercase; color:var(--text-mute);
 }
-.ex-group__n{ margin-left:auto; font-variant-numeric:tabular-nums; }
+.eggs-group__n{ margin-left:auto; font-variant-numeric:tabular-nums; }
 
-.ex-item{
+.eggs-item{
   width:100%; display:flex; align-items:flex-start; gap:9px; text-align:left;
   padding:7px 9px; border-radius:7px; margin-bottom:3px; cursor:pointer;
   transition:background .15s ease;
 }
-.ex-item:hover{ background:var(--surface-2); }
-.ex-item__dot{
+.eggs-item:hover{ background:var(--surface-2); }
+.eggs-item__dot{
   flex:0 0 auto; margin-top:5px; width:8px; height:8px; border-radius:50%;
   background:var(--surface-3); box-shadow:inset 0 0 0 1px var(--border-strong);
 }
-.ex-item--owned .ex-item__dot{ background:var(--owned); box-shadow:none; }
-.ex-item--partial .ex-item__dot{ background:var(--reserved); box-shadow:none; }
-.ex-item__main{ flex:1; min-width:0; }
-.ex-item__name{ font-size:12.5px; color:var(--text-dim); }
-.ex-item--owned .ex-item__name,
-.ex-item--partial .ex-item__name{ color:var(--text); }
+.eggs-item--owned .eggs-item__dot{ background:var(--owned); box-shadow:none; }
+.eggs-item--partial .eggs-item__dot{ background:var(--reserved); box-shadow:none; }
+.eggs-item__main{ flex:1; min-width:0; }
+.eggs-item__name{ font-size:12.5px; color:var(--text-dim); }
+.eggs-item--owned .eggs-item__name,
+.eggs-item--partial .eggs-item__name{ color:var(--text); }
 /* Sub-marcas de variante (std / special ver. ...) */
-.ex-item__vars{ display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.eggs-item__vars{ display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
 .var-chip{
   padding:2px 6px; border-radius:5px; font-size:9.5px; font-weight:700;
   letter-spacing:.04em; text-transform:uppercase;
@@ -496,7 +496,7 @@ body::before{
   <div class="header__inner">
     <div class="brand">
       <h1 class="brand__title">KAMEN RIDER <span>MY-TH</span></h1>
-      <span class="brand__sub">Calendario de waves &amp; checklist EX</span>
+      <span class="brand__sub">Calendario de waves &amp; checklist EGGS</span>
     </div>
 
     <!-- Progreso global por linea; se rellena desde JS -->
@@ -506,7 +506,7 @@ body::before{
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
       </svg>
-      Checklist EX
+      Checklist Eggs
     </button>
   </div>
 </header>
@@ -531,18 +531,18 @@ body::before{
 </div>
 
 <!-- ==========================================================================
-     PANEL LATERAL: CHECKLIST DE EX
+     PANEL LATERAL: CHECKLIST DE EGGS
      ========================================================================== -->
 <div class="backdrop" id="backdrop" data-open="false"></div>
 
 <aside class="panel" id="panel" data-open="false" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
   <div class="panel__head">
     <div class="panel__top">
-      <h2 class="panel__title" id="panelTitle">Checklist de EX</h2>
+      <h2 class="panel__title" id="panelTitle">Checklist Eggs</h2>
       <button class="panel__close" id="closePanel" aria-label="Cerrar checklist">&times;</button>
     </div>
     <p class="panel__hint">
-      Se actualiza sola: marca un producto como <strong>Obtenido</strong> y sus EX
+      Se actualiza sola: marca un producto como <strong>Obtenido</strong> y sus EGGS
       se cuentan aqui. DX y SG se llevan por separado porque cada linea tiene
       piezas exclusivas.
     </p>
@@ -570,7 +570,7 @@ const CATEGORY_ORDER = [
   /* Gimmicks de revista, campana o exclusivos de tienda. Procedencia rara:
      algunos no tienen precio (son premio), pero todos tienen fecha. Una sola
      imagen por producto, sin subcarpeta de galeria. */
-  "RIDE-SEED EX PROMOCIONALES"
+  "RIDE-SEED EGGS PROMOCIONALES"
 ];
 
 /* Subcategorias cuyo contenido es sorpresa -> muestran "Ver posibles contenidos". */
@@ -593,18 +593,18 @@ const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
 const MONTH_ABBR  = ["ene","feb","mar","abr","may","jun",
                      "jul","ago","sep","oct","nov","dic"];
 
-/* Tipos de EX; el orden aqui es el orden dentro del panel. */
-const EX_TYPES = {
-  "ride-ex":        "Ride Ex",
-  "legend-ride-ex": "Legend Ride Ex",
-  "seed-ex":        "Seed Ex",
-  "legend-seed-ex": "Legend Seed Ex",
-  "otros-ex":       "Otros Ex"
+/* Tipos de EGGS; el orden aqui es el orden dentro del panel. */
+const EGGS_TYPES = {
+  "ride-eggs":        "Ride Eggs",
+  "legend-ride-eggs": "Legend Ride Eggs",
+  "seed-eggs":        "Seed Eggs",
+  "legend-seed-eggs": "Legend Seed Eggs",
+  "otros-eggs":       "Otros Eggs"
 };
 
 /* Lineas de la checklist. DX y SG van separadas a proposito:
    SG saca piezas que nunca salen en DX y viceversa. */
-const EX_LINES = { DX: "LINEA DX", SG: "LINEA SG" };
+const EGGS_LINES = { DX: "LINEA DX", SG: "LINEA SG" };
 
 /* Estados de producto. Solo "owned" alimenta la checklist. */
 const STATES = { pending:"Pendiente", reserved:"Reservado", owned:"Obtenido" };
@@ -614,12 +614,12 @@ const CURRENCY = { symbol:"¥", locale:"ja-JP" };
 
 
 /* ===========================================================================
-   BLOQUE 2 · CATALOGO MAESTRO DE EX  (fuente de verdad de la checklist)
+   BLOQUE 2 · CATALOGO MAESTRO DE EGGS  (fuente de verdad de la checklist)
    ---------------------------------------------------------------------------
    Cada entrada:
      id       -> identificador unico, usado en `contains` de los productos
      name     -> nombre visible
-     type     -> clave de EX_TYPES
+     type     -> clave de EGGS_TYPES
      line     -> "DX" o "SG"
      variants -> OPCIONAL. Versiones de la MISMA pieza dentro de la misma linea
                  (ej. estandar vs special ver.). Si se omite se asume una sola
@@ -628,73 +628,73 @@ const CURRENCY = { symbol:"¥", locale:"ja-JP" };
    NOTA: una version SG nunca es variante de una DX. Va como entrada propia
          con line:"SG".
    =========================================================================== */
-const EX_CATALOG = [
+const EGGS_CATALOG = [
 
-  /* ---------- DX · Ride Ex numerados ---------- */
-  { id:"ride-ex-1",        name:"Ride Ex 1",        type:"ride-ex", line:"DX",
+  /* ---------- DX · Ride Eggs numerados ---------- */
+  { id:"ride-eggs-1",        name:"Ride Eggs 1",        type:"ride-eggs", line:"DX",
     variants:[ {id:"std", label:"Estandar"},
                {id:"special", label:"Special ver."},   /* furoku Televi-Kun */
                {id:"gold", label:"Gold ver."} ] },     /* premio Scratch Carddass */
-  /* Ride Ex 1 Origin alude a un rider distinto que Ride Ex 1, aunque la
+  /* Ride Eggs 1 Origin alude a un rider distinto que Ride Eggs 1, aunque la
      premisa sea la misma: va como pieza independiente, no como variante. */
-  { id:"ride-ex-1-origin", name:"Ride Ex 1 Origin", type:"ride-ex", line:"DX" },
-  { id:"ride-ex-4",  name:"Ride Ex 4",  type:"ride-ex", line:"DX",
+  { id:"ride-eggs-1-origin", name:"Ride Eggs 1 Origin", type:"ride-eggs", line:"DX" },
+  { id:"ride-eggs-4",  name:"Ride Eggs 4",  type:"ride-eggs", line:"DX",
     variants:[ {id:"std", label:"Estandar"}, {id:"special", label:"Special ver."} ] },
-  { id:"ride-ex-6",  name:"Ride Ex 6",  type:"ride-ex", line:"DX" },
-  { id:"ride-ex-8",  name:"Ride Ex 8",  type:"ride-ex", line:"DX" },
-  { id:"ride-ex-10", name:"Ride Ex 10", type:"ride-ex", line:"DX" },
-  { id:"ride-ex-11", name:"Ride Ex 11", type:"ride-ex", line:"DX",
+  { id:"ride-eggs-6",  name:"Ride Eggs 6",  type:"ride-eggs", line:"DX" },
+  { id:"ride-eggs-8",  name:"Ride Eggs 8",  type:"ride-eggs", line:"DX" },
+  { id:"ride-eggs-10", name:"Ride Eggs 10", type:"ride-eggs", line:"DX" },
+  { id:"ride-eggs-11", name:"Ride Eggs 11", type:"ride-eggs", line:"DX",
     variants:[ {id:"std", label:"Estandar"}, {id:"special", label:"Special ver."} ] },
 
-  /* ---------- DX · Legend Ride Ex ---------- */
-  { id:"kuuga-ride-ex",    name:"Kuuga Ride Ex",    type:"legend-ride-ex", line:"DX" },
-  { id:"ooz-ride-ex",      name:"Ooz Ride Ex",      type:"legend-ride-ex", line:"DX" },
-  { id:"zeztz-ride-ex",    name:"Zeztz Ride Ex",    type:"legend-ride-ex", line:"DX" },
-  { id:"agito-ride-ex",    name:"Agito Ride Ex",    type:"legend-ride-ex", line:"DX" },
-  { id:"gavv-ride-ex",     name:"Gavv Ride Ex",     type:"legend-ride-ex", line:"DX" },
-  { id:"revice-ride-ex",   name:"Revice Ride Ex",   type:"legend-ride-ex", line:"DX" },
-  { id:"gotchard-ride-ex", name:"Gotchard Ride Ex", type:"legend-ride-ex", line:"DX" },
-  { id:"build-ride-ex",    name:"Build Ride Ex",    type:"legend-ride-ex", line:"DX" },
-  { id:"faiz-ride-ex",     name:"Faiz Ride Ex",     type:"legend-ride-ex", line:"DX" },
+  /* ---------- DX · Legend Ride Eggs ---------- */
+  { id:"kuuga-ride-eggs",    name:"Kuuga Ride Eggs",    type:"legend-ride-eggs", line:"DX" },
+  { id:"ooz-ride-eggs",      name:"Ooz Ride Eggs",      type:"legend-ride-eggs", line:"DX" },
+  { id:"zeztz-ride-eggs",    name:"Zeztz Ride Eggs",    type:"legend-ride-eggs", line:"DX" },
+  { id:"agito-ride-eggs",    name:"Agito Ride Eggs",    type:"legend-ride-eggs", line:"DX" },
+  { id:"gavv-ride-eggs",     name:"Gavv Ride Eggs",     type:"legend-ride-eggs", line:"DX" },
+  { id:"revice-ride-eggs",   name:"Revice Ride Eggs",   type:"legend-ride-eggs", line:"DX" },
+  { id:"gotchard-ride-eggs", name:"Gotchard Ride Eggs", type:"legend-ride-eggs", line:"DX" },
+  { id:"build-ride-eggs",    name:"Build Ride Eggs",    type:"legend-ride-eggs", line:"DX" },
+  { id:"faiz-ride-eggs",     name:"Faiz Ride Eggs",     type:"legend-ride-eggs", line:"DX" },
 
-  /* ---------- DX · Seed Ex ---------- */
+  /* ---------- DX · Seed Eggs ---------- */
   /* Una sola entrada con sus tres procedencias como variantes. Cada sub-marca
      es un enlace al producto que la trae, asi que se ve de un vistazo cual
      falta sin ocupar tres lineas del panel. */
-  { id:"myth-seed-ex", name:"Myth Seed Ex", type:"seed-ex", line:"DX",
+  { id:"myth-seed-eggs", name:"Myth Seed Eggs", type:"seed-eggs", line:"DX",
     variants:[ {id:"taf",    label:"TAF"},
                {id:"tokyo",  label:"KR Store Tokyo"},
                {id:"nagoya", label:"KR Store Nagoya"} ] },
-  { id:"hato-seed-ex",        name:"Hato Seed Ex",        type:"seed-ex", line:"DX" },
-  { id:"koala-seed-ex",       name:"Koala Seed Ex",       type:"seed-ex", line:"DX" },
-  { id:"zou-seed-ex",         name:"Zou Seed Ex",         type:"seed-ex", line:"DX" },
-  { id:"owl-seed-ex",         name:"Owl Seed Ex",         type:"seed-ex", line:"DX" },
-  { id:"taka-seed-ex",        name:"Taka Seed Ex",        type:"seed-ex", line:"DX" },
-  { id:"stag-beetle-seed-ex", name:"Stag Beetle Seed Ex", type:"seed-ex", line:"DX" },
-  { id:"crocodile-seed-ex",   name:"Crocodile Seed Ex",   type:"seed-ex", line:"DX" },
-  { id:"chameleon-seed-ex",   name:"Chameleon Seed Ex",   type:"seed-ex", line:"DX" },
-  { id:"armadillo-seed-ex",   name:"Armadillo Seed Ex",   type:"seed-ex", line:"DX" },
-  { id:"grasshopper-seed-ex", name:"Grasshopper Seed Ex", type:"seed-ex", line:"DX" },
-  { id:"giraffe-seed-ex",     name:"Giraffe Seed Ex",     type:"seed-ex", line:"DX" },
-  { id:"gorilla-seed-ex",     name:"Gorilla Seed Ex",     type:"seed-ex", line:"DX" },
-  { id:"reindeer-seed-ex",    name:"Reindeer Seed Ex",    type:"seed-ex", line:"DX" },
-  { id:"penguin-seed-ex",     name:"Penguin Seed Ex",     type:"seed-ex", line:"DX" },
-  { id:"panda-seed-ex",       name:"Panda Seed Ex",       type:"seed-ex", line:"DX" },
-  { id:"pillbug-seed-ex",     name:"Pillbug Seed Ex",     type:"seed-ex", line:"DX" },
+  { id:"hato-seed-eggs",        name:"Hato Seed Eggs",        type:"seed-eggs", line:"DX" },
+  { id:"koala-seed-eggs",       name:"Koala Seed Eggs",       type:"seed-eggs", line:"DX" },
+  { id:"zou-seed-eggs",         name:"Zou Seed Eggs",         type:"seed-eggs", line:"DX" },
+  { id:"owl-seed-eggs",         name:"Owl Seed Eggs",         type:"seed-eggs", line:"DX" },
+  { id:"taka-seed-eggs",        name:"Taka Seed Eggs",        type:"seed-eggs", line:"DX" },
+  { id:"stag-beetle-seed-eggs", name:"Stag Beetle Seed Eggs", type:"seed-eggs", line:"DX" },
+  { id:"crocodile-seed-eggs",   name:"Crocodile Seed Eggs",   type:"seed-eggs", line:"DX" },
+  { id:"chameleon-seed-eggs",   name:"Chameleon Seed Eggs",   type:"seed-eggs", line:"DX" },
+  { id:"armadillo-seed-eggs",   name:"Armadillo Seed Eggs",   type:"seed-eggs", line:"DX" },
+  { id:"grasshopper-seed-eggs", name:"Grasshopper Seed Eggs", type:"seed-eggs", line:"DX" },
+  { id:"giraffe-seed-eggs",     name:"Giraffe Seed Eggs",     type:"seed-eggs", line:"DX" },
+  { id:"gorilla-seed-eggs",     name:"Gorilla Seed Eggs",     type:"seed-eggs", line:"DX" },
+  { id:"reindeer-seed-eggs",    name:"Reindeer Seed Eggs",    type:"seed-eggs", line:"DX" },
+  { id:"penguin-seed-eggs",     name:"Penguin Seed Eggs",     type:"seed-eggs", line:"DX" },
+  { id:"panda-seed-eggs",       name:"Panda Seed Eggs",       type:"seed-eggs", line:"DX" },
+  { id:"pillbug-seed-eggs",     name:"Pillbug Seed Eggs",     type:"seed-eggs", line:"DX" },
 
-  /* ---------- DX · Legend Seed Ex ---------- */
-  { id:"no1-seed-ex", name:"No. 1 Seed Ex", type:"legend-seed-ex", line:"DX" },
+  /* ---------- DX · Legend Seed Eggs ---------- */
+  { id:"no1-seed-eggs", name:"No. 1 Seed Eggs", type:"legend-seed-eggs", line:"DX" },
 
-  /* ---------- DX · Otros Ex ---------- */
-  { id:"ridewatter-ex", name:"Ridewatter Ex", type:"otros-ex", line:"DX" },
+  /* ---------- DX · Otros Eggs ---------- */
+  { id:"ridewatter-eggs", name:"Ridewatter Eggs", type:"otros-eggs", line:"DX" },
 
   /* ---------- SG · linea propia ---------- */
-  { id:"sg-ride-ex-4",       name:"Ride Ex 4 (SG ver.)",  type:"ride-ex",        line:"SG" },
-  { id:"sg-zio-ride-ex",     name:"Zi-O Ride Ex (SG)",    type:"legend-ride-ex", line:"SG" },
-  { id:"sg-zeroone-ride-ex", name:"ZeroOne Ride Ex (SG)", type:"legend-ride-ex", line:"SG" },
-  { id:"sg-kaixa-seed-ex",   name:"Kaixa Seed Ex (SG)",   type:"legend-seed-ex", line:"SG" },
-  { id:"sg-garren-seed-ex",  name:"Garren Seed Ex (SG)",  type:"legend-seed-ex", line:"SG" },
-  { id:"sg-diend-seed-ex",   name:"DiEnd Seed Ex (SG)",   type:"legend-seed-ex", line:"SG" }
+  { id:"sg-ride-eggs-4",       name:"Ride Eggs 4 (SG ver.)",  type:"ride-eggs",        line:"SG" },
+  { id:"sg-zio-ride-eggs",     name:"Zi-O Ride Eggs (SG)",    type:"legend-ride-eggs", line:"SG" },
+  { id:"sg-zeroone-ride-eggs", name:"ZeroOne Ride Eggs (SG)", type:"legend-ride-eggs", line:"SG" },
+  { id:"sg-kaixa-seed-eggs",   name:"Kaixa Seed Eggs (SG)",   type:"legend-seed-eggs", line:"SG" },
+  { id:"sg-garren-seed-eggs",  name:"Garren Seed Eggs (SG)",  type:"legend-seed-eggs", line:"SG" },
+  { id:"sg-diend-seed-eggs",   name:"DiEnd Seed Eggs (SG)",   type:"legend-seed-eggs", line:"SG" }
 ];
 
 
@@ -726,8 +726,8 @@ const EX_CATALOG = [
                   tarjeta lo avisa con un badge para no confundirlo con dato firme.
      price     -> yenes con IVA incluido, o null si aun no se anuncia
      img       -> ruta local hoy; cambiala por tu enlace de Google Drive
-     contains  -> EX incluidos. Formato "exId" o "exId@variante".
-                  Marcar el producto como Obtenido marca TODOS estos EX.
+     contains  -> EGGS incluidos. Formato "exId" o "exId@variante".
+                  Marcar el producto como Obtenido marca TODOS estos EGGS.
    =========================================================================== */
 const PRODUCTS = [
 
@@ -739,19 +739,19 @@ const PRODUCTS = [
               "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH/02.webp"],contains:[] },
 
   /* =================== AGOSTO 2026 =================== */
-  { id:"dx-legend-set-00", title:"DX LEGEND RIDER EX SET 00", category:"DX SETS",
+  { id:"dx-legend-set-00", title:"DX LEGEND RIDER EGGS SET 00", category:"DX SETS",
     date:"2026-08-29", dateType:"release", price:1540,
-    img:"DX SETS/DX LEGEND RIDER EX SET 00/01-thumb.webp",
-    gallery:["DX SETS/DX LEGEND RIDER EX SET 00/01.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 00/02.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 00/03.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 00/04.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 00/05.webp"],contains:["zeztz-ride-ex","no1-seed-ex"] },
+    img:"DX SETS/DX LEGEND RIDER EGGS SET 00/01-thumb.webp",
+    gallery:["DX SETS/DX LEGEND RIDER EGGS SET 00/01.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 00/02.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 00/03.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 00/04.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 00/05.webp"],contains:["zeztz-ride-eggs","no1-seed-eggs"] },
 
   /* ---- MY-TH FIRST KIT (Shokugan) ----
      Los cuatro salen el mismo dia y al mismo precio: Bandai anuncia una sola
      fecha y un solo precio para toda la coleccion, no uno por caja.
-     La caja avisa de que sus Ride Ex son exclusivos de esta serie y NO
+     La caja avisa de que sus Ride Eggs son exclusivos de esta serie y NO
      funcionan con el DX MY-TH DRIVER, asi que no alimentan la checklist:
      son miniaturas del kit, no los gimmicks de la temporada. Entre ellas si
      encajan: los huevos del 04 valen para los drivers del 01 y el 02.
@@ -759,18 +759,18 @@ const PRODUCTS = [
      seccion de golosinas de tiendas de todo el pais, sin ser exclusivo.
      Precio Bandai: 380 yenes, 418 con impuestos (usamos el segundo, como
      en el resto del catalogo). Publico a partir de 3 anos. */
-  { id:"sg-kit-01", title:"MY-TH FIRST KIT 01 - MY-TH DRIVER & RIDE EX 1 (NEZUMI)", category:"SG MODEL KITS",
+  { id:"sg-kit-01", title:"MY-TH FIRST KIT 01 - MY-TH DRIVER & RIDE EGGS 1 (NEZUMI)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
-    img:"SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE-thumb.webp",
-    gallery:["SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE.webp",
-             "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/01.webp",
-             "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/02.webp"],
+    img:"SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Eggs 1 (Nezumi)/PACKAGE-thumb.webp",
+    gallery:["SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Eggs 1 (Nezumi)/PACKAGE.webp",
+             "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Eggs 1 (Nezumi)/01.webp",
+             "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Eggs 1 (Nezumi)/02.webp"],
     contains:[] },
 
-  { id:"sg-kit-02", title:"MY-TH FIRST KIT 02 - MY-TH DRIVER HAMMER ON & RIDE EX 1 (NEKO)", category:"SG MODEL KITS",
+  { id:"sg-kit-02", title:"MY-TH FIRST KIT 02 - MY-TH DRIVER HAMMER ON & RIDE EGGS 1 (NEKO)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
-    img:"SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko)-thumb.webp",
-    gallery:["SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko).webp"],
+    img:"SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Eggs 1 (Neko)-thumb.webp",
+    gallery:["SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Eggs 1 (Neko).webp"],
     contains:[] },
 
   { id:"sg-kit-03", title:"MY-TH FIRST KIT 03 - KAMEN RIDER MY-TH & RIDEWATTER", category:"SG MODEL KITS",
@@ -779,10 +779,10 @@ const PRODUCTS = [
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter.webp"],
     contains:[] },
 
-  { id:"sg-kit-04", title:"MY-TH FIRST KIT 04 - KAMEN RIDER RID & RIDE EX 1 (NEZUMI Y NEKO)", category:"SG MODEL KITS",
+  { id:"sg-kit-04", title:"MY-TH FIRST KIT 04 - KAMEN RIDER RID & RIDE EGGS 1 (NEZUMI Y NEKO)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
-    img:"SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi y Neko)-thumb.webp",
-    gallery:["SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi y Neko).webp"],
+    img:"SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Eggs 1 (Nezumi y Neko)-thumb.webp",
+    gallery:["SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Eggs 1 (Nezumi y Neko).webp"],
     contains:[] },
 
   /* =================== SEPTIEMBRE 2026 =================== */
@@ -797,7 +797,7 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER/04.webp",
               "DX DRIVERS/DX MY-TH DRIVER/05.webp",
               "DX DRIVERS/DX MY-TH DRIVER/06.webp",
-              "DX DRIVERS/DX MY-TH DRIVER/07.webp"],contains:["ride-ex-1"] },
+              "DX DRIVERS/DX MY-TH DRIVER/07.webp"],contains:["ride-eggs-1"] },
 
   { id:"dx-myth-driver-rid-set", title:"DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:10670,
@@ -810,7 +810,7 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/05.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/06.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/07.webp",
-              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-ex-1"] },
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-eggs-1"] },
 
   { id:"dx-myth-driver-narikiri", title:"DX MY-TH DRIVER SPECIAL NARIKIRI SET", category:"DX DRIVERS",
     date:"2026-09-05", dateType:"release", price:14960,
@@ -824,7 +824,7 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/06.webp",
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/07.webp",
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/08.webp",
-              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/09.webp"],contains:["ride-ex-1","ride-ex-4@std","ride-ex-1-origin"] },
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/09.webp"],contains:["ride-eggs-1","ride-eggs-4@std","ride-eggs-1-origin"] },
 
   { id:"dx-myth-edge", title:"DX MY-TH EDGE", category:"ARMAS",
     date:"2026-09-05", dateType:"release", price:5830,
@@ -835,7 +835,7 @@ const PRODUCTS = [
               "ARMAS/DX MY-TH EDGE/03.webp",
               "ARMAS/DX MY-TH EDGE/04.webp",
               "ARMAS/DX MY-TH EDGE/05.webp",
-              "ARMAS/DX MY-TH EDGE/06.webp"],contains:["zou-seed-ex"] },
+              "ARMAS/DX MY-TH EDGE/06.webp"],contains:["zou-seed-eggs"] },
 
   { id:"dx-hammer-bone-buckle", title:"DX HAMMER BONE BUCKLE", category:"BUCKLES SETS",
     date:"2026-09-05", dateType:"release", price:2750,
@@ -848,26 +848,26 @@ const PRODUCTS = [
               "BUCKLES SETS/DX HAMMER BONE BUCKLE/05.webp",
               "BUCKLES SETS/DX HAMMER BONE BUCKLE/06.webp"],contains:[] },
 
-  { id:"dx-rider-ex-set-01", title:"DX RIDER EX SET 01", category:"DX SETS",
+  { id:"dx-rider-eggs-set-01", title:"DX RIDER EGGS SET 01", category:"DX SETS",
     date:"2026-09-05", dateType:"release", price:2200,
-    img:"DX SETS/DX RIDER EX SET 01/PACKAGE-thumb.webp",
-    gallery:["DX SETS/DX RIDER EX SET 01/PACKAGE.webp",
-              "DX SETS/DX RIDER EX SET 01/01.webp",
-              "DX SETS/DX RIDER EX SET 01/02.webp",
-              "DX SETS/DX RIDER EX SET 01/03.webp",
-              "DX SETS/DX RIDER EX SET 01/04.webp",
-              "DX SETS/DX RIDER EX SET 01/05.webp",
-              "DX SETS/DX RIDER EX SET 01/06.webp",
-              "DX SETS/DX RIDER EX SET 01/07.webp"],contains:["ride-ex-8","kuuga-ride-ex","stag-beetle-seed-ex"] },
+    img:"DX SETS/DX RIDER EGGS SET 01/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX RIDER EGGS SET 01/PACKAGE.webp",
+              "DX SETS/DX RIDER EGGS SET 01/01.webp",
+              "DX SETS/DX RIDER EGGS SET 01/02.webp",
+              "DX SETS/DX RIDER EGGS SET 01/03.webp",
+              "DX SETS/DX RIDER EGGS SET 01/04.webp",
+              "DX SETS/DX RIDER EGGS SET 01/05.webp",
+              "DX SETS/DX RIDER EGGS SET 01/06.webp",
+              "DX SETS/DX RIDER EGGS SET 01/07.webp"],contains:["ride-eggs-8","kuuga-ride-eggs","stag-beetle-seed-eggs"] },
 
-  { id:"dx-legend-set-01", title:"DX LEGEND RIDER EX SET 01", category:"DX SETS",
+  { id:"dx-legend-set-01", title:"DX LEGEND RIDER EGGS SET 01", category:"DX SETS",
     date:"2026-09-05", dateType:"release", price:1540,
-    img:"DX SETS/DX LEGEND RIDER EX SET 01/PACKAGE-thumb.webp",
-    gallery:["DX SETS/DX LEGEND RIDER EX SET 01/PACKAGE.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 01/01.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 01/02.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 01/03.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 01/04.webp"],contains:["agito-ride-ex","gavv-ride-ex"] },
+    img:"DX SETS/DX LEGEND RIDER EGGS SET 01/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX LEGEND RIDER EGGS SET 01/PACKAGE.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 01/01.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 01/02.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 01/03.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 01/04.webp"],contains:["agito-ride-eggs","gavv-ride-eggs"] },
 
   { id:"dx-expack", title:"DX EXPACK", category:"DX SETS",
     date:"2026-09-05", dateType:"release", price:3080,
@@ -878,25 +878,25 @@ const PRODUCTS = [
               "DX SETS/DX EXPACK/03.webp",
               "DX SETS/DX EXPACK/04.webp",
               "DX SETS/DX EXPACK/05.webp",
-              "DX SETS/DX EXPACK/06.webp"],contains:["build-ride-ex"] },
+              "DX SETS/DX EXPACK/06.webp"],contains:["build-ride-eggs"] },
 
   /* Caso especial: es figura Y gimmick a la vez (interactua con el Driver),
      asi que pertenece de verdad a DX SETS y a TAF. Por eso su PNG esta en las
      dos carpetas. `alsoIn` lo hace aparecer en ambas subcategorias siendo un
      unico producto: un solo estado, y cuenta una sola vez en el mes. */
-  { id:"dx-ridewatter-ex", title:"DX RIDEWATTER EX", category:"DX SETS", alsoIn:["TAF"],
+  { id:"dx-ridewatter-eggs", title:"DX RIDEWATTER EGGS", category:"DX SETS", alsoIn:["TAF"],
     date:"2026-09-05", dateType:"release", price:3630,
-    img:"DX SETS/DX Ridewatter Ex/PACKAGE-thumb.webp",
-    gallery:["DX SETS/DX Ridewatter Ex/PACKAGE.webp",
-              "DX SETS/DX Ridewatter Ex/01.webp",
-              "DX SETS/DX Ridewatter Ex/02.webp",
-              "DX SETS/DX Ridewatter Ex/03.webp",
-              "DX SETS/DX Ridewatter Ex/04.webp",
-              "DX SETS/DX Ridewatter Ex/05.webp",
-              "DX SETS/DX Ridewatter Ex/06.webp",
-              "DX SETS/DX Ridewatter Ex/07.webp",
-              "DX SETS/DX Ridewatter Ex/08.webp",
-              "DX SETS/DX Ridewatter Ex/09.webp"],contains:["ridewatter-ex"] },
+    img:"DX SETS/DX Ridewatter Eggs/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX Ridewatter Eggs/PACKAGE.webp",
+              "DX SETS/DX Ridewatter Eggs/01.webp",
+              "DX SETS/DX Ridewatter Eggs/02.webp",
+              "DX SETS/DX Ridewatter Eggs/03.webp",
+              "DX SETS/DX Ridewatter Eggs/04.webp",
+              "DX SETS/DX Ridewatter Eggs/05.webp",
+              "DX SETS/DX Ridewatter Eggs/06.webp",
+              "DX SETS/DX Ridewatter Eggs/07.webp",
+              "DX SETS/DX Ridewatter Eggs/08.webp",
+              "DX SETS/DX Ridewatter Eggs/09.webp"],contains:["ridewatter-eggs"] },
 
   { id:"taf-myth", title:"TAF KAMEN RIDER MY-TH", category:"TAF",
     date:"2026-09-05", dateType:"release", price:4180,
@@ -910,7 +910,7 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER MY-TH/06.webp",
               "TAF/TAF KAMEN RIDER MY-TH/07.webp",
               "TAF/TAF KAMEN RIDER MY-TH/08.webp",
-              "TAF/TAF KAMEN RIDER MY-TH/09.webp"],contains:["myth-seed-ex@taf"] },
+              "TAF/TAF KAMEN RIDER MY-TH/09.webp"],contains:["myth-seed-eggs@taf"] },
 
   { id:"taf-maou", title:"TAF KAMEN RIDER MAOU", category:"TAF",
     date:"2026-09-05", dateType:"release", price:4400,
@@ -945,16 +945,16 @@ const PRODUCTS = [
               "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/02.webp"],contains:[] },
 
   /* --- Tanda del 12 --- */
-  { id:"dx-slashbone-buckle", title:"DX SLASHBONE BUCKLE & RIDE EX 4 SET", category:"BUCKLES SETS",
+  { id:"dx-slashbone-buckle", title:"DX SLASHBONE BUCKLE & RIDE EGGS 4 SET", category:"BUCKLES SETS",
     date:"2026-09-12", dateType:"release", price:3520,
-    img:"BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/PACKAGE-thumb.webp",
-    gallery:["BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/PACKAGE.webp",
-              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/01.webp",
-              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/02.webp",
-              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/03.webp",
-              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/04.webp",
-              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/05.webp",
-              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Ex 4 SET/06.webp"],contains:["ride-ex-4@std"] },
+    img:"BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/PACKAGE-thumb.webp",
+    gallery:["BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/PACKAGE.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/01.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/02.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/03.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/04.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/05.webp",
+              "BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET/06.webp"],contains:["ride-eggs-4@std"] },
 
   { id:"dx-hokokuro", title:"DX HOKOKURO", category:"DX SETS",
     date:"2026-09-12", dateType:"release", price:3850,
@@ -966,7 +966,7 @@ const PRODUCTS = [
               "DX SETS/DX HOKOKURO/04.webp",
               "DX SETS/DX HOKOKURO/05.webp",
               "DX SETS/DX HOKOKURO/06.webp",
-              "DX SETS/DX HOKOKURO/07.webp"],contains:["owl-seed-ex"] },
+              "DX SETS/DX HOKOKURO/07.webp"],contains:["owl-seed-eggs"] },
 
   { id:"taf-datt", title:"TAF KAMEN RIDER DATT", category:"TAF",
     date:"2026-09-12", dateType:"release", price:4400,
@@ -998,13 +998,13 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER RID/09.webp"],contains:[] },
 
   /* --- Tanda del 26 --- */
-  { id:"dx-random-box-01", title:"DX RIDER EX RANDOM BOX 01", category:"DX RANDOM BOX",
+  { id:"dx-random-box-01", title:"DX RIDER EGGS RANDOM BOX 01", category:"DX RANDOM BOX",
     date:"2026-09-26", dateType:"release", price:770,
-    img:"DX RANDOM BOX/DX RIDER EX RANDOM BOX 01/PACKAGE-thumb.webp",
-    gallery:["DX RANDOM BOX/DX RIDER EX RANDOM BOX 01/PACKAGE.webp",
-              "DX RANDOM BOX/DX RIDER EX RANDOM BOX 01/01.webp",
-              "DX RANDOM BOX/DX RIDER EX RANDOM BOX 01/02.webp"],contains:["ride-ex-4@special","crocodile-seed-ex","chameleon-seed-ex",
-              "armadillo-seed-ex","grasshopper-seed-ex","giraffe-seed-ex"] },
+    img:"DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01/PACKAGE-thumb.webp",
+    gallery:["DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01/PACKAGE.webp",
+              "DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01/01.webp",
+              "DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01/02.webp"],contains:["ride-eggs-4@special","crocodile-seed-eggs","chameleon-seed-eggs",
+              "armadillo-seed-eggs","grasshopper-seed-eggs","giraffe-seed-eggs"] },
 
   { id:"dx-myth-phone", title:"DX MY-TH PHONE", category:"DX SETS",
     date:"2026-09-26", dateType:"release", price:4400,
@@ -1014,17 +1014,17 @@ const PRODUCTS = [
               "DX SETS/DX MY-TH PHONE/02.webp",
               "DX SETS/DX MY-TH PHONE/03.webp",
               "DX SETS/DX MY-TH PHONE/04.webp",
-              "DX SETS/DX MY-TH PHONE/05.webp"],contains:["faiz-ride-ex"] },
+              "DX SETS/DX MY-TH PHONE/05.webp"],contains:["faiz-ride-eggs"] },
 
   /* La hoja oficial de Bandai Shokugan no trae fecha ni precio: ambos son
      estimados (septiembre, alineado con la Random Box DX). Cambialos cuando
      se anuncien y quita `estimated`. */
-  { id:"sg-random-box-01", title:"SG RIDER EX RANDOM BOX 01", category:"SG RANDOM BOX",
+  { id:"sg-random-box-01", title:"SG RIDER EGGS RANDOM BOX 01", category:"SG RANDOM BOX",
     date:"2026-09-26", dateType:"release", price:550, estimated:true,
-    img:"SG RANDOM BOX/SG RIDER EX RANDOM BOX 01/PACKAGE-thumb.webp",
-    gallery:["SG RANDOM BOX/SG RIDER EX RANDOM BOX 01/PACKAGE.webp",
-              "SG RANDOM BOX/SG RIDER EX RANDOM BOX 01/01.webp"],contains:["sg-ride-ex-4","sg-zio-ride-ex","sg-zeroone-ride-ex",
-              "sg-kaixa-seed-ex","sg-garren-seed-ex","sg-diend-seed-ex"] },
+    img:"SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/PACKAGE-thumb.webp",
+    gallery:["SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/PACKAGE.webp",
+              "SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/01.webp"],contains:["sg-ride-eggs-4","sg-zio-ride-eggs","sg-zeroone-ride-eggs",
+              "sg-kaixa-seed-eggs","sg-garren-seed-eggs","sg-diend-seed-eggs"] },
 
   /* =================== OCTUBRE 2026 =================== */
   /* --- Tanda del 3 --- */
@@ -1034,42 +1034,42 @@ const PRODUCTS = [
     gallery:["ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/01.webp",
               "ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/02.webp"],contains:[] },
 
-  { id:"dx-bite-bone-buckle", title:"DX BITE BONE BUCKLE & RIDE EX 6 SET", category:"BUCKLES SETS",
+  { id:"dx-bite-bone-buckle", title:"DX BITE BONE BUCKLE & RIDE EGGS 6 SET", category:"BUCKLES SETS",
     date:"2026-10-03", dateType:"release", price:3520,
-    img:"BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/PACKAGE-thumb.webp",
-    gallery:["BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/PACKAGE.webp",
-              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/01.webp",
-              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/02.webp",
-              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/03.webp",
-              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/04.webp",
-              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/05.webp",
-              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Ex 6 SET/06.webp"],contains:["ride-ex-6"] },
+    img:"BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/PACKAGE-thumb.webp",
+    gallery:["BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/PACKAGE.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/01.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/02.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/03.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/04.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/05.webp",
+              "BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET/06.webp"],contains:["ride-eggs-6"] },
 
-  { id:"dx-shot-bone-buckle", title:"DX SHOT BONE BUCKLE & RIDE EX 10 SET", category:"BUCKLES SETS",
+  { id:"dx-shot-bone-buckle", title:"DX SHOT BONE BUCKLE & RIDE EGGS 10 SET", category:"BUCKLES SETS",
     date:"2026-10-03", dateType:"release", price:3520,
-    img:"BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/PACKAGE-thumb.webp",
-    gallery:["BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/PACKAGE.webp",
-              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/01.webp",
-              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/02.webp",
-              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/03.webp",
-              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/04.webp",
-              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/05.webp",
-              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/06.webp",
-              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Ex 10 SET/07.webp"],contains:["ride-ex-10"] },
+    img:"BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/PACKAGE-thumb.webp",
+    gallery:["BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/PACKAGE.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/01.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/02.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/03.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/04.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/05.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/06.webp",
+              "BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET/07.webp"],contains:["ride-eggs-10"] },
 
-  { id:"dx-rider-ex-set-02", title:"DX RIDER EX SET 02", category:"DX SETS",
+  { id:"dx-rider-eggs-set-02", title:"DX RIDER EGGS SET 02", category:"DX SETS",
     date:"2026-10-03", dateType:"release", price:2200,
-    img:"DX SETS/DX RIDER EX SET 02/01-thumb.webp",
-    gallery:["DX SETS/DX RIDER EX SET 02/01.webp"],contains:["ride-ex-11@std","ooz-ride-ex","taka-seed-ex"] },
+    img:"DX SETS/DX RIDER EGGS SET 02/01-thumb.webp",
+    gallery:["DX SETS/DX RIDER EGGS SET 02/01.webp"],contains:["ride-eggs-11@std","ooz-ride-eggs","taka-seed-eggs"] },
 
-  { id:"dx-legend-set-02", title:"DX LEGEND RIDER EX SET 02", category:"DX SETS",
+  { id:"dx-legend-set-02", title:"DX LEGEND RIDER EGGS SET 02", category:"DX SETS",
     date:"2026-10-03", dateType:"release", price:1540,
-    img:"DX SETS/DX LEGEND RIDER EX SET 02/PACKAGE-thumb.webp",
-    gallery:["DX SETS/DX LEGEND RIDER EX SET 02/PACKAGE.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 02/01.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 02/02.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 02/03.webp",
-              "DX SETS/DX LEGEND RIDER EX SET 02/04.webp"],contains:["revice-ride-ex","gotchard-ride-ex"] },
+    img:"DX SETS/DX LEGEND RIDER EGGS SET 02/PACKAGE-thumb.webp",
+    gallery:["DX SETS/DX LEGEND RIDER EGGS SET 02/PACKAGE.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 02/01.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 02/02.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 02/03.webp",
+              "DX SETS/DX LEGEND RIDER EGGS SET 02/04.webp"],contains:["revice-ride-eggs","gotchard-ride-eggs"] },
 
   { id:"taf-jao", title:"TAF KAMEN RIDER JAO", category:"TAF",
     date:"2026-10-03", dateType:"release", price:4620,
@@ -1117,47 +1117,47 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER MUTON/08.webp"],contains:[] },
 
   /* --- Tanda del 24 --- */
-  { id:"dx-random-box-02", title:"DX RIDER EX RANDOM BOX 02", category:"DX RANDOM BOX",
+  { id:"dx-random-box-02", title:"DX RIDER EGGS RANDOM BOX 02", category:"DX RANDOM BOX",
     date:"2026-10-24", dateType:"release", price:770,
-    img:"DX RANDOM BOX/DX RIDER EX RANDOM BOX 02/01-thumb.webp",
-    gallery:["DX RANDOM BOX/DX RIDER EX RANDOM BOX 02/01.webp"],contains:["ride-ex-11@special","gorilla-seed-ex","reindeer-seed-ex",
-              "penguin-seed-ex","panda-seed-ex","pillbug-seed-ex"] },
+    img:"DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 02/01-thumb.webp",
+    gallery:["DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 02/01.webp"],contains:["ride-eggs-11@special","gorilla-seed-eggs","reindeer-seed-eggs",
+              "penguin-seed-eggs","panda-seed-eggs","pillbug-seed-eggs"] },
 
   /* ---- Promocionales de septiembre ----
      Sin subcarpeta: una sola imagen por producto, que hace de portada. */
-  { id:"promo-store-tokyo", title:"DX RIDER EX KAMEN RIDER STORE TOKYO SET",
-    category:"RIDE-SEED EX PROMOCIONALES",
+  { id:"promo-store-tokyo", title:"DX RIDER EGGS KAMEN RIDER STORE TOKYO SET",
+    category:"RIDE-SEED EGGS PROMOCIONALES",
     date:"2026-09-05", dateType:"release", price:1650,
-    img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Myth Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex-thumb.webp",
-    gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Myth Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex.webp"],
-    contains:["myth-seed-ex@tokyo","hato-seed-ex"] },
+    img:"RIDE-SEED EGGS PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE TOKYO SET-Myth Seed Eggs (Kamen Rider Store Tokyo ver.), Hato Seed Eggs-thumb.webp",
+    gallery:["RIDE-SEED EGGS PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE TOKYO SET-Myth Seed Eggs (Kamen Rider Store Tokyo ver.), Hato Seed Eggs.webp"],
+    contains:["myth-seed-eggs@tokyo","hato-seed-eggs"] },
 
-  { id:"promo-store-nagoya", title:"DX RIDER EX KAMEN RIDER STORE NAGOYA SET",
-    category:"RIDE-SEED EX PROMOCIONALES",
+  { id:"promo-store-nagoya", title:"DX RIDER EGGS KAMEN RIDER STORE NAGOYA SET",
+    category:"RIDE-SEED EGGS PROMOCIONALES",
     date:"2026-09-05", dateType:"release", price:1650,
-    img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Myth Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex-thumb.webp",
-    gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Myth Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex.webp"],
-    contains:["myth-seed-ex@nagoya","koala-seed-ex"] },
+    img:"RIDE-SEED EGGS PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE NAGOYA SET-Myth Seed Eggs (Kamen Rider Store Nagoya ver.), Koala Seed Eggs-thumb.webp",
+    gallery:["RIDE-SEED EGGS PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE NAGOYA SET-Myth Seed Eggs (Kamen Rider Store Nagoya ver.), Koala Seed Eggs.webp"],
+    contains:["myth-seed-eggs@nagoya","koala-seed-eggs"] },
 
   /* Premio de la campana Scratch: no se compra, no tiene precio.
      Reparto de tarjetas en tres rondas: 5 sep, 17 oct y 5 dic de 2026.
      Se toma la primera como fecha; las otras dos quedan aqui anotadas. */
   { id:"promo-scratch", title:"SCRATCH CARDDASS",
-    category:"RIDE-SEED EX PROMOCIONALES",
+    category:"RIDE-SEED EGGS PROMOCIONALES",
     date:"2026-09-05", dateType:"release", price:null,
     priceLabel:"Premio de campaña",
-    img:"RIDE-SEED EX PROMOCIONALES/SCRATCH CARDDASS-Ride Ex 1 (Gold ver.)-thumb.webp",
-    gallery:["RIDE-SEED EX PROMOCIONALES/SCRATCH CARDDASS-Ride Ex 1 (Gold ver.).webp"],
-    contains:["ride-ex-1@gold"] },
+    img:"RIDE-SEED EGGS PROMOCIONALES/SCRATCH CARDDASS-Ride Eggs 1 (Gold ver.)-thumb.webp",
+    gallery:["RIDE-SEED EGGS PROMOCIONALES/SCRATCH CARDDASS-Ride Eggs 1 (Gold ver.).webp"],
+    contains:["ride-eggs-1@gold"] },
 
   /* Furoku de la revista Televi-Kun. El precio es el de la revista. */
   { id:"promo-televi-kun", title:"TELEVI-KUN",
-    category:"RIDE-SEED EX PROMOCIONALES",
+    category:"RIDE-SEED EGGS PROMOCIONALES",
     date:"2026-09-30", dateType:"release", price:2090,
     priceLabel:"Precio de la revista",
-    img:"RIDE-SEED EX PROMOCIONALES/TELEVI-KUN-Ride Ex 1 (Special ver.)-thumb.webp",
-    gallery:["RIDE-SEED EX PROMOCIONALES/TELEVI-KUN-Ride Ex 1 (Special ver.).webp"],
-    contains:["ride-ex-1@special"] },
+    img:"RIDE-SEED EGGS PROMOCIONALES/TELEVI-KUN-Ride Eggs 1 (Special ver.)-thumb.webp",
+    gallery:["RIDE-SEED EGGS PROMOCIONALES/TELEVI-KUN-Ride Eggs 1 (Special ver.).webp"],
+    contains:["ride-eggs-1@special"] },
 
   /* =================== NOVIEMBRE 2026 =================== */
   { id:"sv-tigul", title:"RIDER HERO SERIES KAMEN RIDER TIGUL", category:"SOFT VINYL",
@@ -1219,7 +1219,7 @@ const getProductState = id => state.products[id] || "pending";
    BLOQUE 5 · INDICES Y DERIVADOS
    =========================================================================== */
 
-/* Una referencia a EX puede venir como "ride-ex-4" o "ride-ex-4@special".
+/* Una referencia a EGGS puede venir como "ride-eggs-4" o "ride-eggs-4@special".
    Normalizamos siempre a "id@variante" para poder comparar sin ambiguedad. */
 function normalizeRef(ref){
   return ref.includes("@") ? ref : ref + "@std";
@@ -1229,8 +1229,8 @@ function splitRef(ref){
   return { id, variant };
 }
 
-/* Mapa id -> objeto EX, para buscar en O(1). */
-const EX_BY_ID = EX_CATALOG.reduce((map, ex) => { map[ex.id] = ex; return map; }, {});
+/* Mapa id -> objeto EGGS, para buscar en O(1). */
+const EGGS_BY_ID = EGGS_CATALOG.reduce((map, ex) => { map[ex.id] = ex; return map; }, {});
 
 /* Subcategorias en las que aparece un producto. Casi siempre es una;
    los productos "puente" (figura + gimmick) declaran las demas en `alsoIn`. */
@@ -1238,7 +1238,7 @@ function categoriesOf(p){
   return [p.category].concat(p.alsoIn || []);
 }
 
-/* Variantes de un EX (si no declara ninguna, tiene una sola: "std"). */
+/* Variantes de un EGGS (si no declara ninguna, tiene una sola: "std"). */
 function variantsOf(ex){
   return ex.variants && ex.variants.length ? ex.variants : [{ id:"std", label:"Estandar" }];
 }
@@ -1254,7 +1254,7 @@ PRODUCTS.forEach(p => {
 });
 
 /* Conjunto de variantes obtenidas, derivado de los productos marcados.
-   Un producto "Obtenido" marca TODOS los EX que declara (incluidas las
+   Un producto "Obtenido" marca TODOS los EGGS que declara (incluidas las
    random box: se asume caja completa). */
 function ownedVariantSet(){
   const owned = new Set();
@@ -1268,7 +1268,7 @@ function ownedVariantSet(){
 
 /* Estado de una pieza: "owned" (todas sus variantes), "partial" (algunas)
    o "missing". Para el contador global basta con tener una variante. */
-function exStatus(ex, owned){
+function eggsStatus(ex, owned){
   const vars = variantsOf(ex);
   const have = vars.filter(v => owned.has(ex.id + "@" + v.id)).length;
   if(have === 0) return "missing";
@@ -1277,8 +1277,8 @@ function exStatus(ex, owned){
 
 /* Progreso de una linea: piezas conseguidas / piezas totales. */
 function lineProgress(line, owned){
-  const items = EX_CATALOG.filter(ex => ex.line === line);
-  const got = items.filter(ex => exStatus(ex, owned) !== "missing").length;
+  const items = EGGS_CATALOG.filter(ex => ex.line === line);
+  const got = items.filter(ex => eggsStatus(ex, owned) !== "missing").length;
   return { got, total: items.length, pct: items.length ? (got / items.length) * 100 : 0 };
 }
 
@@ -1505,12 +1505,12 @@ function cardHTML(p, inCategory){
 /* ---------------------------------------------------------------------------
    Sub-acordeon "Ver posibles contenidos" de las Random Box.
    Estructura lista para crecer: cada fila ya reserva un hueco de miniatura
-   (.contents__thumb) donde luego puedes poner la imagen del EX.
+   (.contents__thumb) donde luego puedes poner la imagen de la pieza.
    --------------------------------------------------------------------------- */
 function randomContentsHTML(p, owned){
   const rows = p.contains.map(ref => {
     const { id, variant } = splitRef(ref);
-    const ex = EX_BY_ID[id];
+    const ex = EGGS_BY_ID[id];
     if(!ex) return "";                       // referencia huerfana: la ignoramos
 
     const isOwned = owned.has(normalizeRef(ref));
@@ -1521,7 +1521,7 @@ function randomContentsHTML(p, owned){
     return `
       <li class="contents__item${isOwned ? " contents__item--owned" : ""}">
         <!-- Hueco de miniatura: sustituir por <img src="..."> cuando la tengas -->
-        <span class="contents__thumb" aria-hidden="true">EX</span>
+        <span class="contents__thumb" aria-hidden="true">&#9679;</span>
         <span class="contents__name">${esc(ex.name + vLabel)}</span>
         <span class="contents__dot" aria-hidden="true"></span>
       </li>`;
@@ -1547,7 +1547,7 @@ function randomContentsHTML(p, owned){
 
 
 /* ===========================================================================
-   BLOQUE 8 · RENDER — CHECKLIST DE EX (panel lateral)
+   BLOQUE 8 · RENDER — CHECKLIST DE EGGS (panel lateral)
    =========================================================================== */
 const panelBody = document.getElementById("panelBody");
 const miniStats = document.getElementById("miniStats");
@@ -1556,12 +1556,12 @@ function renderChecklist(){
   const owned = ownedVariantSet();
 
   /* --- Mini barras de la cabecera --- */
-  miniStats.innerHTML = Object.keys(EX_LINES).map(line => {
+  miniStats.innerHTML = Object.keys(EGGS_LINES).map(line => {
     const pr = lineProgress(line, owned);
     return `
       <div class="mini-stat mini-stat--${line.toLowerCase()}">
         <div class="mini-stat__top">
-          <span class="mini-stat__label">EX ${esc(line)}</span>
+          <span class="mini-stat__label">EGGS ${esc(line)}</span>
           <span class="mini-stat__count">${pr.got}/${pr.total}</span>
         </div>
         <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${pr.pct}%"></div></div>
@@ -1569,37 +1569,37 @@ function renderChecklist(){
   }).join("");
 
   /* --- Cuerpo del panel: una seccion por linea, agrupada por tipo --- */
-  panelBody.innerHTML = Object.entries(EX_LINES).map(([line, label]) => {
+  panelBody.innerHTML = Object.entries(EGGS_LINES).map(([line, label]) => {
     const pr = lineProgress(line, owned);
 
-    const groups = Object.entries(EX_TYPES).map(([type, typeLabel]) => {
-      const all = EX_CATALOG.filter(ex => ex.line === line && ex.type === type);
+    const groups = Object.entries(EGGS_TYPES).map(([type, typeLabel]) => {
+      const all = EGGS_CATALOG.filter(ex => ex.line === line && ex.type === type);
       if(!all.length) return "";
 
       const visible = state.ui.hideOwned
-        ? all.filter(ex => exStatus(ex, owned) !== "owned")
+        ? all.filter(ex => eggsStatus(ex, owned) !== "owned")
         : all;
       if(!visible.length) return "";
 
-      const gotN = all.filter(ex => exStatus(ex, owned) !== "missing").length;
+      const gotN = all.filter(ex => eggsStatus(ex, owned) !== "missing").length;
 
       return `
-        <div class="ex-group">
-          <div class="ex-group__head">
+        <div class="eggs-group">
+          <div class="eggs-group__head">
             <span>${esc(typeLabel)}</span>
-            <span class="ex-group__n">${gotN}/${all.length}</span>
+            <span class="eggs-group__n">${gotN}/${all.length}</span>
           </div>
-          ${visible.map(ex => exItemHTML(ex, owned)).join("")}
+          ${visible.map(ex => eggsItemHTML(ex, owned)).join("")}
         </div>`;
     }).join("");
 
     return `
-      <section class="ex-line ex-line--${line.toLowerCase()}">
-        <div class="ex-line__head">
-          <span class="ex-line__name">${esc(label)}</span>
-          <span class="ex-line__count">${pr.got}/${pr.total}</span>
+      <section class="eggs-line eggs-line--${line.toLowerCase()}">
+        <div class="eggs-line__head">
+          <span class="eggs-line__name">${esc(label)}</span>
+          <span class="eggs-line__count">${pr.got}/${pr.total}</span>
         </div>
-        <div class="ex-line__bar"><div class="ex-line__fill" style="width:${pr.pct}%"></div></div>
+        <div class="eggs-line__bar"><div class="eggs-line__fill" style="width:${pr.pct}%"></div></div>
         ${groups || '<p class="panel__empty">Todo conseguido en esta linea.</p>'}
       </section>`;
   }).join("");
@@ -1607,15 +1607,15 @@ function renderChecklist(){
   bindChecklistEvents();
 }
 
-function exItemHTML(ex, owned){
-  const status = exStatus(ex, owned);
+function eggsItemHTML(ex, owned){
+  const status = eggsStatus(ex, owned);
   const vars   = variantsOf(ex);
 
   /* Las sub-marcas solo aparecen si la pieza tiene mas de una version.
      Cada una enlaza al producto que la trae: asi una entrada sola basta
      para saber que version falta y de donde sale. */
   const chips = vars.length > 1
-    ? `<div class="ex-item__vars">${vars.map(v => {
+    ? `<div class="eggs-item__vars">${vars.map(v => {
          const has   = owned.has(ex.id + "@" + v.id);
          const donde = (SOURCES[ex.id + "@" + v.id] || [])[0];
          return `<span class="var-chip${has ? " var-chip--owned" : ""}"
@@ -1628,11 +1628,11 @@ function exItemHTML(ex, owned){
   const source = (SOURCES[ex.id + "@" + vars[0].id] || [])[0];
 
   return `
-    <div class="ex-item ex-item--${status}" id="ex-${esc(ex.id)}"
+    <div class="eggs-item eggs-item--${status}" id="eggs-${esc(ex.id)}"
          data-goto="${source ? esc(source.id) : ""}" role="button" tabindex="0">
-      <span class="ex-item__dot" aria-hidden="true"></span>
-      <span class="ex-item__main">
-        <span class="ex-item__name">${esc(ex.name)}</span>
+      <span class="eggs-item__dot" aria-hidden="true"></span>
+      <span class="eggs-item__main">
+        <span class="eggs-item__name">${esc(ex.name)}</span>
         ${chips}
       </span>
     </div>`;
@@ -1754,7 +1754,7 @@ function updateMonthCounters(){
 
 /* --- Clicks dentro de la checklist: saltar al producto de origen --- */
 function bindChecklistEvents(){
-  panelBody.querySelectorAll(".ex-item").forEach(item => {
+  panelBody.querySelectorAll(".eggs-item").forEach(item => {
     item.addEventListener("click", e => {
       /* Si el clic cae en una sub-marca, manda el producto de esa version. */
       const chip = e.target.closest(".var-chip[data-goto]");
