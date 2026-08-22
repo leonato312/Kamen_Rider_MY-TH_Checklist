@@ -108,6 +108,13 @@ Se probó un campo `related` con entradas independientes enlazadas entre sí. Se
 descartó: ocupaba tres líneas del panel repitiendo enlaces cruzados, peor de leer
 que el problema que resolvía.
 
+**Productos que absorben a otros.** Un set deluxe suele traer dentro el producto
+base. Se declara con `reemplaza: ["id", ...]` **en el que absorbe**, no en el
+absorbido: cuando salga un driver nuevo se toca un sitio, en vez de editar todo
+lo que deja obsoleto. El producto cubierto no se marca como obtenido —no lo
+tienes— sino que se atenúa y avisa de en qué caja viene; sí cuenta en el
+contador del mes, que responde a "¿me queda algo por comprar?".
+
 **Qué alimenta la checklist y qué no.** Solo los gimmicks de la temporada. Los
 model kits y las figuras de montar traen miniaturas que la propia caja advierte
 que no funcionan con el driver — contarlas inflaría el progreso con algo que no
