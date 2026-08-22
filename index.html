@@ -477,7 +477,7 @@ body::before{
 
 .ex-item{
   width:100%; display:flex; align-items:flex-start; gap:9px; text-align:left;
-  padding:7px 9px; border-radius:7px; margin-bottom:3px;
+  padding:7px 9px; border-radius:7px; margin-bottom:3px; cursor:pointer;
   transition:background .15s ease;
 }
 .ex-item:hover{ background:var(--surface-2); }
@@ -499,6 +499,28 @@ body::before{
   background:var(--surface-3); color:var(--text-mute);
 }
 .var-chip--owned{ background:var(--owned-soft); color:var(--owned); }
+
+/* Enlaces a piezas emparentadas (mismo nombre, diseno distinto) */
+.ex-item__rel{ display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-top:5px; }
+.ex-item__rel-lbl{
+  font-size:9px; font-weight:700; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--text-mute);
+}
+.rel-chip{
+  padding:2px 7px; border-radius:5px; font-size:9.5px; font-weight:600;
+  color:var(--text-dim); background:var(--surface-3);
+  border:1px dashed var(--border-strong); cursor:pointer;
+  transition:color .15s ease, border-color .15s ease;
+}
+.rel-chip:hover{ color:var(--dx); border-color:var(--dx); border-style:solid; }
+.rel-chip--owned{ color:var(--owned); border-color:rgba(55,214,122,.4); }
+
+/* Destello al llegar desde un enlace */
+.ex-item--flash{ animation:exflash 1.5s ease; }
+@keyframes exflash{
+  0%,100%{ background:transparent; }
+  20%    { background:var(--dx-soft); }
+}
 
 .panel__empty{ padding:22px 4px; text-align:center; font-size:12px; color:var(--text-mute); }
 
@@ -695,13 +717,16 @@ const EX_CATALOG = [
   { id:"faiz-ride-ex",     name:"Faiz Ride Ex",     type:"legend-ride-ex", line:"DX" },
 
   /* ---------- DX · Seed Ex ---------- */
-  /* OJO: asumo que "Myceed Ex" (del TAF Myth) y el "Mys Seed Ex" de los sets
-     de tienda son la MISMA pieza, y que las de tienda son versiones suyas.
-     Si resultan ser piezas distintas, hay que sacarlas a entradas propias. */
-  { id:"myceed-ex",           name:"Myceed Ex / Mys Seed Ex", type:"seed-ex", line:"DX",
-    variants:[ {id:"std", label:"Estandar"},
-               {id:"tokyo", label:"KR Store Tokyo ver."},
-               {id:"nagoya", label:"KR Store Nagoya ver."} ] },
+  /* Los tres Mys Seed Ex comparten nombre pero son piezas DISTINTAS entre si,
+     con disenos propios: cuentan por separado y hacen falta las tres.
+     `related` las enlaza en la checklist para no perderles el rastro.
+     No usar `variants` aqui: eso es para reediciones de la MISMA pieza. */
+  { id:"myceed-ex",          name:"Myceed Ex (TAF)",                type:"seed-ex", line:"DX",
+    related:["mys-seed-ex-tokyo","mys-seed-ex-nagoya"] },
+  { id:"mys-seed-ex-tokyo",  name:"Mys Seed Ex (KR Store Tokyo)",   type:"seed-ex", line:"DX",
+    related:["myceed-ex","mys-seed-ex-nagoya"] },
+  { id:"mys-seed-ex-nagoya", name:"Mys Seed Ex (KR Store Nagoya)",  type:"seed-ex", line:"DX",
+    related:["myceed-ex","mys-seed-ex-tokyo"] },
   { id:"hato-seed-ex",        name:"Hato Seed Ex",        type:"seed-ex", line:"DX" },
   { id:"koala-seed-ex",       name:"Koala Seed Ex",       type:"seed-ex", line:"DX" },
   { id:"zou-seed-ex",         name:"Zou Seed Ex",         type:"seed-ex", line:"DX" },
@@ -1125,14 +1150,14 @@ const PRODUCTS = [
     date:"2026-09-05", dateType:"release", price:1650,
     img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Mys Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex-thumb.webp",
     gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE TOKYO SET-Mys Seed Ex (Kamen Rider Store Tokyo ver.), Hato Seed Ex.webp"],
-    contains:["myceed-ex@tokyo","hato-seed-ex"] },
+    contains:["mys-seed-ex-tokyo","hato-seed-ex"] },
 
   { id:"promo-store-nagoya", title:"DX RIDER EX KAMEN RIDER STORE NAGOYA SET",
     category:"RIDE-SEED EX PROMOCIONALES",
     date:"2026-09-05", dateType:"release", price:1650,
     img:"RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Mys Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex-thumb.webp",
     gallery:["RIDE-SEED EX PROMOCIONALES/DX RIDER EX KAMEN RIDER STORE NAGOYA SET-Mys Seed Ex (Kamen Rider Store Nagoya ver.), Koala Seed Ex.webp"],
-    contains:["myceed-ex@nagoya","koala-seed-ex"] },
+    contains:["mys-seed-ex-nagoya","koala-seed-ex"] },
 
   /* Premio de la campana Scratch: no se compra, no tiene precio.
      Reparto de tarjetas en tres rondas: 5 sep, 17 oct y 5 dic de 2026.
@@ -1649,17 +1674,34 @@ function exItemHTML(ex, owned){
        }).join("")}</div>`
     : "";
 
+  /* Piezas emparentadas: mismo nombre, disenos distintos. Se cuentan aparte,
+     pero desde aqui se salta de una a otra dentro del propio panel. */
+  const rel = (ex.related || []).map(id => {
+    const otro = EX_BY_ID[id];
+    if(!otro) return "";
+    const suyo = exStatus(otro, owned) !== "missing";
+    return `<span class="rel-chip${suyo ? " rel-chip--owned" : ""}" data-rel="${esc(id)}"
+                  role="link" tabindex="0"
+                  title="Ir a ${esc(otro.name)}">${esc(otro.name)}</span>`;
+  }).join("");
+
+  const relBloque = rel
+    ? `<span class="ex-item__rel"><span class="ex-item__rel-lbl">Ver tambien</span>${rel}</span>`
+    : "";
+
   /* Al pulsar, saltamos al primer producto que trae la pieza. */
   const source = (SOURCES[ex.id + "@" + vars[0].id] || [])[0];
 
   return `
-    <button class="ex-item ex-item--${status}" data-goto="${source ? esc(source.id) : ""}">
+    <div class="ex-item ex-item--${status}" id="ex-${esc(ex.id)}"
+         data-goto="${source ? esc(source.id) : ""}" role="button" tabindex="0">
       <span class="ex-item__dot" aria-hidden="true"></span>
       <span class="ex-item__main">
         <span class="ex-item__name">${esc(ex.name)}</span>
         ${chips}
+        ${relBloque}
       </span>
-    </button>`;
+    </div>`;
 }
 
 
@@ -1800,11 +1842,45 @@ function updateMonthCounters(){
 /* --- Clicks dentro de la checklist: saltar al producto de origen --- */
 function bindChecklistEvents(){
   panelBody.querySelectorAll(".ex-item").forEach(item => {
-    item.addEventListener("click", () => {
+    item.addEventListener("click", e => {
+      /* Los enlaces a piezas emparentadas mandan sobre el salto al producto. */
+      if(e.target.closest(".rel-chip")) return;
       const productId = item.dataset.goto;
       if(productId) goToProduct(productId);
     });
   });
+
+  /* Enlace entre piezas emparentadas: se queda dentro del panel. */
+  panelBody.querySelectorAll(".rel-chip").forEach(chip => {
+    const ir = e => {
+      e.stopPropagation();
+      goToEx(chip.dataset.rel);
+    };
+    chip.addEventListener("click", ir);
+    chip.addEventListener("keydown", e => {
+      if(e.key === "Enter" || e.key === " ") ir(e);
+    });
+  });
+}
+
+/* Lleva el panel hasta una pieza y la resalta. Si el filtro "ocultar los que
+   ya tengo" la esta escondiendo, lo desactiva primero: si no, el enlace no
+   llevaria a ninguna parte. */
+function goToEx(exId){
+  let destino = document.getElementById("ex-" + exId);
+  if(!destino && state.ui.hideOwned){
+    state.ui.hideOwned = false;
+    hideOwnedEl.checked = false;
+    saveState();
+    renderChecklist();
+    destino = document.getElementById("ex-" + exId);
+  }
+  if(!destino) return;
+
+  destino.scrollIntoView({ behavior:"smooth", block:"center" });
+  destino.classList.remove("ex-item--flash");
+  void destino.offsetWidth;                   // reinicia la animacion
+  destino.classList.add("ex-item--flash");
 }
 
 /* Abre el mes que corresponda, cierra el panel y resalta la tarjeta. */
