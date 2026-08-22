@@ -52,6 +52,12 @@
   --sg:      #35d0d8;
   --sg-soft: rgba(53,208,216,.13);
 
+  /* Un color por checklist, para que ninguna se sienta vacia. Oro y cian
+     quedan para los Eggs, que son el gimmick y deben seguir mandando. */
+  --taf:     #b78cff;
+  --sodo:    #ff9f6b;
+  --buckles: #ff8fab;
+
   /* Estados de producto */
   --pending:    #667085;
   --reserved:   #f0b429;
@@ -127,8 +133,12 @@ body::before{
 .mini-stat--sg .mini-stat__fill{ background:var(--sg); }
 /* Las de categoria van en gris: los Eggs son el gimmick y deben destacar */
 .mini-stat--prod{ min-width:104px; }
-.mini-stat--prod .mini-stat__label{ color:var(--text-dim); }
-.mini-stat--prod .mini-stat__fill{ background:var(--text-dim); }
+.mini-stat--taf     .mini-stat__label{ color:var(--taf); }
+.mini-stat--taf     .mini-stat__fill { background:var(--taf); }
+.mini-stat--sodo    .mini-stat__label{ color:var(--sodo); }
+.mini-stat--sodo    .mini-stat__fill { background:var(--sodo); }
+.mini-stat--buckles .mini-stat__label{ color:var(--buckles); }
+.mini-stat--buckles .mini-stat__fill { background:var(--buckles); }
 
 .btn-panel{
   display:flex; align-items:center; gap:9px;
@@ -440,7 +450,10 @@ body::before{
 }
 .panel__tab:hover{ background:var(--surface-3); color:var(--text-dim); }
 .panel__tab[aria-selected="true"]{ background:var(--surface-3); color:var(--text); }
-.panel__tab[aria-selected="true"] .panel__tab-n{ color:var(--dx); }
+.panel__tab--eggs[aria-selected="true"]    .panel__tab-n{ color:var(--dx); }
+.panel__tab--taf[aria-selected="true"]     .panel__tab-n{ color:var(--taf); }
+.panel__tab--sodo[aria-selected="true"]    .panel__tab-n{ color:var(--sodo); }
+.panel__tab--buckles[aria-selected="true"] .panel__tab-n{ color:var(--buckles); }
 .panel__tab-n{ font-size:10px; font-weight:600; color:var(--text-mute); font-variant-numeric:tabular-nums; }
 
 .panel__filter{ display:flex; align-items:center; gap:8px; margin-top:13px; font-size:12px; color:var(--text-dim); cursor:pointer; }
@@ -456,8 +469,12 @@ body::before{
 .eggs-line__name{ font-size:13px; font-weight:800; letter-spacing:.12em; }
 .eggs-line--dx .eggs-line__name{ color:var(--dx); }
 .eggs-line--sg .eggs-line__name{ color:var(--sg); }
-.eggs-line--prod .eggs-line__name{ color:var(--text); }
-.eggs-line--prod .eggs-line__fill{ background:var(--text-dim); }
+.eggs-line--taf     .eggs-line__name{ color:var(--taf); }
+.eggs-line--taf     .eggs-line__fill{ background:var(--taf); }
+.eggs-line--sodo    .eggs-line__name{ color:var(--sodo); }
+.eggs-line--sodo    .eggs-line__fill{ background:var(--sodo); }
+.eggs-line--buckles .eggs-line__name{ color:var(--buckles); }
+.eggs-line--buckles .eggs-line__fill{ background:var(--buckles); }
 .panel__sep{
   margin:26px 0 4px; padding-top:16px; border-top:1px solid var(--border);
   font-size:10px; font-weight:700; letter-spacing:.14em;
@@ -685,9 +702,9 @@ const CHECKLIST_TABS = [
    Un producto cubierto por otro cuenta como conseguido: si el Narikiri trae
    el Hammerbone, lo tienes, aunque no compraras la caja suelta. */
 const PRODUCT_CHECKLISTS = [
-  { cat:"TAF",          label:"TAF" },
-  { cat:"SG SO-DO",     label:"SO-DO" },
-  { cat:"BUCKLES SETS", label:"BUCKLES" }
+  { cat:"TAF",          label:"TAF",     slug:"taf" },
+  { cat:"SG SO-DO",     label:"SO-DO",   slug:"sodo" },
+  { cat:"BUCKLES SETS", label:"BUCKLES", slug:"buckles" }
 ];
 
 /* Estados de producto. Solo "owned" alimenta la checklist. */
@@ -1782,11 +1799,11 @@ function renderChecklist(){
         </div>
         <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${pr.pct}%"></div></div>
       </div>`;
-  }).join("") + PRODUCT_CHECKLISTS.map(({ cat, label }) => {
+  }).join("") + PRODUCT_CHECKLISTS.map(({ cat, label, slug }) => {
     const pr = catProgress(cat, coveredMap());
     if(!pr.total) return "";
     return `
-      <div class="mini-stat mini-stat--prod">
+      <div class="mini-stat mini-stat--prod mini-stat--${esc(slug)}">
         <div class="mini-stat__top">
           <span class="mini-stat__label">${esc(label)}</span>
           <span class="mini-stat__count">${pr.got}/${pr.total}</span>
@@ -1808,7 +1825,9 @@ function renderChecklist(){
     if(!pr.total) return "";                     // categoria aun sin productos
     const sel = t.id === activa.id;
     return `
-      <button class="panel__tab" role="tab" aria-selected="${sel}" data-tab="${esc(t.id)}">
+      <button class="panel__tab panel__tab--${esc(t.id === "eggs" ? "eggs"
+                : (PRODUCT_CHECKLISTS.find(c => c.cat === t.id) || {}).slug || "eggs")}"
+              role="tab" aria-selected="${sel}" data-tab="${esc(t.id)}">
         ${esc(t.label)}
         <span class="panel__tab-n">${pr.got}/${pr.total}</span>
       </button>`;
@@ -1865,7 +1884,8 @@ function renderChecklist(){
       .map(p => productItemHTML(p, cubiertos)).join("");
 
     panelBody.innerHTML = `
-      <section class="eggs-line eggs-line--prod">
+      <section class="eggs-line eggs-line--prod eggs-line--${esc(
+          (PRODUCT_CHECKLISTS.find(c => c.cat === activa.id) || {}).slug || "prod")}">
         <div class="eggs-line__head">
           <span class="eggs-line__name">${esc(activa.label.toUpperCase())}</span>
           <span class="eggs-line__count">${pr.got}/${pr.total}</span>
