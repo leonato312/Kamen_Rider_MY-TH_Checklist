@@ -1,185 +1,158 @@
 # -*- coding: utf-8 -*-
-"""Auditoria de nombres y estructura. SOLO LECTURA: no modifica nada."""
-import io, os, re, unicodedata
+"""Auditoria del catalogo. SOLO LECTURA: no modifica nada.
+
+Que comprueba, por orden de importancia:
+
+  1. Que index.html y el disco digan lo mismo. Es lo unico que puede romper
+     el sitio publicado, asi que va primero.
+  2. Que cada producto tenga portada y una numeracion sana.
+  3. Nomenclatura y duplicados.
+
+Que NO comprueba: el contenido de FICHA/. Esas carpetas son material de
+consulta, de formato libre y no publicable — una hoja puede cubrir una
+coleccion entera. Exigirles un nombre por producto solo generaba ruido.
+"""
+import io, os, re, sys
 
 import os as _os
 BASE = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-FICHA_DIR = u'FICHA'
-# Solo los originales. Los .webp los genera build_all.py a partir de estos;
-# contarlos duplicaba cada numero y hacia ver huecos donde no los hay.
-IMG_EXT = ('.jpg', '.jpeg', '.png', '.gif')
 
-problemas = []      # (severidad, ruta, motivo)
+HTML      = os.path.join(BASE, u'index.html')
+FICHA_DIR = u'FICHA'
+IMG_EXT   = ('.jpg', '.jpeg', '.png')      # solo originales; los .webp son derivados
+OMITIR    = ('tools',)
+
+problemas = []
 def flag(sev, ruta, motivo):
     problemas.append((sev, ruta, motivo))
 
-def mb(n):
-    return n / 1048576.0
+def orden(nombre):
+    """PACKAGE primero, luego 01, 02, 03..."""
+    stem = os.path.splitext(nombre)[0]
+    if stem.upper() == u'PACKAGE': return (0, 0)
+    return (1, int(stem)) if stem.isdigit() else (2, 0)
 
-OMITIR = ('tools',)   # no es una categoria del catalogo
-cats = sorted([d for d in os.listdir(BASE) if d not in OMITIR
-               if os.path.isdir(os.path.join(BASE, d)) and not d.startswith('.')])
+cats = sorted([d for d in os.listdir(BASE)
+               if os.path.isdir(os.path.join(BASE, d))
+               and not d.startswith('.') and d not in OMITIR])
 
-print(u'==============================================================')
-print(u' 1. INVENTARIO POR CATEGORIA')
-print(u'==============================================================')
-print(u'%-16s %6s %8s %10s %9s' % (u'CATEGORIA', u'FICHAS', u'PRODUCT', u'IMAGENES', u'PESO'))
-
-total_files = total_bytes = 0
-inventario = {}   # cat -> {'fichas':[...], 'prods':{nombre: [archivos]}}
-
+# ---------------------------------------------------------------- inventario
+inv = {}          # cat -> {'ficha': n, 'prods': {nombre: [archivos]}, 'sueltos': [archivos]}
 for cat in cats:
     d = os.path.join(BASE, cat)
-    fichas, prods = [], {}
     fpath = os.path.join(d, FICHA_DIR)
-    if os.path.isdir(fpath):
-        fichas = sorted([f for f in os.listdir(fpath) if f.lower().endswith(IMG_EXT)])
-    for s in sorted(os.listdir(d)):
-        sp = os.path.join(d, s)
-        if os.path.isdir(sp) and s != FICHA_DIR:
-            prods[s] = sorted([f for f in os.listdir(sp) if f.lower().endswith(IMG_EXT)])
-    inventario[cat] = {'fichas': fichas, 'prods': prods}
+    ficha = len([f for f in os.listdir(fpath) if f.lower().endswith(IMG_EXT)]) \
+            if os.path.isdir(fpath) else 0
+    prods, sueltos = {}, []
+    for x in sorted(os.listdir(d)):
+        xp = os.path.join(d, x)
+        if os.path.isdir(xp) and x != FICHA_DIR:
+            prods[x] = sorted([f for f in os.listdir(xp) if f.lower().endswith(IMG_EXT)],
+                              key=orden)
+        elif os.path.isfile(xp) and x.lower().endswith(IMG_EXT):
+            sueltos.append(x)              # producto de una sola imagen
+    inv[cat] = {'ficha': ficha, 'prods': prods, 'sueltos': sueltos}
 
-    n_img = sum(len(v) for v in prods.values())
-    peso = 0
-    for r, _, fs in os.walk(d):
-        for f in fs:
-            peso += os.path.getsize(os.path.join(r, f))
-            total_files += 1
-    total_bytes += peso
-    print(u'%-16s %6d %8d %10d %8.1fM' % (cat, len(fichas), len(prods), n_img, mb(peso)))
+print(u'==============================================================')
+print(u' 1. INDEX.HTML  <->  DISCO   (lo unico que puede romper el sitio)')
+print(u'==============================================================')
 
-print(u'%-16s %6s %8s %10s %8.1fM' % (u'TOTAL', u'', u'', u'', mb(total_bytes)))
+s = io.open(HTML, encoding='utf-8').read()
+portadas = re.findall(r'img:"([^"]*)"', s)
+galerias = re.findall(r'"([^"]*\.webp)"',
+                      u' '.join(re.findall(r'gallery:\[(.*?)\]', s, re.S)))
+
+rotas = [p for p in portadas + galerias if not os.path.exists(os.path.join(BASE, p))]
+for p in rotas:
+    flag(u'ALTO', p, u'referenciada en index.html pero no esta en disco')
+print(u'  portadas %d · fotos de galeria %d · rutas rotas %d'
+      % (len(portadas), len(galerias), len(rotas)))
+
+# WebP en disco que nadie usa: peso muerto que se subiria al repositorio
+refs = set(portadas) | set(galerias)
+huerfanos = []
+for r, d, fs in os.walk(BASE):
+    if '.git' in r.split(os.sep) or FICHA_DIR in [x.upper() for x in r.split(os.sep)]:
+        continue
+    for f in fs:
+        if f.endswith('.webp'):
+            rel = os.path.relpath(os.path.join(r, f), BASE).replace(os.sep, u'/')
+            if rel not in refs:
+                huerfanos.append(rel)
+for h in huerfanos:
+    flag(u'MEDIO', h, u'.webp en disco que index.html no usa')
+print(u'  .webp huerfanos: %d' % len(huerfanos))
+
+# Carpetas de producto que la pagina no conoce
+conocidas = set()
+for p in portadas + galerias:
+    conocidas.add(p.rsplit(u'/', 1)[0])
+for cat in cats:
+    for prod in inv[cat]['prods']:
+        ruta = u'%s/%s' % (cat, prod)
+        if ruta not in conocidas and inv[cat]['prods'][prod]:
+            flag(u'MEDIO', ruta + u'/', u'carpeta con fotos que index.html no referencia')
 
 print(u'')
 print(u'==============================================================')
-print(u' 2. CADA PRODUCTO: PORTADA Y NUMERACION')
+print(u' 2. PORTADA Y NUMERACION DE CADA PRODUCTO')
 print(u'==============================================================')
-
 for cat in cats:
-    prods = inventario[cat]['prods']
-    if not prods:
-        print(u'-- %s: (sin carpetas de producto)' % cat)
+    prods, sueltos = inv[cat]['prods'], inv[cat]['sueltos']
+    if not prods and not sueltos:
+        print(u'-- %-28s (vacia)' % cat)
         continue
-    print(u'-- %s' % cat)
+    print(u'-- %-28s ficha: %d archivo(s)' % (cat, inv[cat]['ficha']))
+    for x in sueltos:
+        print(u'   %-52s 1 img  (suelto)' % os.path.splitext(x)[0][:52])
     for nombre, files in sorted(prods.items()):
         if not files:
             flag(u'ALTO', u'%s/%s/' % (cat, nombre), u'carpeta de producto vacia')
-            print(u'   %-48s  VACIA' % nombre[:48])
-            continue
-
+            print(u'   %-52s VACIA' % nombre[:52]); continue
         stems = [os.path.splitext(f)[0] for f in files]
-        has_pkg = any(s.upper() == u'PACKAGE' for s in stems)
-        nums = sorted([int(s) for s in stems if s.isdigit()])
-        otros = [s for s in stems if not s.isdigit() and s.upper() != u'PACKAGE']
-
-        portada = u'PACKAGE' if has_pkg else (u'01' if 1 in nums else u'??')
+        pkg   = any(v.upper() == u'PACKAGE' for v in stems)
+        nums  = sorted(int(v) for v in stems if v.isdigit())
+        portada = u'PACKAGE' if pkg else (u'01' if 1 in nums else u'??')
         if portada == u'??':
-            flag(u'ALTO', u'%s/%s/' % (cat, nombre),
-                 u'sin PACKAGE y sin 01: no hay portada definible')
-
-        # Numeracion: debe ser 1..n sin huecos
-        hueco = u''
+            flag(u'ALTO', u'%s/%s/' % (cat, nombre), u'sin PACKAGE y sin 01: no hay portada')
+        aviso = u''
         if nums and nums != list(range(1, len(nums) + 1)):
             faltan = [n for n in range(1, max(nums) + 1) if n not in nums]
-            hueco = u'  HUECOS: falta %s' % u', '.join(u'%02d' % n for n in faltan)
-            flag(u'MEDIO', u'%s/%s/' % (cat, nombre), u'numeracion con huecos: falta %s'
-                 % u', '.join(u'%02d' % n for n in faltan))
-
-        # Padding: 1.jpg en vez de 01.jpg
-        sinpad = [s for s in stems if s.isdigit() and len(s) < 2]
+            aviso = u'  HUECOS: %s' % u', '.join(u'%02d' % n for n in faltan)
+            flag(u'MEDIO', u'%s/%s/' % (cat, nombre), u'numeracion con huecos: %s' % aviso.strip())
+        sinpad = [v for v in stems if v.isdigit() and len(v) < 2]
         if sinpad:
-            flag(u'MEDIO', u'%s/%s/' % (cat, nombre),
-                 u'sin cero delante: %s' % u', '.join(sinpad))
-
-        # Extensiones mezcladas
-        exts = set(os.path.splitext(f)[1].lower() for f in files)
-        mix = u'  ext: %s' % u'/'.join(sorted(e[1:] for e in exts)) if len(exts) > 1 else u''
-
-        extra = u'  otros: %s' % u', '.join(otros) if otros else u''
-        print(u'   %-48s  %2d img  portada=%-8s%s%s%s'
-              % (nombre[:48], len(files), portada, hueco, mix, extra))
+            flag(u'MEDIO', u'%s/%s/' % (cat, nombre), u'sin cero delante: %s' % u', '.join(sinpad))
+        print(u'   %-52s %2d img  portada=%-8s%s' % (nombre[:52], len(files), portada, aviso))
 
 print(u'')
 print(u'==============================================================')
-print(u' 3. FICHAS  <->  CARPETAS DE PRODUCTO')
+print(u' 3. NOMENCLATURA Y DUPLICADOS')
 print(u'==============================================================')
-
-def norm(s):
-    """Normaliza para comparar: mayusculas y separadores/espacios colapsados."""
-    s = s.upper().replace(u'&', u' & ')
-    s = re.sub(u'[\\s_]+', u' ', s).strip()
-    return s
-
-for cat in cats:
-    fichas = inventario[cat]['fichas']
-    prods  = list(inventario[cat]['prods'].keys())
-    if not fichas and not prods:
-        continue
-    print(u'-- %s' % cat)
-
-    if not fichas:
-        flag(u'ALTO', u'%s/FICHA/' % cat, u'categoria sin carpeta FICHA o vacia')
-        print(u'   (sin fichas)')
-
-    prods_norm = dict((norm(p), p) for p in prods)
-    emparejadas = set()
-
-    for f in fichas:
-        stem = os.path.splitext(f)[0]
-        # nombre del producto = lo anterior al separador de contenidos
-        partes = re.split(u'\\s-\\s|-(?=[A-Z][a-z])', stem, 1)
-        base = partes[0].strip()
-        cont = partes[1].strip() if len(partes) > 1 else None
-
-        n = norm(base)
-        if n in prods_norm:
-            real = prods_norm[n]
-            emparejadas.add(real)
-            if real != base:
-                flag(u'ALTO', u'%s/%s' % (cat, f),
-                     u'ficha "%s" vs carpeta "%s": difieren' % (base, real))
-                print(u'   [!=] %-44s  carpeta: %s' % (base[:44], real))
-            else:
-                print(u'   [ok] %-44s  %s' % (base[:44],
-                      u'contenidos: ' + cont[:28] if cont else u'(sin contenidos)'))
-        else:
-            flag(u'ALTO', u'%s/FICHA/%s' % (cat, f), u'ficha sin carpeta de producto')
-            print(u'   [??] %-44s  SIN CARPETA' % base[:44])
-
-    for p in prods:
-        if p not in emparejadas:
-            flag(u'ALTO', u'%s/%s/' % (cat, p), u'carpeta de producto sin ficha')
-            print(u'   [??] %-44s  SIN FICHA' % p[:44])
-
-print(u'')
-print(u'==============================================================')
-print(u' 4. NOMENCLATURA')
-print(u'==============================================================')
-
 for cat in cats:
     if cat != cat.upper():
         flag(u'MEDIO', cat, u'categoria con minusculas')
-    for f in inventario[cat]['fichas']:
-        stem = os.path.splitext(f)[0]
-        partes = re.split(u'\\s-\\s|-(?=[A-Z][a-z])', stem, 1)
-        base = partes[0].strip()
-        if base != base.upper():
-            flag(u'BAJO', u'%s/FICHA/%s' % (cat, f),
-                 u'estilo: minusculas en el nombre: "%s"' % base)
-        if u' - ' not in stem and len(partes) > 1:
-            flag(u'BAJO', u'%s/FICHA/%s' % (cat, f),
-                 u'separador pegado; se recomienda " - " por MY-TH')
-    for p in inventario[cat]['prods']:
-        if p != p.upper():
-            flag(u'BAJO', u'%s/%s/' % (cat, p), u'estilo: minusculas en el nombre')  # informativo
+    for prod in inv[cat]['prods']:
+        if prod != prod.upper():
+            flag(u'BAJO', u'%s/%s/' % (cat, prod), u'estilo: minusculas en el nombre')
+
+vistos = {}
+for cat in cats:
+    for f in list(inv[cat]['prods'].keys()) + list(inv[cat]['sueltos']):
+        vistos.setdefault(f, []).append(cat)
+dups = {k: v for k, v in vistos.items() if len(v) > 1}
+if dups:
+    for f, cs in dups.items():
+        print(u'  mismo nombre en %s: %s' % (u' y '.join(cs), f[:60]))
+else:
+    print(u'  sin nombres repetidos entre categorias')
 
 print(u'')
 print(u'==============================================================')
-print(u' 5. RESULTADO')
+print(u' RESULTADO')
 print(u'==============================================================')
-orden = {u'ALTO': 0, u'MEDIO': 1, u'BAJO': 2}
-problemas.sort(key=lambda x: (orden[x[0]], x[1]))
+orden_sev = {u'ALTO': 0, u'MEDIO': 1, u'BAJO': 2}
+problemas.sort(key=lambda x: (orden_sev[x[0]], x[1]))
 if not problemas:
     print(u'  Sin incidencias.')
 else:

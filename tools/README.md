@@ -14,7 +14,7 @@ ubicación, así que no hay nada que configurar.
 
 | Script | Qué hace | Escribe |
 |---|---|---|
-| `audit.py` | Revisa nombres y estructura: ficha ↔ carpeta, numeración, duplicados | nada |
+| `audit.py` | Cruza `index.html` con el disco: rutas rotas, WebP huérfanos, portadas y numeración | nada |
 | `plan.py` | Muestra qué portada y qué galería saldría de cada producto | nada |
 | `build_all.py` | Genera los `.webp` y repunta `index.html` | sí |
 
@@ -72,12 +72,14 @@ no le genera nada y la tarjeta se queda sin imagen.
 - **Portada = `PACKAGE` si existe, si no `01`.** Decisión deliberada.
 - Las carpetas van en MAYÚSCULAS. En Windows da igual, en el servidor no:
   una mayúscula mal puesta es una imagen rota solo en producción.
-- Nombre de ficha y nombre de carpeta deben coincidir **exactamente**.
-  `audit.py` existe sobre todo para cazar eso.
+- **`FICHA/` es de formato libre.** Es material de consulta, no publicable:
+  una sola hoja puede cubrir toda una colección y sus nombres no tienen que
+  corresponderse con los de los productos. `audit.py` no la revisa.
 - El Ridewatter Eggs tiene carpeta en `DX SETS` y en `TAF` por ser figura y
   gimmick a la vez. La web usa la de `DX SETS`, su categoría primaria.
-- **Excepción:** los productos de una sola imagen no llevan carpeta propia.
-  El archivo va suelto en la categoría, con el nombre completo incluidos sus
-  contenidos. Es el caso de `RIDE-SEED EGGS PROMOCIONALES` y de tres de los
-  cuatro `SG MODEL KITS`. `audit.py` los marcará como "sin ficha": es
-  esperado, no un fallo.
+- Los productos de una sola imagen no llevan carpeta propia: el archivo va
+  suelto en la categoría, con su nombre completo. Es el caso de
+  `RIDE-SEED EGGS PROMOCIONALES` y de tres de los cuatro `SG MODEL KITS`.
+- `TAF/DX Ridewatter Eggs/` es la copia espejo del producto puente y la
+  auditoría avisa de que nadie la referencia. Es correcto: la web usa la de
+  `DX SETS` y esas fotos no se convierten ni se suben.
