@@ -708,7 +708,12 @@ const EX_CATALOG = [
      · FECHAS Y PRECIOS -> Kamen_Rider_Myth_datos_imagenes.xlsx.
 
    Cada producto:
-     id        -> unico (se usa para guardar tu estado en localStorage)
+     id        -> unico, y es la clave con la que se guarda tu estado.
+                  Convencion: <linea>-<producto> en minusculas, con guion como
+                  separador de palabras (dx-, taf-, sv-, sg-, promo-).
+                  La puntuacion interna de un nombre se pierde al hacer el
+                  slug: MY-TH queda como "myth", no "my-th", porque ahi el
+                  guion ya significa otra cosa.
      title     -> nombre visible; igual al del PNG, sin el sufijo
                   "-contenidos" (esa info ya vive en `contains`)
      category  -> una de CATEGORY_ORDER
@@ -754,7 +759,7 @@ const PRODUCTS = [
      seccion de golosinas de tiendas de todo el pais, sin ser exclusivo.
      Precio Bandai: 380 yenes, 418 con impuestos (usamos el segundo, como
      en el resto del catalogo). Publico a partir de 3 anos. */
-  { id:"kit-01", title:"MY-TH FIRST KIT 01 - MY-TH DRIVER & RIDE EX 1 (NEZUMI)", category:"SG MODEL KITS",
+  { id:"sg-kit-01", title:"MY-TH FIRST KIT 01 - MY-TH DRIVER & RIDE EX 1 (NEZUMI)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
     img:"SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE-thumb.webp",
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/PACKAGE.webp",
@@ -762,19 +767,19 @@ const PRODUCTS = [
              "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Ex 1 (Nezumi)/02.webp"],
     contains:[] },
 
-  { id:"kit-02", title:"MY-TH FIRST KIT 02 - MY-TH DRIVER HAMMER ON & RIDE EX 1 (NEKO)", category:"SG MODEL KITS",
+  { id:"sg-kit-02", title:"MY-TH FIRST KIT 02 - MY-TH DRIVER HAMMER ON & RIDE EX 1 (NEKO)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
     img:"SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko)-thumb.webp",
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Ex 1 (Neko).webp"],
     contains:[] },
 
-  { id:"kit-03", title:"MY-TH FIRST KIT 03 - KAMEN RIDER MY-TH & RIDEWATTER", category:"SG MODEL KITS",
+  { id:"sg-kit-03", title:"MY-TH FIRST KIT 03 - KAMEN RIDER MY-TH & RIDEWATTER", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
     img:"SG MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter-thumb.webp",
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter.webp"],
     contains:[] },
 
-  { id:"kit-04", title:"MY-TH FIRST KIT 04 - KAMEN RIDER RID & RIDE EX 1 (NEZUMI Y NEKO)", category:"SG MODEL KITS",
+  { id:"sg-kit-04", title:"MY-TH FIRST KIT 04 - KAMEN RIDER RID & RIDE EX 1 (NEZUMI Y NEKO)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
     img:"SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi y Neko)-thumb.webp",
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Ex 1 (Nezumi y Neko).webp"],
@@ -907,7 +912,7 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER MY-TH/08.webp",
               "TAF/TAF KAMEN RIDER MY-TH/09.webp"],contains:["myth-seed-ex@taf"] },
 
-  { id:"taf-mao", title:"TAF KAMEN RIDER MAOU", category:"TAF",
+  { id:"taf-maou", title:"TAF KAMEN RIDER MAOU", category:"TAF",
     date:"2026-09-05", dateType:"release", price:4400,
     img:"TAF/TAF KAMEN RIDER MAOU/PACKAGE-thumb.webp",
     gallery:["TAF/TAF KAMEN RIDER MAOU/PACKAGE.webp",
@@ -927,13 +932,13 @@ const PRODUCTS = [
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/01.webp",
               "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/02.webp"],contains:[] },
 
-  { id:"sv-mao", title:"RIDER HERO SERIES KAMEN RIDER MAOU", category:"SOFT VINYL",
+  { id:"sv-maou", title:"RIDER HERO SERIES KAMEN RIDER MAOU", category:"SOFT VINYL",
     date:"2026-09-05", dateType:"release", price:990,
     img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/01-thumb.webp",
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/01.webp",
               "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/02.webp"],contains:[] },
 
-  { id:"sv-rido", title:"RIDER HERO SERIES KAMEN RIDER RID", category:"SOFT VINYL",
+  { id:"sv-rid", title:"RIDER HERO SERIES KAMEN RIDER RID", category:"SOFT VINYL",
     date:"2026-09-05", dateType:"release", price:990,
     img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/01-thumb.webp",
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/01.webp",
@@ -978,7 +983,7 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER DATT/09.webp"],contains:[] },
 
   /* --- Tanda del 19 --- */
-  { id:"taf-rido", title:"TAF KAMEN RIDER RID", category:"TAF",
+  { id:"taf-rid", title:"TAF KAMEN RIDER RID", category:"TAF",
     date:"2026-09-19", dateType:"release", price:4400,
     img:"TAF/TAF KAMEN RIDER RID/PACKAGE-thumb.webp",
     gallery:["TAF/TAF KAMEN RIDER RID/PACKAGE.webp",
@@ -1184,8 +1189,15 @@ function loadState(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
       const saved = JSON.parse(raw);
-      state.products = saved.products || {};
       state.ui = Object.assign(state.ui, saved.ui || {});
+
+      /* Descarta lo guardado bajo ids que ya no existen. Sin esto, cada vez
+         que se renombra un producto su marca se queda ahi para siempre,
+         invisible y engordando el guardado. */
+      const vivos = new Set(PRODUCTS.map(p => p.id));
+      state.products = Object.fromEntries(
+        Object.entries(saved.products || {}).filter(([id]) => vivos.has(id))
+      );
     }
   }catch(e){
     console.warn("No se pudo leer el estado guardado; empezamos limpio.", e);
