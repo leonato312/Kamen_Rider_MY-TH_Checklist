@@ -136,7 +136,7 @@ principal. El producto cubierto no se marca como obtenido —no lo
 tienes— sino que se atenúa y avisa de en qué caja viene; sí cuenta en el
 contador del mes, que responde a "¿me queda algo por comprar?".
 
-**Productos que pertenecen a dos categorías.** El Ridewatter Eggs es figura TAF
+**Productos puente: los que pertenecen a dos categorías.** El Ridewatter Eggs es figura TAF
 y gimmick a la vez. Se resuelve con `alsoIn: ["TAF"]`: se dibuja una tarjeta en
 cada subcategoría pero sigue siendo **un único producto** — estado compartido vía
 `data-pid`, cuenta una vez en el mes y una en la checklist. Sin eso habría que
@@ -406,3 +406,9 @@ Vale más que la lista de aciertos, porque evita repetirlos.
 - **Enlaces de Google Drive** como origen de las imágenes.
 - **Confiar en el `.xlsx` de apoyo para los nombres.** Servía para fechas y precios;
   para nomenclatura transcribía mal la mitad.
+- **Exigir que cada ficha se llamara igual que un producto.** Regla que me
+  inventé yo y que hizo gritar a la auditoría durante días con nueve avisos
+  falsos. `FICHA/` es de formato libre, ver sección 5.
+- **Deducir a ojo qué set absorbe a cuál.** Falló dos veces seguidas —primero se
+  escapó un buckle, luego otro— y por eso ahora se verifica comparando
+  contenidos, ver sección 7.
