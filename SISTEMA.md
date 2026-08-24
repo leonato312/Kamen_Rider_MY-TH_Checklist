@@ -6,6 +6,12 @@ deduce mirando los archivos.
 
 Escrito el 2026-08-22, con el catálogo de Myth ya publicado y funcionando.
 
+**Estado en ese momento:** 46 productos de julio a noviembre de 2026 · 41 piezas
+Eggs (35 DX, 6 SG) · 12 categorías · 6 checklists · 280 archivos y 43,5 MB
+publicados en GitHub Pages.
+
+Para la versión generalizada a toda la franquicia, ver `PROJECT-RED.md`.
+
 ---
 
 ## 1. Qué problema resuelve
@@ -130,10 +136,31 @@ principal. El producto cubierto no se marca como obtenido —no lo
 tienes— sino que se atenúa y avisa de en qué caja viene; sí cuenta en el
 contador del mes, que responde a "¿me queda algo por comprar?".
 
+**Productos que pertenecen a dos categorías.** El Ridewatter Eggs es figura TAF
+y gimmick a la vez. Se resuelve con `alsoIn: ["TAF"]`: se dibuja una tarjeta en
+cada subcategoría pero sigue siendo **un único producto** — estado compartido vía
+`data-pid`, cuenta una vez en el mes y una en la checklist. Sin eso habría que
+duplicar la entrada y las dos copias se desincronizarían.
+
 **Qué alimenta la checklist y qué no.** Solo los gimmicks de la temporada. Los
 model kits y las figuras de montar traen miniaturas que la propia caja advierte
 que no funcionan con el driver — contarlas inflaría el progreso con algo que no
 puedes usar. Se catalogan, se marcan, pero no suman.
+
+### El desplegable de contenidos
+
+Todo producto que traiga piezas las lista en un desplegable cerrado por defecto.
+Cerrado no altera la altura de la tarjeta; abierto muestra cada pieza con su
+punto de estado.
+
+**El texto distingue lo que de verdad es distinto.** En una caja sorpresa las
+piezas son **posibles** —te toca una— y pone "Ver posibles contenidos" con borde
+punteado. En un set vienen **garantizadas** y pone "Eggs incluidos", en singular
+si es una sola, con borde continuo. Llamarlos igual daría a entender que comprar
+un set es una lotería.
+
+Al principio solo lo tenían las cajas sorpresa. Extenderlo al resto fue barato
+porque el mecanismo ya existía: solo estaba restringido por categoría.
 
 ---
 
@@ -171,6 +198,13 @@ de su sección. Sirve para orientarse cuando hay cinco o seis.
 **Oro y cian se reservan a los Eggs**, que son el gimmick de la temporada; el
 resto usa tonos más suaves para no competir. Si las barras gritaran todas igual,
 la cabecera sería un semáforo y se perdería de un vistazo cuál importa.
+
+### Cuánto cabe en la cabecera
+
+Con seis mini-barras la cabecera va a una línea en pantallas de 1280 o más, y por
+debajo pasa a su propia fila. **A partir de la séptima ocupará dos líneas casi
+siempre.** Si se llega a eso, la salida es dejar arriba solo las del coleccionable
+principal y ver el resto al abrir el panel, donde las solapas ya llevan contador.
 
 ### Añadir una checklist nueva
 
@@ -246,7 +280,7 @@ por otro lado (Google Drive, en este caso).
 
 **700 px para una tarjeta de 252 px** porque en pantallas retina se ve al doble.
 
-### Tres trampas que costaron encontrar
+### Cuatro trampas que costaron encontrar
 
 **No pongas `loading="lazy"` en las portadas.** Las tarjetas viven dentro de un
 acordeón que arranca con `max-height: 0`. El navegador las considera fuera de
@@ -261,6 +295,10 @@ puesto, el navegador empieza a tirar de las cercanas y el ahorro se evapora.
 **Google Drive no sirve como hosting de imágenes.** Los enlaces `uc?export=view`
 van con límite de peticiones y suelen funcionar solo para quien tiene sesión
 iniciada. Las imágenes van junto al HTML, con rutas relativas.
+
+**Cuidado con las miniaturas que cargan la imagen grande.** Si una tira de
+miniaturas de 62 px apunta al archivo de 1600 px, abrir una galería de diez fotos
+son 2 MB para pintar diez cuadraditos. Se detectó midiendo, no mirando.
 
 **Rutas relativas, siempre.** Así el sitio funciona igual bajo `usuario.github.io/repo/`
 que en la raíz de un dominio propio. Con rutas absolutas, añadir un dominio
