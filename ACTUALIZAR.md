@@ -1,171 +1,149 @@
-# Actualización pendiente — Kamen Rider Myth
+# Actualización — Kamen Rider Myth
 
-**Este documento es una tarea, no documentación.** Se aplica, se verifica y
-**se borra**, junto con los archivos que deja obsoletos.
+> **Esto es una guía, no un parche.** No lo apliques al pie de la letra: las
+> cifras y los nombres son de Gavan Infinity, y algunas cosas aquí **no te
+> tocan**. Lee el §3 antes de tocar nada.
+>
+> **Y no es el destino final.** El encargo de verdad está en el §5: fundir toda
+> tu documentación en **un solo md**, que es lo que heredará el próximo
+> repositorio.
 
-Viene de lo aprendido montando **Gavan Infinity**, la tercera serie de la
-franquicia. Nada de lo que hay aquí es de Gavan: son cosas de uso general que se
-descubrieron allí y que este repositorio necesita.
-
-> **Adáptalo a Myth.** Las tablas de abajo llevan los valores de esta serie ya
-> calculados, pero **revísalos** antes de pegarlos: son mi lectura de tu
-> `CATEGORY_ORDER`, no una verdad comprobada contra las cajas.
+Sustituye a la versión anterior de este archivo, que ya está aplicada.
 
 ---
 
-## 1. Lo que ya está copiado en el repositorio
+## 1. Lo que ha cambiado en Gavan Infinity
 
-| Archivo | Estado | Qué hacer |
+Cinco cosas de uso general, todas salidas de tropezar con ellas:
+
+| Qué | En una línea |
+|---|---|
+| **Un solo md por repositorio** | los cinco documentos se fundieron en `Gavan-Infinity.md` |
+| **La checklist se pliega por línea** | 129 piezas en un scroll eran 152 elementos |
+| **Las reediciones son versiones, no piezas** | y la referencia lleva `@` siempre |
+| **Colección contra familia** | la familia solo ordena dentro de una línea |
+| **El límite de barras de la cabecera hay que medirlo** | el que teníais escrito estaba mal |
+
+---
+
+## 2. Lo que sí te toca, con tus propios números
+
+### 2.1 El `@` desnudo — esto es concreto y es tuyo
+
+`SISTEMA.md` §3 fija que una reedición va como `variants`. Bien. Pero la
+referencia se escribe de dos formas distintas en el mismo catálogo, y **una
+pieza las mezcla consigo misma**:
+
+| Pieza | Referencias desnudas | Con `@std` |
 |---|---|---|
-| `tools/check_urls.py` | **copiado y probado aquí** | nada, ya funciona |
-| `PROJECT-RED.md` | **copiado** | leerlo: resuelve la referencia rota de `SISTEMA.md` |
+| `ride-eggs-1` | **3** | 0 |
+| `ride-eggs-4` | **1** | 2 |
+| `ride-eggs-11` | 0 | 1 |
 
-`check_urls.py` se corrió en seco en este repositorio: **274 rutas, 0
-discrepancias de mayúsculas.** No hace falta adaptarlo.
+Las cuatro desnudas funcionan —el motor las normaliza— pero se leen mal: parecen
+declarar *la pieza* cuando declaran *una versión*. Y `ride-eggs-4` es el caso
+feo: el mismo id escrito de las dos maneras según el producto.
 
-### Por qué hacía falta esa herramienta
+**La regla que conviene fijar:** si la pieza declara `variants`, su referencia
+lleva `@` siempre, también `@std`. Son cuatro ediciones, ningún cambio de
+motor.
 
-`audit.py` comprueba las rutas con `os.path.exists`, que **en Windows no
-distingue mayúsculas**. Una ruta mal capitalizada pasa la auditoría en tu equipo
-y da 404 publicada. Es el fallo que tu propio `SISTEMA.md` §5 llama «el más
-traicionero de todo el sistema», y dice literalmente que la auditoría no puede
-detectarlo. Ahora sí.
+### 2.2 Plegar la checklist de Eggs por línea
+
+Tus 41 Eggs son **35 en DX y 6 en SG**, y la línea DX se reparte en cinco tipos.
+Dibujado de una vez, eso es un muro — y es tu propio `SISTEMA.md` §4 el que dice
+que apilar así estaba mal.
+
+La solución es la misma máquina que ya tienes en el acordeón de meses,
+`max-height` + `data-open`, aplicada a la sección de línea, con lo abierto
+guardado en el estado. **Cerrada no puede esconder el resumen:** el encabezado
+mantiene nombre, contador y barra. Y en la primera visita, todas cerradas: dos
+barras juntas ya son la respuesta.
+
+Con dos líneas gana menos que con cinco, pero la DX con 35 piezas lo justifica
+sola.
+
+### 2.3 El límite de la cabecera estaba mal, y era vuestro
+
+`SISTEMA.md` §4 dice: *«A partir de la séptima ocupará dos líneas casi
+siempre»*. Gavan Infinity llegó a siete y **sí caben a 1280 px**. Lo que sí
+fallaba estaba más abajo: entre 1081 y 1279 quedaba una barra huérfana en una
+segunda fila, porque el responsive solo bajaba las barras a fila propia por
+debajo de 1080.
+
+Arreglo: subir ese umbral, **en su propia consulta** para no adelantar el resto
+del responsive.
+
+**Tú tienes seis barras.** Comprueba la banda entre tu breakpoint y 1280 antes
+de dar por bueno el número; puede que ya te esté pasando.
+
+### 2.4 Colección contra familia
+
+**Si dos grupos se compran por separado y no comparten línea, son colecciones
+distintas.** La familia solo sirve para ordenar dentro de una misma línea.
+
+En Gavan, cinco piezas repartidas entre tres líneas quedaban invisibles como
+familia: agrupando primero por línea, no había forma de verlas juntas. Tu
+equivalente son los `EGGS_TYPES`: si alguno se compra por su cuenta y aparece en
+DX y en SG, hoy no se puede ver entero.
+
+### 2.5 Una comprobación más para la auditoría
+
+Avisa de un tipo usado sin etiqueta, pero no del caso contrario: **una familia
+declarada que ya ninguna pieza usa**. Como no dibuja nada, se queda ahí para
+siempre sin que nada la delate. Es un aviso en BAJO —no rompe, solo miente sobre
+cómo está organizada la colección—.
+
+---
+
+## 3. Lo que NO te toca
+
+- **La trampa del parser de piezas con `variants`.** Tu `audit.py` no parsea el
+  catálogo de piezas; ese parser es un añadido de Gavan. Si algún día se lo
+  pones, que exija `name` detrás de `id` **con un lookahead**: consumirlo deja
+  el cuerpo sin el campo y revienta igual.
+- **`CATEGORY_BADGE`, `exclusiva`, `reservas`, `LINE_LABEL`.** Ya estaban en la
+  actualización anterior.
+- **El modelo con `collection`.** Sigues teniendo una sola colección repartida.
+
+---
+
+## 4. Verificar
 
 ```bash
+python tools/audit.py
 python tools/check_urls.py
-python tools/check_urls.py --servidor https://leonato312.github.io/Kamen_Rider_MY-TH_Checklist
 ```
 
-**No lo canalices.** `check_urls.py | tail -4` devuelve el código de salida de
-`tail`, no el suyo, y un fallo pasa por bueno. Usa `${PIPESTATUS[0]}`.
+Y **ejecuta la lógica, no la leas**: marca una caja en el navegador, recarga, y
+mira que la checklist siga diciendo lo mismo. Los fallos de esta clase no se ven
+leyendo el código.
+
+Aviso del que se aprendió por las malas: **las transiciones CSS no avanzan en
+una pestaña en segundo plano.** Si un acordeón parece no abrirse, comprueba eso
+antes de buscar el fallo en tu CSS.
 
 ---
 
-## 2. Lo que hay que aplicar a mano en `index.html`
+## 5. El encargo de verdad: un solo md
 
-### 2.1 El distintivo de línea está mal en seis categorías
+Hoy tienes `SISTEMA.md`, `PROJECT-RED.md`, `tools/README.md` y este archivo. Se
+solapan, y mantener varios es cómo se desincronizan.
 
-**Este es el arreglo que de verdad importa aquí.** En la línea 1656:
+**Fúndelos en un único documento llamado `Myth.md`** (o como quieras referirte a
+esa conversación), que sea el punto de entrada para cualquier actualización,
+mejora o investigación. Lo que debe llevar dentro:
 
-```js
-const isSG = p.category.startsWith("SG");
-```
+1. Qué es esto y cómo se mantiene.
+2. El motor: estructura, la regla de oro del estado, el modelo de datos.
+3. De dónde salen los datos y las imágenes, con sus trampas.
+4. Qué se decidió en Myth **y por qué** — MY-TH, MAOU y RID salidos de las
+   cajas, el `related` descartado, la etiqueta «Estimado» retirada.
+5. Lo aprendido: los errores y lo que se probó y no funcionó.
 
-y en la 1667:
+**Escríbelo para heredarse.** La serie siguiente copia ese archivo, lo renombra
+y sustituye la parte que es solo tuya. Todo lo demás debe servirle tal cual.
 
-```js
-isSG ? '<span class="badge badge--sg">SG</span>' : '<span class="badge badge--dx">DX</span>',
-```
-
-Todo lo que no empiece por `SG` recibe el distintivo **DX**. De tus doce
-categorías, **seis no son DX**: una figura TAF no es DX, ni un Soft Vinyl, ni un
-S.H.Figuarts, ni un premio de campaña.
-
-**Sustituye** las dos líneas por esto, y añade el mapa al Bloque 1:
-
-```js
-/* Distintivo de linea que lleva la tarjeta, por prefijo de categoria.
-   Sin entrada, sin distintivo: es mejor no poner nada que poner una linea
-   equivocada. */
-const CATEGORY_BADGE = {
-  "DX SETS":"DX", "DX RANDOM BOX":"DX", "DX DRIVERS":"DX",
-  "BUCKLES SETS":"DX", "ARMAS":"DX",
-  "SG MODEL KITS":"SG", "SG SO-DO":"SG", "SG RANDOM BOX":"SG"
-};
-```
-
-```js
-const linea   = CATEGORY_BADGE[p.category] || "";
-const isPromo = p.category === "RIDE-SEED EGGS PROMOCIONALES";
-```
-
-```js
-linea ? `<span class="badge badge--${esc(linea.toLowerCase())}">${esc(linea)}</span>` : "",
-```
-
-**Quedan sin distintivo a propósito:** `TAF`, `SOFT VINYL`, `SHF` y
-`RIDE-SEED EGGS PROMOCIONALES`. **Comprueba si `BUCKLES SETS` y `ARMAS` son de
-verdad línea DX** antes de dejarlos así; es lo único de la tabla que he supuesto.
-
-### 2.2 Campos para Premium Bandai, si alguna vez hace falta
-
-Dos campos opcionales del producto. **Solo si Myth llega a tener exclusivas de
-P-Bandai**; si no, sáltate esto entero.
-
-```js
-exclusiva:"Premium Bandai",       // distintivo propio, aparte de dateType
-reservas:"6 jul - 4 oct 2026",    // linea bajo el precio
-```
-
-El detalle está en `PROJECT-RED.md` §2, con el CSS y dónde se pintan. Y la
-decisión de fondo: **`date` es la fecha de entrega, no la de reserva.**
-
-### 2.3 `LINE_LABEL`: no lo necesitas
-
-Solo hace falta cuando una clave de línea es compuesta. `EGGS_LINES` aquí es
-`{DX, SG}`, las dos de una palabra. **Ignóralo.**
-
----
-
-## 3. Ojo: tu motor es anterior al de Omegahorn
-
-`PROJECT-RED.md` habla de `PIEZAS_CATALOG` y `LINES`. En Myth se llaman
-**`EGGS_CATALOG`** y **`EGGS_LINES`**, y las piezas no llevan campo
-`collection` porque aquí solo hay una colección repartida.
-
-**No renombres nada.** Funciona, está publicado y el cambio no aporta. Solo
-tenlo presente al leer la plantilla: los nombres no coinciden, la arquitectura
-sí.
-
----
-
-## 4. Verificar antes de dar por bueno
-
-```bash
-python tools/audit.py          # debe seguir sin incidencias ALTO
-python tools/check_urls.py     # 274 rutas, 0 discrepancias
-```
-
-Y abre `index.html` en el navegador: **comprueba que una tarjeta de TAF ya no
-dice «DX»** y que las de `DX SETS` y `SG SO-DO` siguen bien.
-
----
-
-## 5. Qué borrar al terminar
-
-### `tools/README.md`
-
-Queda obsoleto en cuanto `PROJECT-RED.md` esté en el repositorio: su tabla de
-scripts se queda corta —ahora son cuatro— y el procedimiento por wave está en el
-§10 de la plantilla, más completo.
-
-**Antes de borrarlo, rescata lo que es solo de Myth** y llévalo a `SISTEMA.md`
-si no está ya:
-
-- MY-TH, MAOU y RID, las tres romanizaciones que salieron de las cajas de TAF
-- que `TAF/DX Ridewatter Eggs/` es la copia espejo del producto cruzado y que la
-  auditoría avise de ella es correcto
-- que los model kits y las figuras de montar no alimentan la checklist
-
-Lo demás ya está en la plantilla.
-
-### Este archivo
-
-`ACTUALIZAR.md` se borra cuando los puntos 1 a 4 estén hechos y verificados. Si
-lo dejas, la próxima vez que lo abras no sabrás si se aplicó.
-
----
-
-## 6. Lo que NO se trae de Gavan Infinity, y por qué
-
-Para que no lo busques:
-
-- **El motor con `collection`.** Myth tiene una sola colección repartida; el
-  campo no aportaría nada.
-- **Las seis líneas y `LINE_LABEL`.** Aquí hay dos, DX y SG.
-- **El `REGISTRO.md` de Gavan.** Son sus datos. El tuyo es `SISTEMA.md`, que
-  cumple ese papel y además es la memoria de por qué el sistema es así.
-
-Lo que sí conviene leer de allí, aunque no se copie, es el §5 de
-`PROJECT-RED.md` —**de dónde salen las imágenes**, nueve fuentes con sus
-trampas— porque la próxima wave de Myth se recopila igual.
+Y borra al terminar: `PROJECT-RED.md`, `tools/README.md`, `ACTUALIZAR.md` y
+`SISTEMA.md` una vez volcados. **Si queda un `.md` suelto en la raíz, no es un
+segundo documento: es algo pendiente de bajar y borrar.**
