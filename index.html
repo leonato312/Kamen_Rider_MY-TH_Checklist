@@ -469,7 +469,19 @@ body::before{
 
 /* Bloque por linea (DX / SG) */
 .eggs-line{ margin-top:20px; }
-.eggs-line__head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.eggs-line__head{
+  display:flex; align-items:center; gap:10px; margin-bottom:10px;
+  width:100%; text-align:left; cursor:pointer; padding:2px 0;
+}
+.eggs-line__chevron{
+  flex:0 0 auto; width:14px; height:14px; color:var(--text-mute);
+  transition:transform .25s ease;
+}
+.eggs-line[data-open="true"] .eggs-line__chevron{ transform:rotate(90deg); }
+/* Cerrada esconde las piezas, nunca el resumen: nombre, contador y barra
+   quedan fuera del bloque plegable a proposito. */
+.eggs-line__body{ max-height:0; overflow:hidden; transition:max-height .35s ease; }
+.eggs-line[data-open="true"] .eggs-line__body{ max-height:6000px; }
 .eggs-line__name{ font-size:13px; font-weight:800; letter-spacing:.12em; }
 .eggs-line--dx .eggs-line__name{ color:var(--dx); }
 .eggs-line--sg .eggs-line__name{ color:var(--sg); }
@@ -533,10 +545,17 @@ body::before{
 /* ===========================================================================
    8. RESPONSIVE
    =========================================================================== */
-@media (max-width: 1080px){
-  .header__inner{ gap:14px; }
+/* Las barras a fila propia. El umbral hay que MEDIRLO, no estimarlo: con seis
+   barras la cabecera aguanta en una linea hasta 1280, y a 1240 el boton de las
+   checklists se cae solo a una segunda fila. Entre ese punto y el 1080 que
+   habia antes, la cabecera se partia sin que nadie gobernara como.
+   Va en su propia consulta para no adelantar el resto del responsive. */
+@media (max-width: 1279px){
   .mini-stats{ order:3; width:100%; }
   .mini-stat{ flex:1; min-width:0; }
+}
+@media (max-width: 1080px){
+  .header__inner{ gap:14px; }
 }
 @media (max-width: 720px){
   .main{ padding:20px 14px 70px; }
@@ -843,7 +862,11 @@ const EGGS_CATALOG = [
                   absorbe, no en el absorbido: asi sacar un set nuevo es tocar
                   un solo sitio en vez de editar todo lo que deja obsoleto.
      img       -> ruta local; relativa a la raiz del proyecto
-     contains  -> EGGS incluidos. Formato "exId" o "exId@variante".
+     contains  -> EGGS incluidos. Formato "piezaId" o "piezaId@variante".
+                  REGLA: si la pieza declara `variants`, la referencia lleva
+                  `@` SIEMPRE, tambien `@std`. El motor normaliza la desnuda,
+                  pero se lee mal: parece declarar la pieza cuando declara una
+                  version, y el mismo id acaba escrito de dos formas.
                   Marcar el producto como Obtenido marca TODOS estos EGGS.
    =========================================================================== */
 const PRODUCTS = [
@@ -915,7 +938,7 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER/04.webp",
               "DX DRIVERS/DX MY-TH DRIVER/05.webp",
               "DX DRIVERS/DX MY-TH DRIVER/06.webp",
-              "DX DRIVERS/DX MY-TH DRIVER/07.webp"],contains:["ride-eggs-1"] },
+              "DX DRIVERS/DX MY-TH DRIVER/07.webp"],contains:["ride-eggs-1@std"] },
 
   /* La caja trae el Driver y el Hammer Bone Buckle, asi que comprarlo hace
      innecesarios los dos sueltos. */
@@ -932,7 +955,7 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/05.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/06.webp",
               "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/07.webp",
-              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-eggs-1"] },
+              "DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-eggs-1@std"] },
 
   /* Edicion limitada. Es upgrade de dos sets a la vez: el MY-TH & RID SET
      (que a su vez trae el Driver suelto y el Hammer Bone Buckle) y el
@@ -952,7 +975,7 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/06.webp",
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/07.webp",
               "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/08.webp",
-              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/09.webp"],contains:["ride-eggs-1","ride-eggs-4@std","ride-eggs-1-origin"] },
+              "DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET/09.webp"],contains:["ride-eggs-1@std","ride-eggs-4@std","ride-eggs-1-origin"] },
 
   { id:"dx-myth-edge", title:"DX MY-TH EDGE", category:"ARMAS",
     date:"2026-09-05", dateType:"release", price:5830,
@@ -1358,7 +1381,7 @@ const STORAGE_KEY = "krmyth-catalog-v1";
 
 let state = {
   products: {},                             // { productId: "pending"|"reserved"|"owned" }
-  ui: { openMonths: [], hideOwned: false, tab: "eggs" }   // acordeon, filtro y pestana
+  ui: { openMonths: [], hideOwned: false, tab: "eggs", openLines: [] }
 };
 
 function loadState(){
@@ -1367,6 +1390,7 @@ function loadState(){
     if(raw){
       const saved = JSON.parse(raw);
       state.ui = Object.assign(state.ui, saved.ui || {});
+      if(!Array.isArray(state.ui.openLines)) state.ui.openLines = [];   // estado de antes
 
       /* Descarta lo guardado bajo ids que ya no existen. Sin esto, cada vez
          que se renombra un producto su marca se queda ahi para siempre,
@@ -1870,14 +1894,28 @@ function renderChecklist(){
           </div>`;
       }).join("");
 
+      /* La linea se pliega. DX son 35 piezas en cinco tipos: dibujadas de una
+         vez es un muro, y el panel deja de responder de un vistazo. Cerrada
+         NO esconde el resumen — nombre, contador y barra siguen ahi, que es
+         justo lo que se viene a mirar. Misma maquinaria que el acordeon de
+         meses: max-height + data-open, con lo abierto guardado. */
+      const abierta = state.ui.openLines.includes(line);
+
       return `
-        <section class="eggs-line eggs-line--${line.toLowerCase()}">
-          <div class="eggs-line__head">
+        <section class="eggs-line eggs-line--${line.toLowerCase()}" data-open="${abierta}">
+          <button class="eggs-line__head" data-line="${esc(line)}"
+                  aria-expanded="${abierta}">
+            <svg class="eggs-line__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
             <span class="eggs-line__name">${esc(label)}</span>
             <span class="eggs-line__count">${pr.got}/${pr.total}</span>
-          </div>
+          </button>
           <div class="eggs-line__bar"><div class="eggs-line__fill" style="width:${pr.pct}%"></div></div>
-          ${groups || '<p class="panel__empty">Todo conseguido en esta linea.</p>'}
+          <div class="eggs-line__body">
+            ${groups || '<p class="panel__empty">Todo conseguido en esta linea.</p>'}
+          </div>
         </section>`;
     }).join("");
 
@@ -2106,6 +2144,20 @@ function updateMonthCounters(){
 
 /* --- Clicks dentro de la checklist: saltar al producto de origen --- */
 function bindChecklistEvents(){
+  panelBody.querySelectorAll(".eggs-line__head[data-line]").forEach(head => {
+    head.addEventListener("click", () => {
+      const sec  = head.closest(".eggs-line");
+      const line = head.dataset.line;
+      const open = sec.dataset.open !== "true";
+      sec.dataset.open = open;
+      head.setAttribute("aria-expanded", open);
+      state.ui.openLines = open
+        ? [...new Set([...state.ui.openLines, line])]
+        : state.ui.openLines.filter(l => l !== line);
+      saveState();
+    });
+  });
+
   panelTabs.querySelectorAll(".panel__tab").forEach(btn => {
     btn.addEventListener("click", () => {
       state.ui.tab = btn.dataset.tab;
