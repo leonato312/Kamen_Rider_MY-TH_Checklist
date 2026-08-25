@@ -276,6 +276,101 @@ colección de diez tipos.
 3. **Las hojas de cálculo de apoyo, solo para fechas y precios.** Para
    nomenclatura transcriben mal la mitad.
 
+### Las páginas de donde se saca todo
+
+**Ninguna serie tiene todas sus fotos ni todos sus datos en un sitio.** Este es
+el orden de búsqueda, y cada fuente tiene su trampa.
+
+| Fuente | Para qué |
+|---|---|
+| `toy.bandai.co.jp` | ficha: fotos, fecha, precio, contenidos |
+| **CDN de Akamai** | fotos de cualquier producto, aunque su página no abra |
+| `bandai.co.jp/candy` | la raíz de la línea SG |
+| `tamashiiweb.com` | S.H.Figuarts: datos buenos, fotos pequeñas |
+| `p-bandai.jp` | **geobloqueado** |
+| `1999.co.jp` | **las fotos de caja** |
+| `tokullectibles.com` | números de modelo, contenidos y banners |
+| la wiki de la serie | premios, que ninguna tienda vende |
+| el repositorio hermano | piezas de crossover |
+
+**1 · La ficha de Bandai.** Conviven dos hosts y hay que mirar **los dos**:
+
+```
+bandai-a.akamaihd.net/bc/img/model/xl/<nº modelo>_<n>.jpg      fichas antiguas
+assets-toy.bandai.co.jp/toy/ja/product/AAAA/MM/<hash>/<n>.jpg  nuevas
+```
+
+Mirando solo el primero se queda fuera **la mitad** de los productos. Se enumera
+`_1`, `_2`… hasta el primer 404, conservando el **orden del documento**: es el de
+la galería oficial.
+
+**2 · El CDN por número de modelo es la llave maestra.** No está geobloqueado y
+responde aunque la página del producto no se pueda abrir.
+
+> **La trampa más cara: devuelve 200 a cualquier número válido, sea de la serie
+> que sea.** En Gavan Infinity entraron diez fotos de otra serie porque una
+> tienda daba un número equivocado y la descarga «funcionó». **Abre una imagen y
+> míralas** antes de dar por buena una carpeta.
+
+**3 · Bandai Candy**, la raíz de SG:
+`bandai.co.jp/candy/search/result.html?q=<término en japonés>`. En la ficha, la
+galería propia son las imágenes con pareja `-product-mobile`; las que solo
+aparecen como `-product-main` son de otros productos. Sirve los mismos archivos
+que el CDN, así que aporta datos más que resolución — pero hay que ir: destapó un
+producto que ninguna otra fuente listaba.
+
+**4 · Tamashii Web** para S.H.Figuarts. Datos completos —precio, reservas,
+`セット内容`— pero **las fotos más pequeñas**, y las fichas nuevas solo en
+`.webp`.
+
+**5 · Premium Bandai está geobloqueado.** `p-bandai.jp` devuelve 302 desde fuera
+de Japón, y `p-bandai.com/us` no distribuye las exclusivas japonesas. **La salida
+es el CDN:** el número de item de la URL *es* el número de modelo.
+
+**6 · HobbySearch (`1999.co.jp`) es de donde salen las cajas.** Bandai no publica
+la foto del paquete por separado:
+
+```
+www.1999.co.jp/itbig<NN>/<id>.jpg     miniatura 224 px
+www.1999.co.jp/itbig<NN>/<id>b*.jpg   galería 1200 px
+www.1999.co.jp/itbig<NN>/<id>p*.jpg   PAQUETE 1200 px   <- esto
+```
+
+Son JPEG de verdad aunque el navegador reciba `.webp`. **Su buscador tiene
+truco:** el parámetro que funciona es `searchkey=`, no `sw=`; con `sw=` devuelve
+el catálogo entero sin filtrar. No stockea exclusivas de P-Bandai ni premios.
+
+**7 · Tokullectibles**, que es Shopify y sirve para tres cosas:
+
+```
+tokullectibles.com/products/<handle>.json
+tokullectibles.com/collections/<slug>/products.json?limit=250
+```
+
+- **Números de modelo de todo**, incluidos SG y gashapon. Con eso, el CDN da las
+  fotos: es la vía más rápida para levantar una línea entera.
+- **Contenidos** que a veces Bandai no lista.
+- **Banners** que Bandai no publica: se reconocen porque su nombre **no** sigue
+  el patrón `<nº modelo>_<n>.jpg`.
+
+Dos avisos: **sus copias de Bandai están recomprimidas** —ni un byte coincide con
+las del CDN— y **reutiliza una imagen genérica** en los productos sin foto, que
+se detecta porque el mismo nombre aparece en varios. Sus precios son de
+importación en dólares.
+
+**8 · La wiki es la única fuente de los premios**: campañas, máquina de garra,
+bonos de ropa y regalos de revista. En Fandom los nombres de archivo están en los
+atributos `data-image-name`. Ojo: a veces el original subido es pequeño.
+
+**9 · El repositorio hermano.** Si una pieza es un crossover, puede estar mejor
+al otro lado. Aquí pasa con el Ridewatter Eggs.
+
+### Después de descargar, comprueba
+
+**Abre y decodifica todas las imágenes.** Un `PACKAGE.jpg` llegó truncado —107.826
+bytes en vez de 164.106— **con código 200**, y abría como imagen válida hasta que
+la conversión intentó leer el último bloque. Ni el código ni el tamaño bastan.
+
 ### Qué anotar de cada caja
 
 **Todo lo que trae, no solo los coleccionables.** Un set que incluye un cinturón
