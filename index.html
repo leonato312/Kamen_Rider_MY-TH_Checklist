@@ -58,6 +58,9 @@
   --sodo:    #ff9f6b;
   --buckles: #ff8fab;
   --vinyl:   #6fa8ff;
+  --rider:   #7ee0c2;
+  --driver:  #e8c26a;
+  --arma:    #d98cf0;
 
   /* Estados de producto */
   --pending:    #667085;
@@ -458,6 +461,9 @@ body::before{
 .panel__tab--sodo[aria-selected="true"]    .panel__tab-n{ color:var(--sodo); }
 .panel__tab--buckles[aria-selected="true"] .panel__tab-n{ color:var(--buckles); }
 .panel__tab--vinyl[aria-selected="true"]   .panel__tab-n{ color:var(--vinyl); }
+.panel__tab--rider[aria-selected="true"]   .panel__tab-n{ color:var(--rider); }
+.panel__tab--driver[aria-selected="true"]  .panel__tab-n{ color:var(--driver); }
+.panel__tab--arma[aria-selected="true"]    .panel__tab-n{ color:var(--arma); }
 .panel__tab-n{ font-size:10px; font-weight:600; color:var(--text-mute); font-variant-numeric:tabular-nums; }
 
 .panel__filter{ display:flex; align-items:center; gap:8px; margin-top:13px; font-size:12px; color:var(--text-dim); cursor:pointer; }
@@ -493,6 +499,12 @@ body::before{
 .eggs-line--buckles .eggs-line__fill{ background:var(--buckles); }
 .eggs-line--vinyl   .eggs-line__name{ color:var(--vinyl); }
 .eggs-line--vinyl   .eggs-line__fill{ background:var(--vinyl); }
+.eggs-line--rider   .eggs-line__name{ color:var(--rider); }
+.eggs-line--rider   .eggs-line__fill{ background:var(--rider); }
+.eggs-line--driver  .eggs-line__name{ color:var(--driver); }
+.eggs-line--driver  .eggs-line__fill{ background:var(--driver); }
+.eggs-line--arma    .eggs-line__name{ color:var(--arma); }
+.eggs-line--arma    .eggs-line__fill{ background:var(--arma); }
 .panel__sep{
   margin:26px 0 4px; padding-top:16px; border-top:1px solid var(--border);
   font-size:10px; font-weight:700; letter-spacing:.14em;
@@ -719,7 +731,16 @@ const CHECKLIST_TABS = [
   { id:"BUCKLES SETS",   label:"Buckles",
     hint:"Los Bone Buckles. Uno que venga dentro de un set que tengas cuenta como conseguido." },
   { id:"SOFT VINYL",     label:"Vinyl",
-    hint:"Las figuras de vinilo blando de la Rider Hero Series." }
+    hint:"Las figuras de vinilo blando de la Rider Hero Series." },
+
+  /* Las tres de entidad. Cruzan varias lineas de juguete, asi que no son
+     categorias: son otro eje sobre los mismos productos. */
+  { id:"@rider",  label:"Riders",  entidad:"rider",
+    hint:"Un rider cuenta en cuanto tienes UNA de sus figuras. Los chips dicen en que lineas existe y cual tienes." },
+  { id:"@driver", label:"Drivers", entidad:"driver",
+    hint:"Cinturones que son el producto. Los que vienen dentro de un set que tengas cuentan igual." },
+  { id:"@arma",   label:"Armas",   entidad:"arma",
+    hint:"Solo las armas que se venden como producto; las que son accesorio de una figura no se cuentan." }
 ];
 
 /* Categorias que ademas de tarjetas tienen su propia checklist en el panel.
@@ -733,6 +754,58 @@ const PRODUCT_CHECKLISTS = [
   { cat:"SG SO-DO",     label:"SO-DO",   slug:"sodo" },
   { cat:"BUCKLES SETS", label:"BUCKLES", slug:"buckles" },
   { cat:"SOFT VINYL",   label:"VINYL",   slug:"vinyl" }
+];
+
+/* ---------------------------------------------------------------------------
+   ENTIDADES: riders, drivers y armas.
+   ---------------------------------------------------------------------------
+   Tercera clase de checklist, distinta de las otras dos. En los Eggs la pieza
+   esta repartida entre productos; en TAF o SO-DO cada producto ES la pieza.
+   Aqui la entidad es el PERSONAJE o el OBJETO, y un mismo rider aparece en
+   varias lineas de juguete: MY-TH tiene figura TAF, Soft Vinyl, SO-DO y kit.
+
+   Por eso la linea se modela como VARIANTE: reaprovecha entera la maquinaria
+   de `variants` —estado por version, sub-marcas que enlazan a su producto— sin
+   codigo nuevo. La entidad se cuenta una vez; las lineas se ven como chips.
+
+   Un producto declara que entidades representa en `figuras`. NO se cuentan las
+   armas ni los drivers que vienen como accesorio de una figura: el criterio es
+   que el objeto sea el producto, no un extra dentro de la caja de otro.
+   --------------------------------------------------------------------------- */
+const ENTIDAD_TIPOS = {
+  rider:  "Riders",
+  driver: "Drivers",
+  arma:   "Armas"
+};
+
+const L_TAF  = { id:"taf",  label:"TAF" };
+const L_SV   = { id:"sv",   label:"SOFT VINYL" };
+const L_SODO = { id:"sodo", label:"SO-DO" };
+const L_KIT  = { id:"kit",  label:"MODEL KIT" };
+const L_DX   = { id:"dx",   label:"DX" };
+
+const ENTIDADES = [
+  /* --- Riders. La variante es la linea en la que existe esa figura. --- */
+  { id:"rider-myth",   name:"MY-TH",  tipo:"rider", variants:[L_TAF, L_SV, L_SODO, L_KIT] },
+  { id:"rider-maou",   name:"MAOU",   tipo:"rider", variants:[L_TAF, L_SV, L_SODO] },
+  { id:"rider-datt",   name:"DATT",   tipo:"rider", variants:[L_TAF, L_SV, L_SODO] },
+  { id:"rider-rid",    name:"RID",    tipo:"rider", variants:[L_TAF, L_SV, L_SODO, L_KIT] },
+  { id:"rider-jao",    name:"JAO",    tipo:"rider", variants:[L_TAF, L_SV] },
+  { id:"rider-tigul",  name:"TIGUL",  tipo:"rider", variants:[L_SV] },
+  { id:"rider-muton",  name:"MUTON",  tipo:"rider", variants:[L_TAF] },
+  { id:"rider-vanken", name:"VANKEN", tipo:"rider", variants:[L_TAF] },
+
+  /* --- Drivers. Un solo cinturon en la temporada, en tres presentaciones.
+         Las cajas DX que lo incluyen (RID SET, Narikiri) no lo declaran: ya lo
+         cubren por `reemplaza`, y contarlo dos veces seria mentir. --- */
+  { id:"drv-myth", name:"MY-TH Driver", tipo:"driver",
+    variants:[ L_DX, L_KIT, { id:"kit-hammer", label:"MODEL KIT (Hammer On)" } ] },
+
+  /* --- Armas. Solo las que son el producto, no accesorios de una figura. --- */
+  { id:"arma-myth-edge",    name:"MY-TH Edge",   tipo:"arma", variants:[L_DX] },
+  { id:"arma-rabbit-sword", name:"Rabbit Sword", tipo:"arma", variants:[L_DX] },
+  { id:"arma-snake-size",   name:"Snake Size",   tipo:"arma", variants:[L_DX] },
+  { id:"arma-dog-gun",      name:"Dog Gun",      tipo:"arma", variants:[L_DX] }
 ];
 
 /* Estados de producto. Solo "owned" alimenta la checklist. */
@@ -876,7 +949,8 @@ const PRODUCTS = [
     date:"2026-07-25", dateType:"release", price:880,
     img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH/01-thumb.webp",
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH/01.webp",
-              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH/02.webp"],contains:[] },
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH/02.webp"],
+    figuras:["rider-myth@sv"],contains:[] },
 
   /* =================== AGOSTO 2026 =================== */
   { id:"dx-legend-set-00", title:"DX LEGEND RIDER EGGS SET 00", category:"DX SETS",
@@ -905,24 +979,28 @@ const PRODUCTS = [
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Eggs 1 (Nezumi)/PACKAGE.webp",
              "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Eggs 1 (Nezumi)/01.webp",
              "SG MODEL KITS/MY-TH FIRST KIT 01-Myth Driver, Ride Eggs 1 (Nezumi)/02.webp"],
+    figuras:["drv-myth@kit"],
     contains:[] },
 
   { id:"sg-kit-02", title:"MY-TH FIRST KIT 02 - MY-TH DRIVER HAMMER ON & RIDE EGGS 1 (NEKO)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
     img:"SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Eggs 1 (Neko)-thumb.webp",
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 02-Myth Driver Hammer On, Ride Eggs 1 (Neko).webp"],
+    figuras:["drv-myth@kit-hammer"],
     contains:[] },
 
   { id:"sg-kit-03", title:"MY-TH FIRST KIT 03 - KAMEN RIDER MY-TH & RIDEWATTER", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
     img:"SG MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter-thumb.webp",
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 03-Kamen Rider Myth, Ridewatter.webp"],
+    figuras:["rider-myth@kit"],
     contains:[] },
 
   { id:"sg-kit-04", title:"MY-TH FIRST KIT 04 - KAMEN RIDER RID & RIDE EGGS 1 (NEZUMI Y NEKO)", category:"SG MODEL KITS",
     date:"2026-08-31", dateType:"release", price:418,
     img:"SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Eggs 1 (Nezumi y Neko)-thumb.webp",
     gallery:["SG MODEL KITS/MY-TH FIRST KIT 04-Kamen Rider Rid, Ride Eggs 1 (Nezumi y Neko).webp"],
+    figuras:["rider-rid@kit"],
     contains:[] },
 
   /* =================== SEPTIEMBRE 2026 =================== */
@@ -938,7 +1016,8 @@ const PRODUCTS = [
               "DX DRIVERS/DX MY-TH DRIVER/04.webp",
               "DX DRIVERS/DX MY-TH DRIVER/05.webp",
               "DX DRIVERS/DX MY-TH DRIVER/06.webp",
-              "DX DRIVERS/DX MY-TH DRIVER/07.webp"],contains:["ride-eggs-1@std"] },
+              "DX DRIVERS/DX MY-TH DRIVER/07.webp"],
+    figuras:["drv-myth@dx"],contains:["ride-eggs-1@std"] },
 
   /* La caja trae el Driver y el Hammer Bone Buckle, asi que comprarlo hace
      innecesarios los dos sueltos. */
@@ -986,7 +1065,8 @@ const PRODUCTS = [
               "ARMAS/DX MY-TH EDGE/03.webp",
               "ARMAS/DX MY-TH EDGE/04.webp",
               "ARMAS/DX MY-TH EDGE/05.webp",
-              "ARMAS/DX MY-TH EDGE/06.webp"],contains:["zou-seed-eggs"] },
+              "ARMAS/DX MY-TH EDGE/06.webp"],
+    figuras:["arma-myth-edge@dx"],contains:["zou-seed-eggs"] },
 
   { id:"dx-hammer-bone-buckle", title:"DX HAMMER BONE BUCKLE", category:"BUCKLES SETS",
     date:"2026-09-05", dateType:"release", price:2750,
@@ -1062,7 +1142,8 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER MY-TH/06.webp",
               "TAF/TAF KAMEN RIDER MY-TH/07.webp",
               "TAF/TAF KAMEN RIDER MY-TH/08.webp",
-              "TAF/TAF KAMEN RIDER MY-TH/09.webp"],contains:["myth-seed-eggs@taf"] },
+              "TAF/TAF KAMEN RIDER MY-TH/09.webp"],
+    figuras:["rider-myth@taf"],contains:["myth-seed-eggs@taf"] },
 
   { id:"taf-maou", title:"TAF KAMEN RIDER MAOU", category:"TAF",
     date:"2026-09-05", dateType:"release", price:4400,
@@ -1076,25 +1157,29 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER MAOU/06.webp",
               "TAF/TAF KAMEN RIDER MAOU/07.webp",
               "TAF/TAF KAMEN RIDER MAOU/08.webp",
-              "TAF/TAF KAMEN RIDER MAOU/09.webp"],contains:[] },
+              "TAF/TAF KAMEN RIDER MAOU/09.webp"],
+    figuras:["rider-maou@taf"],contains:[] },
 
   { id:"sv-datt", title:"RIDER HERO SERIES KAMEN RIDER DATT", category:"SOFT VINYL",
     date:"2026-09-05", dateType:"release", price:990,
     img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/01-thumb.webp",
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/01.webp",
-              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/02.webp"],contains:[] },
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/02.webp"],
+    figuras:["rider-datt@sv"],contains:[] },
 
   { id:"sv-maou", title:"RIDER HERO SERIES KAMEN RIDER MAOU", category:"SOFT VINYL",
     date:"2026-09-05", dateType:"release", price:990,
     img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/01-thumb.webp",
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/01.webp",
-              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/02.webp"],contains:[] },
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/02.webp"],
+    figuras:["rider-maou@sv"],contains:[] },
 
   { id:"sv-rid", title:"RIDER HERO SERIES KAMEN RIDER RID", category:"SOFT VINYL",
     date:"2026-09-05", dateType:"release", price:990,
     img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/01-thumb.webp",
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/01.webp",
-              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/02.webp"],contains:[] },
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/02.webp"],
+    figuras:["rider-rid@sv"],contains:[] },
 
   /* --- Tanda del 15: SO-DO (Shokugan) ---
      装動 仮面ライダーマイス EGGS1 Feat. 装動 仮面ライダーゼッツ.
@@ -1112,6 +1197,7 @@ const PRODUCTS = [
              "SG SO-DO/SO-DO MY-TH/02.webp",
              "SG SO-DO/SO-DO MY-TH/03.webp",
              "SG SO-DO/SO-DO MY-TH/04.webp"],
+    figuras:["rider-myth@sodo"],
     contains:[] },
 
   { id:"sg-sodo-maou", title:"SO-DO MAOU", category:"SG SO-DO",
@@ -1121,6 +1207,7 @@ const PRODUCTS = [
     gallery:["SG SO-DO/SO-DO MAOU/01.webp",
              "SG SO-DO/SO-DO MAOU/02.webp",
              "SG SO-DO/SO-DO MAOU/03.webp"],
+    figuras:["rider-maou@sodo"],
     contains:[] },
 
   { id:"sg-sodo-datt", title:"SO-DO DATT", category:"SG SO-DO",
@@ -1130,6 +1217,7 @@ const PRODUCTS = [
     gallery:["SG SO-DO/SO-DO DATT/01.webp",
              "SG SO-DO/SO-DO DATT/02.webp",
              "SG SO-DO/SO-DO DATT/03.webp"],
+    figuras:["rider-datt@sodo"],
     contains:[] },
 
   { id:"sg-sodo-rid", title:"SO-DO RID", category:"SG SO-DO",
@@ -1139,6 +1227,7 @@ const PRODUCTS = [
     gallery:["SG SO-DO/SO-DO RID/01.webp",
              "SG SO-DO/SO-DO RID/02.webp",
              "SG SO-DO/SO-DO RID/03.webp"],
+    figuras:["rider-rid@sodo"],
     contains:[] },
 
   /* --- Tanda del 12 --- */
@@ -1178,7 +1267,8 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER DATT/06.webp",
               "TAF/TAF KAMEN RIDER DATT/07.webp",
               "TAF/TAF KAMEN RIDER DATT/08.webp",
-              "TAF/TAF KAMEN RIDER DATT/09.webp"],contains:[] },
+              "TAF/TAF KAMEN RIDER DATT/09.webp"],
+    figuras:["rider-datt@taf"],contains:[] },
 
   /* --- Tanda del 19 --- */
   { id:"taf-rid", title:"TAF KAMEN RIDER RID", category:"TAF",
@@ -1193,7 +1283,8 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER RID/06.webp",
               "TAF/TAF KAMEN RIDER RID/07.webp",
               "TAF/TAF KAMEN RIDER RID/08.webp",
-              "TAF/TAF KAMEN RIDER RID/09.webp"],contains:[] },
+              "TAF/TAF KAMEN RIDER RID/09.webp"],
+    figuras:["rider-rid@taf"],contains:[] },
 
   /* --- Tanda del 26 --- */
   { id:"dx-random-box-01", title:"DX RIDER EGGS RANDOM BOX 01", category:"DX RANDOM BOX",
@@ -1230,7 +1321,8 @@ const PRODUCTS = [
     date:"2026-10-03", dateType:"release", price:4400,
     img:"ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/01-thumb.webp",
     gallery:["ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/01.webp",
-              "ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/02.webp"],contains:[] },
+              "ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/02.webp"],
+    figuras:["arma-rabbit-sword@dx","arma-snake-size@dx","arma-dog-gun@dx"],contains:[] },
 
   { id:"dx-bite-bone-buckle", title:"DX BITE BONE BUCKLE & RIDE EGGS 6 SET", category:"BUCKLES SETS",
     date:"2026-10-03", dateType:"release", price:3520,
@@ -1283,7 +1375,8 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER JAO/06.webp",
               "TAF/TAF KAMEN RIDER JAO/07.webp",
               "TAF/TAF KAMEN RIDER JAO/08.webp",
-              "TAF/TAF KAMEN RIDER JAO/09.webp"],contains:[] },
+              "TAF/TAF KAMEN RIDER JAO/09.webp"],
+    figuras:["rider-jao@taf"],contains:[] },
 
   { id:"taf-vanken", title:"TAF KAMEN RIDER VANKEN", category:"TAF",
     date:"2026-10-03", dateType:"release", price:4400,
@@ -1295,13 +1388,15 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER VANKEN/05.webp",
               "TAF/TAF KAMEN RIDER VANKEN/06.webp",
               "TAF/TAF KAMEN RIDER VANKEN/07.webp",
-              "TAF/TAF KAMEN RIDER VANKEN/08.webp"],contains:[] },
+              "TAF/TAF KAMEN RIDER VANKEN/08.webp"],
+    figuras:["rider-vanken@taf"],contains:[] },
 
   { id:"sv-jao", title:"RIDER HERO SERIES KAMEN RIDER JAO", category:"SOFT VINYL",
     date:"2026-10-03", dateType:"release", price:990,
     img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/01-thumb.webp",
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/01.webp",
-              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/02.webp"],contains:[] },
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/02.webp"],
+    figuras:["rider-jao@sv"],contains:[] },
 
   /* --- Tanda del 17 --- */
   { id:"taf-muton", title:"TAF KAMEN RIDER MUTON", category:"TAF",
@@ -1314,7 +1409,8 @@ const PRODUCTS = [
               "TAF/TAF KAMEN RIDER MUTON/05.webp",
               "TAF/TAF KAMEN RIDER MUTON/06.webp",
               "TAF/TAF KAMEN RIDER MUTON/07.webp",
-              "TAF/TAF KAMEN RIDER MUTON/08.webp"],contains:[] },
+              "TAF/TAF KAMEN RIDER MUTON/08.webp"],
+    figuras:["rider-muton@taf"],contains:[] },
 
   /* --- Tanda del 24 --- */
   { id:"dx-random-box-02", title:"DX RIDER EGGS RANDOM BOX 02", category:"DX RANDOM BOX",
@@ -1364,7 +1460,9 @@ const PRODUCTS = [
     date:"2026-11-07", dateType:"release", price:990,
     img:"SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/01-thumb.webp",
     gallery:["SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/01.webp",
-              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/02.webp"],contains:[] }
+              "SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/02.webp"],
+    figuras:["rider-tigul@sv"],
+    contains:[] }
 ];
 
 /* El mes de cada producto se deriva de su fecha una sola vez, al cargar.
@@ -1486,6 +1584,38 @@ PRODUCTS.forEach(p => {
     (SOURCES[key] = SOURCES[key] || []).push(p);
   });
 });
+
+/* --- Entidades: riders, drivers y armas --- */
+const ENTIDADES_BY_ID = ENTIDADES.reduce((m, e) => { m[e.id] = e; return m; }, {});
+
+/* Que producto representa cada entidad-linea. */
+const SOURCES_FIG = {};
+PRODUCTS.forEach(p => (p.figuras || []).forEach(ref => {
+  const k = normalizeRef(ref);
+  (SOURCES_FIG[k] = SOURCES_FIG[k] || []).push(p);
+}));
+
+/* Una figura la tienes si tienes su producto O si viene dentro de otro que
+   tengas: el Narikiri trae el Driver DX, asi que el Driver esta en tus manos
+   aunque no compraras esa caja. Reaprovecha la cadena de `reemplaza`. */
+function ownedFigurasSet(){
+  const owned = new Set();
+  const cubiertos = coveredMap();
+  PRODUCTS.forEach(p => {
+    if(getProductState(p.id) === "owned" || cubiertos[p.id])
+      (p.figuras || []).forEach(ref => owned.add(normalizeRef(ref)));
+  });
+  return owned;
+}
+
+/* Progreso de un tipo de entidad. Una entidad cuenta en cuanto tienes UNA de
+   sus lineas: para "que riders tengo" da igual si es el TAF o el vinilo. */
+function tipoProgress(tipo, owned){
+  const items = ENTIDADES.filter(e => e.tipo === tipo);
+  const got   = items.filter(e => eggsStatus(e, owned) !== "missing").length;
+  return { items, got, total: items.length,
+           pct: items.length ? (got / items.length) * 100 : 0 };
+}
 
 /* Conjunto de variantes obtenidas, derivado de los productos marcados.
    Un producto "Obtenido" marca TODOS los EGGS que declara (incluidas las
@@ -1854,11 +1984,13 @@ function renderChecklist(){
       ? (() => { const l = Object.keys(EGGS_LINES).map(x => lineProgress(x, owned));
                  return { got: l.reduce((n, x) => n + x.got, 0),
                           total: l.reduce((n, x) => n + x.total, 0) }; })()
+      : t.entidad ? tipoProgress(t.entidad, ownedFigurasSet())
       : catProgress(t.id, cubiertos);
     if(!pr.total) return "";                     // categoria aun sin productos
     const sel = t.id === activa.id;
     return `
-      <button class="panel__tab panel__tab--${esc(t.id === "eggs" ? "eggs"
+      <button class="panel__tab panel__tab--${esc(t.entidad ? t.entidad
+                : t.id === "eggs" ? "eggs"
                 : (PRODUCT_CHECKLISTS.find(c => c.cat === t.id) || {}).slug || "eggs")}"
               role="tab" aria-selected="${sel}" data-tab="${esc(t.id)}">
         ${esc(t.label)}
@@ -1918,6 +2050,47 @@ function renderChecklist(){
           </div>
         </section>`;
     }).join("");
+
+  }else if(activa.entidad){
+    /* Checklist de entidad: riders, drivers o armas. Misma pinta que la de
+       Eggs —entrada con sub-marcas— pero aqui la variante es la LINEA. */
+    const ownedFig = ownedFigurasSet();
+    const pr = tipoProgress(activa.entidad, ownedFig);
+
+    const visible = state.ui.hideOwned
+      ? pr.items.filter(e => eggsStatus(e, ownedFig) !== "owned")
+      : pr.items;
+
+    const filas = visible.map(e => {
+      const status = eggsStatus(e, ownedFig);
+      const chips = variantsOf(e).map(v => {
+        const tengo = ownedFig.has(e.id + "@" + v.id);
+        const donde = (SOURCES_FIG[e.id + "@" + v.id] || [])[0];
+        return `<span class="var-chip${tengo ? " var-chip--owned" : ""}"
+                      ${donde ? `data-goto="${esc(donde.id)}" role="link" tabindex="0"
+                      title="${esc(donde.title)}"` : ""}>${esc(v.label)}</span>`;
+      }).join("");
+      const primero = (SOURCES_FIG[e.id + "@" + variantsOf(e)[0].id] || [])[0];
+      return `
+        <div class="eggs-item eggs-item--${status}" data-goto="${primero ? esc(primero.id) : ""}"
+             role="button" tabindex="0">
+          <span class="eggs-item__dot" aria-hidden="true"></span>
+          <span class="eggs-item__main">
+            <span class="eggs-item__name">${esc(e.name)}</span>
+            <div class="eggs-item__vars">${chips}</div>
+          </span>
+        </div>`;
+    }).join("");
+
+    panelBody.innerHTML = `
+      <section class="eggs-line eggs-line--${esc(activa.entidad)}">
+        <div class="eggs-line__head">
+          <span class="eggs-line__name">${esc(ENTIDAD_TIPOS[activa.entidad].toUpperCase())}</span>
+          <span class="eggs-line__count">${pr.got}/${pr.total}</span>
+        </div>
+        <div class="eggs-line__bar"><div class="eggs-line__fill" style="width:${pr.pct}%"></div></div>
+        ${filas || '<p class="panel__empty">Todo conseguido.</p>'}
+      </section>`;
 
   }else{
     /* Checklist de producto: cada producto de la categoria es una pieza. */
