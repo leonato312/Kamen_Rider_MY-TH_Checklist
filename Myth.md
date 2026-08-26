@@ -69,10 +69,11 @@ dependencias. Se abre con doble clic y funciona igual en local que publicado.
 Todo el catálogo se genera desde dos arrays:
 
 - `EGGS_CATALOG` — un objeto por pieza coleccionable
+- `ENTIDADES` — un objeto por rider, driver o arma
 - `PRODUCTS` — un objeto por producto
 
 De ahí salen tarjetas, contadores, barras y checklists. Mantener el catálogo es
-editar dos listas.
+editar esas listas.
 
 **Por qué así:** la checklist necesita saber qué piezas trae cada producto. Si
 las tarjetas fueran HTML a mano, esa relación viviría en la cabeza de quien las
@@ -113,6 +114,7 @@ clave, se pisan lo que el usuario tenga marcado. El patrón es `<serie>-catalog-
   alsoIn:["TAF"],                // opcional: producto que pertenece a dos categorías
   reemplaza:["dx-myth-driver"],  // opcional: productos que trae dentro
   componentes:["driver-myth"],   // opcional: piezas no coleccionables, solo auditoría
+  figuras:["rider-myth@taf"],    // opcional: qué rider/driver/arma representa
   img:"...-thumb.webp",
   gallery:["....webp"],
   contains:["ride-eggs-8","ride-eggs-4@std"] }
@@ -145,6 +147,17 @@ precio pendiente, es que no lo tendrá nunca. Si hay precio, sale como tooltip.
 **siempre**, también `@std`. El motor normaliza la desnuda, pero se lee mal:
 parece declarar *la pieza* cuando declara *una versión*, y el mismo id acaba
 escrito de dos formas en el mismo catálogo.
+
+### Entidad
+
+```js
+{ id:"rider-myth", name:"MY-TH", tipo:"rider",   // clave de ENTIDAD_TIPOS
+  variants:[ {id:"taf", label:"TAF"},            // la LÍNEA es la variante
+             {id:"sv",  label:"SOFT VINYL"} ] }
+```
+
+Las líneas se declaran una vez como constantes (`L_TAF`, `L_SV`…) y se comparten
+entre entidades: así el rótulo no puede divergir de una a otra.
 
 ### Las cuatro reglas que más se prestan a error
 
@@ -196,15 +209,41 @@ lotería.
 
 ## 4. Las checklists
 
-Hay **dos clases y no funcionan igual**, aunque se vean parecidas.
+Hay **tres clases y no funcionan igual**, aunque se vean parecidas. Distinguirlas
+es lo que evita modelar mal una colección nueva.
 
-**Del coleccionable.** La pieza está repartida entre productos, así que ninguno la
-representa. Se declara con `contains` y el progreso se **deriva**. Es la razón de
-ser del sistema.
+**Del coleccionable** (`EGGS_CATALOG` + `contains`). La pieza está repartida entre
+productos, así que ninguno la representa. El progreso se **deriva**. Es la razón
+de ser del sistema.
 
 **De producto** (`PRODUCT_CHECKLISTS`). Cada producto **es** la pieza; la
 checklist solo los agrupa. Aporta ver todos juntos, porque el catálogo está
 ordenado por mes y si no habría que recorrer cinco meses.
+
+**De entidad** (`ENTIDADES` + `figuras`). La entidad es un **personaje o un
+objeto**, y existe en varias líneas de juguete a la vez: un rider tiene figura
+TAF, vinilo, SO-DO y model kit. No es una categoría —es **otro eje sobre los
+mismos productos**—.
+
+> **La línea se modela como variante.** Ese es el truco que ahorra todo el
+> trabajo: `variants` ya sabe llevar estado por versión y pintar sub-marcas que
+> enlazan a su producto, así que una entidad con `variants:[TAF, SOFT VINYL,
+> SO-DO]` sale gratis. La entidad cuenta **una vez** —tener el rider es tenerlo,
+> en la línea que sea— y los chips dicen en cuál lo tienes.
+
+Dos consecuencias que no son obvias:
+
+- **No van en la cabecera.** Una figura TAF cuenta a la vez en la checklist "TAF"
+  y en "Riders"; ponerlas juntas arriba daría a entender que se suman. Las de
+  entidad viven solo en el panel.
+- **Se benefician de la cobertura.** Si un set trae dentro el driver suelto,
+  marcar el set da el driver por tenido — sin declararlo dos veces, porque
+  `figuras` se lee también de los productos cubiertos.
+
+**Qué no se cuenta como entidad:** los objetos que son **accesorio de una
+figura**. El criterio es que el objeto sea *el producto*, no un extra dentro de
+la caja de otro. Un arma que viene en el kit de un personaje no es un arma
+coleccionable; la misma arma vendida en su caja, sí.
 
 ### Cada una en su pestaña, nunca apiladas
 
@@ -247,10 +286,14 @@ posiciones verticales distintas. El número escrito en un documento envejece.
 
 ### Añadir una checklist nueva
 
-Tres pasos en `index.html`: entrada en `PRODUCT_CHECKLISTS` (`cat`, `label`,
-`slug`), entrada en `CHECKLIST_TABS` (`id`, `label`, `hint`), y un color en
-`:root` con las cuatro reglas que lo aplican. Una categoría sin productos no
-dibuja pestaña, así que se puede declarar antes de tener nada.
+**De producto:** entrada en `PRODUCT_CHECKLISTS` (`cat`, `label`, `slug`), entrada
+en `CHECKLIST_TABS` (`id`, `label`, `hint`) y un color en `:root` con las cuatro
+reglas que lo aplican. Una categoría sin productos no dibuja pestaña, así que se
+puede declarar antes de tener nada.
+
+**De entidad:** una clave en `ENTIDAD_TIPOS`, las entidades en `ENTIDADES` con sus
+`variants` (las líneas), un `figuras:["entidad@linea"]` en cada producto que la
+represente, y la pestaña con `entidad:"<tipo>"` en vez de una categoría.
 
 ---
 
@@ -515,7 +558,8 @@ Dos avisos del entorno de pruebas:
 ### Estado
 
 46 productos de julio a noviembre de 2026 · 41 piezas Eggs (35 DX, 6 SG) ·
-12 categorías · 6 checklists · ~280 archivos y 43,5 MB publicados.
+8 riders, 1 driver y 4 armas · 12 categorías · **8 checklists** · ~280 archivos
+y 43,5 MB publicados.
 
 - **Repositorio:** `leonato312/Kamen_Rider_MY-TH_Checklist`
 - **Sitio:** https://leonato312.github.io/Kamen_Rider_MY-TH_Checklist/
@@ -542,7 +586,17 @@ esperando su primer producto), `SG MODEL KITS`, `SG SO-DO`, `SG RANDOM BOX`,
 `DX SETS`, `DX RANDOM BOX`, `DX DRIVERS`, `BUCKLES SETS`, `ARMAS`,
 `RIDE-SEED EGGS PROMOCIONALES`.
 
-Checklists: Eggs (DX y SG), TAF, SO-DO, Buckles y Vinyl.
+Checklists: **de coleccionable** Eggs (DX y SG); **de producto** TAF, SO-DO,
+Buckles y Vinyl; **de entidad** Riders, Drivers y Armas.
+
+Los 8 riders son MY-TH, MAOU, DATT, RID, JAO, TIGUL, MUTON y VANKEN. Hay **un
+solo driver**, el MY-TH Driver, en tres presentaciones: DX, model kit y model kit
+Hammer On. Y **4 armas**: MY-TH Edge suelta, más Rabbit Sword, Snake Size y Dog
+Gun, que vienen las tres en el Twelve Zodiac Weapons Set.
+
+`HOKOKUROU` **no** cuenta como arma: es un dispositivo de brazo con gimmick de
+sellos y está archivado en `DX SETS`, no en `ARMAS`. La categoría que le puso el
+usuario manda sobre lo que parezca en la foto.
 
 ### Decisiones propias de Myth, con su porqué
 
@@ -622,7 +676,8 @@ ficha, que se quedó atrás. Verificar siempre el resultado, no la intención.
 - **Las miniaturas de la galería** cargan el WebP de 1600 px. Se decidió dejarlo:
   precarga lo que el visor va a mostrar. Si molesta, generar `-thumb` para las 204
   fotos sube el despliegue ~6 MB y divide por seis lo que baja quien navegue.
-- **Drivers y Armas no tienen checklist propia.** Son 3 y 2 productos.
+- **`SHF` no aporta riders todavía.** Cuando tenga producto, cada figura suya
+  añade una variante `shf` a su rider.
 
 ---
 
