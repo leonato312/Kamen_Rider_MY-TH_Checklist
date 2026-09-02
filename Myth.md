@@ -1,699 +1,181 @@
 # Kamen Rider Myth — checklist de merchandising
 
-Punto de entrada único del repositorio. Cualquier actualización, mejora o
-investigación empieza aquí.
+Punto de entrada de este repositorio. La arquitectura —qué se cataloga, cómo
+se ordena, cómo funcionan el catálogo central y la barra lateral— vive en los
+documentos maestros de `D:\DG\` (`MAESTRO-1-CHECKLIST.md`,
+`MAESTRO-2-INVESTIGACION.md`, `MAESTRO-3-CODIFICACION.md`) y **son la
+autoridad**. Este archivo recoge únicamente lo que queda fuera de su alcance:
+el cuestionario del maestro respondido para Myth, las excepciones reales que
+Myth se ganó por haberse publicado antes de que los maestros existieran, y las
+lecciones de esta serie en concreto.
 
-Reemplaza a `SISTEMA.md`, `PROJECT-RED.md`, `tools/README.md` y `ACTUALIZAR.md`,
-que se borraron al volcarlos. **Si aparece otro `.md` suelto en la raíz, no es
-un segundo documento: es algo pendiente de bajar aquí y borrar.**
-
----
-
-## Cómo se hereda este archivo
-
-La serie siguiente copia este archivo, lo renombra y **solo sustituye la
-Parte II**. Todo lo demás le sirve tal cual.
-
-| Parte | Qué es | Al heredar |
-|---|---|---|
-| **I. El motor** | arquitectura, modelo, imágenes, herramientas, despliegue | se queda igual |
-| **II. Esta serie** | Myth: su vocabulario, sus categorías, sus decisiones | **se reemplaza entero** |
-| **III. Lo aprendido** | errores que costaron tiempo y lo que se descartó | se queda igual |
-
-Antes de arrancar una serie nueva, responder el cuestionario del §13. Sin eso,
-cualquier estructura que se monte es a ciegas.
-
----
----
-
-# PARTE I — EL MOTOR
-
-## 0. Un repositorio por serie
-
-**No meter dos series en el mismo catálogo.** Cada una tiene su coleccionable,
-sus líneas y su calendario, y sobre todo: **una serie sigue sacando producto
-después de que acabe su emisión**. Si compartieran repositorio, el catálogo de la
-vieja seguiría creciendo dentro del de la nueva y el calendario dejaría de
-responder a la pregunta que lo justifica.
-
-Consecuencia práctica: cada serie con su repositorio, su `index.html`, su URL y
-**su propia clave de `localStorage`**.
+Myth fue el primer repositorio migrado a la arquitectura de los maestros, y
+también el primero en probar el pivote de enciclopedia (§10.2). Lo que se
+aprendió en el camino ya está incorporado a los maestros; aquí solo queda el
+resto de la historia.
 
 ---
 
-## 1. Para qué existe
+## 1. Identidad y excepciones declaradas
 
-Dos preguntas, en este orden:
-
-1. **¿Cuándo llega la próxima wave?** Por eso el mes es la categoría raíz y todo
-   cuelga de la fecha de salida.
-2. **¿Qué me falta del coleccionable?** Las piezas se reparten entre sets, cajas
-   sorpresa y exclusivas — decenas, imposibles de rastrear a ojo. Las figuras y
-   los cinturones no: son pocos.
-
-Vocabulario, porque se confunden: una **wave** es el ciclo de lanzamientos de un
-mes; las **tandas** son los días concretos dentro de ese mes. Septiembre de Myth
-es una wave con seis tandas.
-
-Si una serie no tiene un coleccionable masivo repartido, media máquina sobra y
-queda un calendario con checklists por categoría. Compruébalo antes de montar.
-
----
-
-## 2. La arquitectura
-
-### Un archivo, dos listas
-
-`index.html` es HTML5 + CSS3 + Vanilla JS. Sin frameworks, sin build, sin
-dependencias. Se abre con doble clic y funciona igual en local que publicado.
-Todo el catálogo se genera desde dos arrays:
-
-- `EGGS_CATALOG` — un objeto por pieza coleccionable
-- `ENTIDADES` — un objeto por rider, driver o arma
-- `PRODUCTS` — un objeto por producto
-
-De ahí salen tarjetas, contadores, barras y checklists. Mantener el catálogo es
-editar esas listas.
-
-**Por qué así:** la checklist necesita saber qué piezas trae cada producto. Si
-las tarjetas fueran HTML a mano, esa relación viviría en la cabeza de quien las
-escribió y se rompería a la tercera wave. Declarada como dato, marcar un producto
-actualiza la checklist sola y no puede desincronizarse.
-
-**El coste:** un error de sintaxis deja la página en blanco, porque todo se
-genera en tiempo de ejecución. De ahí que el repositorio sea Git **desde antes de
-escribir la primera entrada**.
-
-### La regla de oro del estado
-
-Solo se persiste `{products:{id:estado}, ui:{...}}` bajo `krmyth-catalog-v1`.
-**Las checklists nunca se guardan: se derivan de los productos en cada render.**
-Progreso, cobertura, qué pieza falta — todo es cálculo. Esa es la razón de que no
-puedan mentir.
-
-`loadState()` descarta ids que ya no existen, para que renombrar un producto no
-deje basura invisible engordando el guardado.
-
-**Cada serie necesita su propia clave.** Si dos catálogos comparten dominio y
-clave, se pisan lo que el usuario tenga marcado. El patrón es `<serie>-catalog-v1`.
-
----
-
-## 3. El modelo de datos
-
-### Producto
-
-```js
-{ id:"dx-rider-eggs-set-01",     // <línea>-<producto>, minúsculas
-  title:"DX RIDER EGGS SET 01",  // el nombre de la caja
-  category:"DX SETS",            // una de CATEGORY_ORDER
-  date:"2026-09-05",             // el mes del acordeón sale de aquí
-  dateType:"release",            // "release" | "preorder" (Premium Bandai)
-  price:2200,                    // con impuestos, o null
-  priceLabel:"Premio de campaña",// opcional: matiza o sustituye el precio
-  alsoIn:["TAF"],                // opcional: producto que pertenece a dos categorías
-  reemplaza:["dx-myth-driver"],  // opcional: productos que trae dentro
-  componentes:["driver-myth"],   // opcional: piezas no coleccionables, solo auditoría
-  figuras:["rider-myth@taf"],    // opcional: qué rider/driver/arma representa
-  img:"...-thumb.webp",
-  gallery:["....webp"],
-  contains:["ride-eggs-8","ride-eggs-4@std"] }
-```
-
-**`date` es la única fuente de verdad temporal.** El mes se deriva al cargar
-(`p.month = p.date.slice(0,7)`). Guardar mes y fecha por separado los deja
-desincronizarse tarde o temprano.
-
-**`dateType:"preorder"`** existe porque Premium Bandai no tiene fecha de tienda,
-tiene fecha de reserva. Se trata como equivalente al release y se marca con badge
-para no confundir.
-
-**`priceLabel`** cubre lo que no es un precio normal. Si `price` es `null`,
-sustituye al texto "Precio por confirmar" — porque un premio de campaña no es un
-precio pendiente, es que no lo tendrá nunca. Si hay precio, sale como tooltip.
-
-### Pieza coleccionable
-
-```js
-{ id:"ride-eggs-4",
-  name:"Ride Eggs 4",
-  type:"ride-eggs",   // clave de EGGS_TYPES, agrupa dentro del panel
-  line:"DX",          // contadores separados por línea
-  variants:[ {id:"std", label:"Estandar"},
-             {id:"special", label:"Special ver."} ] }
-```
-
-**Regla de referencia:** si la pieza declara `variants`, en `contains` va con `@`
-**siempre**, también `@std`. El motor normaliza la desnuda, pero se lee mal:
-parece declarar *la pieza* cuando declara *una versión*, y el mismo id acaba
-escrito de dos formas en el mismo catálogo.
-
-### Entidad
-
-```js
-{ id:"rider-myth", name:"MY-TH", tipo:"rider",   // clave de ENTIDAD_TIPOS
-  variants:[ {id:"taf", label:"TAF"},            // la LÍNEA es la variante
-             {id:"sv",  label:"SOFT VINYL"} ] }
-```
-
-Las líneas se declaran una vez como constantes (`L_TAF`, `L_SV`…) y se comparten
-entre entidades: así el rótulo no puede divergir de una a otra.
-
-### Las cuatro reglas que más se prestan a error
-
-**Líneas separadas.** DX y SG llevan contadores independientes porque cada línea
-saca piezas que la otra no. Fundirlas haría que "me faltan 3" no significara nada.
-
-**Variantes contra piezas propias:**
-
-| Situación | Cómo va |
-|---|---|
-| Misma pieza reeditada (`special ver.`, `Gold ver.`) | `variants` — una línea, cualquier versión cuenta |
-| Diseños distintos que comparten nombre o procedencia | `variants` también, con sub-marcas que enlazan a su producto |
-| Piezas que aluden a **personajes distintos** | entradas separadas |
-
-La tercera fila es la trampa: `Ride Eggs 1` y `Ride Eggs 1 Origin` parecen
-variante y no lo son, porque aluden a dos riders.
-
-**Productos que absorben a otros.** Un set deluxe suele traer dentro el producto
-base. Se declara con `reemplaza` **en el que absorbe**, y la cobertura es
-**transitiva**: basta declarar lo que se absorbe directamente y las cadenas se
-recorren solas. Cuando salga un set nuevo se toca un sitio en vez de editar todo
-lo que deja obsoleto.
-
-El cubierto **no** pasa a Obtenido —no lo tienes, lo tienes *dentro de otra
-caja*—: se atenúa y avisa de en qué caja viene. Sí cuenta en el contador del mes,
-que responde a "¿me queda algo por comprar?". **Ojo con el doble sentido:** en la
-tarjeta cubierto significa *no lo necesitas*; en la checklist significa *lo
-tienes* y se marca en verde. Misma información, dos preguntas distintas.
-
-**Productos puente.** Un producto puede pertenecer de verdad a dos categorías —el
-Ridewatter Eggs es figura y gimmick a la vez—. Se resuelve con `alsoIn`: se dibuja
-una tarjeta en cada subcategoría pero sigue siendo **un único producto**, con
-estado compartido vía `data-pid`, contando una vez en el mes y una en la
-checklist. Sin eso habría que duplicar la entrada y las copias se
-desincronizarían.
-
-### El desplegable de contenidos
-
-Todo producto que traiga piezas las lista en un desplegable cerrado por defecto,
-que no altera la altura de la tarjeta.
-
-**El texto distingue lo que de verdad es distinto.** En una caja sorpresa las
-piezas son **posibles** —te toca una— y pone "Ver posibles contenidos", borde
-punteado. En un set vienen **garantizadas**: "Eggs incluidos", singular si es una,
-borde continuo. Llamarlos igual daría a entender que comprar un set es una
-lotería.
-
----
-
-## 4. Las checklists
-
-Hay **tres clases y no funcionan igual**, aunque se vean parecidas. Distinguirlas
-es lo que evita modelar mal una colección nueva.
-
-**Del coleccionable** (`EGGS_CATALOG` + `contains`). La pieza está repartida entre
-productos, así que ninguno la representa. El progreso se **deriva**. Es la razón
-de ser del sistema.
-
-**De producto** (`PRODUCT_CHECKLISTS`). Cada producto **es** la pieza; la
-checklist solo los agrupa. Aporta ver todos juntos, porque el catálogo está
-ordenado por mes y si no habría que recorrer cinco meses.
-
-**De entidad** (`ENTIDADES` + `figuras`). La entidad es un **personaje o un
-objeto**, y existe en varias líneas de juguete a la vez: un rider tiene figura
-TAF, vinilo, SO-DO y model kit. No es una categoría —es **otro eje sobre los
-mismos productos**—.
-
-> **La línea se modela como variante.** Ese es el truco que ahorra todo el
-> trabajo: `variants` ya sabe llevar estado por versión y pintar sub-marcas que
-> enlazan a su producto, así que una entidad con `variants:[TAF, SOFT VINYL,
-> SO-DO]` sale gratis. La entidad cuenta **una vez** —tener el rider es tenerlo,
-> en la línea que sea— y los chips dicen en cuál lo tienes.
-
-Dos consecuencias que no son obvias:
-
-- **No van en la cabecera.** Una figura TAF cuenta a la vez en la checklist "TAF"
-  y en "Riders"; ponerlas juntas arriba daría a entender que se suman. Las de
-  entidad viven solo en el panel.
-- **Se benefician de la cobertura.** Si un set trae dentro el driver suelto,
-  marcar el set da el driver por tenido — sin declararlo dos veces, porque
-  `figuras` se lee también de los productos cubiertos.
-
-**Qué no se cuenta como entidad:** los objetos que son **accesorio de una
-figura**. El criterio es que el objeto sea *el producto*, no un extra dentro de
-la caja de otro. Un arma que viene en el kit de un personaje no es un arma
-coleccionable; la misma arma vendida en su caja, sí.
-
-### Cada una en su pestaña, nunca apiladas
-
-Se probaron primero como bloques en un mismo panel y estaba mal: **hay
-coleccionistas que siguen una sola línea** y a esos, pasar por 41 piezas del
-gimmick para llegar a sus cuatro kits no les sirve. Y hay quien lleva dos cuentas
-a la vez y quiere compararlas.
-
-Cada checklist es una pestaña (`CHECKLIST_TABS`) con su contador en la solapa, su
-texto de ayuda y su color. El panel recuerda en cuál estabas y el filtro de
-ocultar se mantiene al cambiar.
-
-### La línea se pliega
-
-Una línea con decenas de piezas repartidas en varios tipos, dibujada de una vez,
-es un muro. Se pliega con la misma maquinaria que el acordeón de meses
-—`max-height` + `data-open`, con lo abierto guardado—.
-
-**Cerrada no puede esconder el resumen:** nombre, contador y barra quedan fuera
-del bloque plegable a propósito, porque son justo lo que se viene a mirar. En la
-primera visita, todas cerradas: dos barras juntas ya son la respuesta.
-
-### El color orienta
-
-Cada checklist tiene un tono que se repite en los tres sitios donde aparece: la
-mini-barra de la cabecera, la solapa de su pestaña y el encabezado de su sección.
-
-**Los dos tonos fuertes se reservan al coleccionable principal**; el resto usa
-tonos suaves. Con seis barras, si todas gritan igual se pierde cuál importa.
-
-### Cuánto cabe en la cabecera
-
-**Hay que medirlo, no estimarlo.** Con seis barras esta cabecera aguanta en una
-línea hasta 1280 px; a 1240 el botón de las checklists se caía solo a una segunda
-fila. El responsive baja las barras a fila propia en `max-width: 1279px`, en su
-propia consulta para no adelantar el resto.
-
-Si se añaden barras, volver a medir: forzar el viewport a varios anchos y contar
-posiciones verticales distintas. El número escrito en un documento envejece.
-
-### Añadir una checklist nueva
-
-**De producto:** entrada en `PRODUCT_CHECKLISTS` (`cat`, `label`, `slug`), entrada
-en `CHECKLIST_TABS` (`id`, `label`, `hint`) y un color en `:root` con las cuatro
-reglas que lo aplican. Una categoría sin productos no dibuja pestaña, así que se
-puede declarar antes de tener nada.
-
-**De entidad:** una clave en `ENTIDAD_TIPOS`, las entidades en `ENTIDADES` con sus
-`variants` (las líneas), un `figuras:["entidad@linea"]` en cada producto que la
-represente, y la pestaña con `entidad:"<tipo>"` en vez de una categoría.
-
----
-
-## 5. De dónde salen los datos
-
-### `FICHA/`, la base de datos
-
-Cada categoría contiene una carpeta `FICHA/` con las capturas de las páginas
-oficiales de donde salen fecha, precio y contenidos. **Es lo primero que hay que
-mirar antes de actualizar nada.**
-
-**Es de formato libre.** No se publica, no se le generan derivados —se guarda a
-resolución original precisamente para poder leer los datos— y **sus nombres no
-tienen que corresponderse con ningún producto**: una sola hoja puede cubrir una
-colección de diez tipos.
-
-### Jerarquía de fuentes
-
-1. **Los nombres, de la caja del producto.** Si hay foto de la caja, manda la
-   caja. En Myth tres nombres estuvieron mal semanas hasta que las cajas de TAF
-   los zanjaron.
-2. **Fechas y precios, de la ficha oficial.**
-3. **Las hojas de cálculo de apoyo, solo para fechas y precios.** Para
-   nomenclatura transcriben mal la mitad.
-
-### Las páginas de donde se saca todo
-
-**Ninguna serie tiene todas sus fotos ni todos sus datos en un sitio.** Este es
-el orden de búsqueda, y cada fuente tiene su trampa.
-
-| Fuente | Para qué |
-|---|---|
-| `toy.bandai.co.jp` | ficha: fotos, fecha, precio, contenidos |
-| **CDN de Akamai** | fotos de cualquier producto, aunque su página no abra |
-| `bandai.co.jp/candy` | la raíz de la línea SG |
-| `tamashiiweb.com` | S.H.Figuarts: datos buenos, fotos pequeñas |
-| `p-bandai.jp` | **geobloqueado** |
-| `1999.co.jp` | **las fotos de caja** |
-| `tokullectibles.com` | números de modelo, contenidos y banners |
-| la wiki de la serie | premios, que ninguna tienda vende |
-| el repositorio hermano | piezas de crossover |
-
-**1 · La ficha de Bandai.** Conviven dos hosts y hay que mirar **los dos**:
-
-```
-bandai-a.akamaihd.net/bc/img/model/xl/<nº modelo>_<n>.jpg      fichas antiguas
-assets-toy.bandai.co.jp/toy/ja/product/AAAA/MM/<hash>/<n>.jpg  nuevas
-```
-
-Mirando solo el primero se queda fuera **la mitad** de los productos. Se enumera
-`_1`, `_2`… hasta el primer 404, conservando el **orden del documento**: es el de
-la galería oficial.
-
-**2 · El CDN por número de modelo es la llave maestra.** No está geobloqueado y
-responde aunque la página del producto no se pueda abrir.
-
-> **La trampa más cara: devuelve 200 a cualquier número válido, sea de la serie
-> que sea.** En Gavan Infinity entraron diez fotos de otra serie porque una
-> tienda daba un número equivocado y la descarga «funcionó». **Abre una imagen y
-> míralas** antes de dar por buena una carpeta.
-
-**3 · Bandai Candy**, la raíz de SG:
-`bandai.co.jp/candy/search/result.html?q=<término en japonés>`. En la ficha, la
-galería propia son las imágenes con pareja `-product-mobile`; las que solo
-aparecen como `-product-main` son de otros productos. Sirve los mismos archivos
-que el CDN, así que aporta datos más que resolución — pero hay que ir: destapó un
-producto que ninguna otra fuente listaba.
-
-**4 · Tamashii Web** para S.H.Figuarts. Datos completos —precio, reservas,
-`セット内容`— pero **las fotos más pequeñas**, y las fichas nuevas solo en
-`.webp`.
-
-**5 · Premium Bandai está geobloqueado.** `p-bandai.jp` devuelve 302 desde fuera
-de Japón, y `p-bandai.com/us` no distribuye las exclusivas japonesas. **La salida
-es el CDN:** el número de item de la URL *es* el número de modelo.
-
-**6 · HobbySearch (`1999.co.jp`) es de donde salen las cajas.** Bandai no publica
-la foto del paquete por separado:
-
-```
-www.1999.co.jp/itbig<NN>/<id>.jpg     miniatura 224 px
-www.1999.co.jp/itbig<NN>/<id>b*.jpg   galería 1200 px
-www.1999.co.jp/itbig<NN>/<id>p*.jpg   PAQUETE 1200 px   <- esto
-```
-
-Son JPEG de verdad aunque el navegador reciba `.webp`. **Su buscador tiene
-truco:** el parámetro que funciona es `searchkey=`, no `sw=`; con `sw=` devuelve
-el catálogo entero sin filtrar. No stockea exclusivas de P-Bandai ni premios.
-
-**7 · Tokullectibles**, que es Shopify y sirve para tres cosas:
-
-```
-tokullectibles.com/products/<handle>.json
-tokullectibles.com/collections/<slug>/products.json?limit=250
-```
-
-- **Números de modelo de todo**, incluidos SG y gashapon. Con eso, el CDN da las
-  fotos: es la vía más rápida para levantar una línea entera.
-- **Contenidos** que a veces Bandai no lista.
-- **Banners** que Bandai no publica: se reconocen porque su nombre **no** sigue
-  el patrón `<nº modelo>_<n>.jpg`.
-
-Dos avisos: **sus copias de Bandai están recomprimidas** —ni un byte coincide con
-las del CDN— y **reutiliza una imagen genérica** en los productos sin foto, que
-se detecta porque el mismo nombre aparece en varios. Sus precios son de
-importación en dólares.
-
-**8 · La wiki es la única fuente de los premios**: campañas, máquina de garra,
-bonos de ropa y regalos de revista. En Fandom los nombres de archivo están en los
-atributos `data-image-name`. Ojo: a veces el original subido es pequeño.
-
-**9 · El repositorio hermano.** Si una pieza es un crossover, puede estar mejor
-al otro lado. Aquí pasa con el Ridewatter Eggs.
-
-### Después de descargar, comprueba
-
-**Abre y decodifica todas las imágenes.** Un `PACKAGE.jpg` llegó truncado —107.826
-bytes en vez de 164.106— **con código 200**, y abría como imagen válida hasta que
-la conversión intentó leer el último bloque. Ni el código ni el tamaño bastan.
-
-### Qué anotar de cada caja
-
-**Todo lo que trae, no solo los coleccionables.** Un set que incluye un cinturón
-deja sin sentido comprar ese cinturón suelto, y eso se pasa por alto con
-facilidad cuando la atención está en el gimmick principal. Si es un set especial,
-anotar además **de qué sets es upgrade**: con la cobertura transitiva, basta con
-eso.
-
----
-
-## 6. Las imágenes
-
-### Estructura
-
-```
-CATEGORÍA EN MAYÚSCULAS/
-├── FICHA/                        ← consulta, NO se publica
-├── NOMBRE DEL PRODUCTO-Contenidos/
-│   ├── PACKAGE.jpg               ← original, NO se publica
-│   ├── PACKAGE.webp              ← galería, 1600 px
-│   ├── PACKAGE-thumb.webp        ← portada, 700 px
-│   └── 01.jpg  01.webp
-└── PRODUCTO DE UNA IMAGEN-Contenidos.jpg   ← sin carpeta
-```
-
-**Portada = `PACKAGE` si existe, si no `01`.** Los productos de una sola imagen no
-llevan carpeta: el archivo va suelto con su nombre completo.
-
-### Los derivados
-
-| Archivo | Lado máx. | Calidad | Para qué |
-|---|---|---|---|
-| `<nombre>.webp` | 1600 px | 80 | galería, se abre en el visor |
-| `<nombre>-thumb.webp` | 700 px | 82 | portada de la tarjeta |
-
-En Myth: portadas de 36,2 → 2,0 MB (94% menos) y galerías de 218 → 38 MB (83%).
-700 px para una tarjeta de 252 px porque en pantallas retina se ve al doble.
-
-Los originales no se tocan ni se suben; su respaldo va aparte.
-
-### Cinco trampas que costaron horas
-
-**1. No pongas `loading="lazy"` en las portadas.** Las tarjetas viven dentro de un
-acordeón que arranca con `max-height: 0`; el navegador las da por fuera de
-pantalla y no las pide hasta que hay scroll, así que aparecen vacías hasta que
-mueves el ratón. Con 62 KB por portada, diferirlas no aporta nada.
-
-**2. Las fotos de galería sí se difieren, pero de verdad.** Las `<img>` se crean
-sin `src` y solo se rellena al abrirlas. Con `lazy` a secas el navegador tira de
-las cercanas y el ahorro se evapora.
-
-**3. Cuidado con las miniaturas que cargan la imagen grande.** Una tira de
-miniaturas de 62 px apuntando al archivo de 1600 px son 2 MB para pintar diez
-cuadraditos. Se detecta midiendo, no mirando.
-
-**4. Las mayúsculas de las rutas.** Windows resuelve sin distinguirlas y el
-servidor no: una mayúscula mal puesta funciona en tu equipo y da 404 publicada.
-Es el fallo más traicionero del sistema, y por eso existe `check_urls.py`.
-
-**5. Nada de servir imágenes desde Drive.** Límites de peticiones, y funcionan
-solo para quien tiene sesión iniciada. Van junto al HTML, con **rutas relativas**
-— así el sitio funciona igual bajo `/repo/` que en un dominio propio.
-
----
-
-## 7. Las herramientas
-
-Cuatro scripts en `tools/`, con Pillow como única dependencia
-(`python -m pip install Pillow`). Deducen las rutas de su propia ubicación.
-
-| Script | Qué hace | Escribe |
-|---|---|---|
-| `audit.py` | Cruza `index.html` con el disco | nada |
-| `check_urls.py` | Igual, pero distinguiendo mayúsculas | nada |
-| `plan.py` | Muestra qué portada y galería saldrían | nada |
-| `build_all.py` | Genera los `.webp` y repunta el HTML | sí |
-
-**Los tres primeros son de solo lectura: correrlos siempre antes.**
-
-`audit.py` comprueba lo único que puede romper el sitio: rutas referenciadas que
-no existen, `.webp` en disco que nadie usa, carpetas con fotos que la página
-ignora, portada determinable, numeración y duplicados. Y dibuja el árbol de
-`reemplaza`, deduciéndolo además de los `componentes` para avisar si la
-declaración no cuadra con el contenido real.
-
-**Una auditoría con falsos positivos es peor que ninguna.** Una versión contaba
-los `.webp` derivados como fotos y avisaba de huecos inexistentes: con 74 avisos
-de los que 70 eran ruido, nadie los lee.
-
-### Añadir un producto
-
-1. Guardar la captura en `CATEGORIA/FICHA/`, anotando **todo** lo que trae.
-2. Crear `CATEGORIA/NOMBRE DEL PRODUCTO-Contenidos/` con `PACKAGE.jpg` si la hay
-   y luego `01.jpg`, `02.jpg`… correlativas y con cero delante.
-3. `python tools/audit.py`, sin incidencias ALTO.
-4. Entrada en `PRODUCTS`, y piezas nuevas en `EGGS_CATALOG`. Si absorbe a otros,
-   `reemplaza`; si es de las categorías donde eso pasa, también `componentes`.
-5. **Registrar la carpeta en el diccionario `CARPETA` de `plan.py`.** Es el paso
-   que se olvida: sin él el script no le genera nada y la tarjeta se queda sin
-   imagen.
-6. `python tools/build_all.py`.
-
----
-
-## 8. Qué se publica y despliegue
-
-```
-se sube          index.html + los .webp + tools/     ~43 MB
-se queda local   originales + FICHA/ + xlsx          ~238 MB
-```
-
-El `.gitignore` filtra por patrón, así vale para lo que se añada dentro de meses.
-**Git no es la copia de seguridad** de los originales: están ignorados a propósito
-y necesitan respaldo aparte.
-
-GitHub Pages desde `main` / root. **Tras un push que renombra rutas, tarda uno o
-dos minutos en reconstruir: un 404 justo después de subir no es un fallo.**
-
-### Cómo verificar de verdad
-
-`python tools/audit.py` y `python tools/check_urls.py`, y después **ejecuta la
-lógica, no la leas**: marca una caja en el navegador, recarga y comprueba que la
-checklist siga diciendo lo mismo. Los fallos de esta clase no se ven leyendo.
-
-Dos avisos del entorno de pruebas:
-
-- **Las transiciones CSS no avanzan en una pestaña en segundo plano.** Si un
-  acordeón parece no abrirse, comprueba eso antes de buscar el fallo en tu CSS.
-- **`localStorage` está deshabilitado en URLs `data:`.** Si la vista previa carga
-  así, la persistencia no se puede probar ahí: hay que abrir el archivo o el sitio
-  publicado.
-
----
----
-
-# PARTE II — ESTA SERIE
-
-> Esto es lo único que la serie siguiente sustituye.
-
-## 9. Kamen Rider Myth
-
-### Estado
-
-46 productos de julio a noviembre de 2026 · 41 piezas Eggs (35 DX, 6 SG) ·
-8 riders, 1 driver y 4 armas · 12 categorías · **8 checklists** · ~280 archivos
-y 43,5 MB publicados.
-
+- **Franquicia · Serie:** Kamen Rider · Myth
 - **Repositorio:** `leonato312/Kamen_Rider_MY-TH_Checklist`
 - **Sitio:** https://leonato312.github.io/Kamen_Rider_MY-TH_Checklist/
 - **Clave de estado:** `krmyth-catalog-v1`
+- **Estado:** `abierto` — sigue recibiendo waves
 
-### Vocabulario
-
-El gimmick son los **Eggs**, en dos familias: **Ride Eggs** (numerados, más las
-versiones Legend Rider) y **Seed Eggs** (temática animal, más las Legend). Aparte,
-los **Bone Buckles** y el **Ridewatter Eggs**.
-
-Riders, con la romanización de las cajas: **MY-TH** (マイス), **MAOU** (マオウ),
-**DATT**, **RID** (リド), JAO, TIGUL, MUTON, VANKEN.
-
-**Bandai escribe エグズ, y en alfabeto latino EGZ** —el título de SO-DO es
-`装動 仮面ライダーマイス EGZ1`—. Se eligió **Eggs** porque son huevos y así se
-lee solo; se descartó EGZ por opaco y "Ex" por ser una transcripción inicial. Del
-mismo modo "Myceed" se occidentalizó a **"Myth Seed Eggs"**.
-
-### Categorías
-
-En este orden dentro de cada mes: `TAF`, `SOFT VINYL`, `SHF` (declarada y vacía,
-esperando su primer producto), `SG MODEL KITS`, `SG SO-DO`, `SG RANDOM BOX`,
-`DX SETS`, `DX RANDOM BOX`, `DX DRIVERS`, `BUCKLES SETS`, `ARMAS`,
-`RIDE-SEED EGGS PROMOCIONALES`.
-
-Checklists: **de coleccionable** Eggs (DX y SG); **de producto** TAF, SO-DO,
-Buckles y Vinyl; **de entidad** Riders, Drivers y Armas.
-
-Los 8 riders son MY-TH, MAOU, DATT, RID, JAO, TIGUL, MUTON y VANKEN. Hay **un
-solo driver**, el MY-TH Driver, en tres presentaciones: DX, model kit y model kit
-Hammer On. Y **4 armas**: MY-TH Edge suelta, más Rabbit Sword, Snake Size y Dog
-Gun, que vienen las tres en el Twelve Zodiac Weapons Set.
-
-`HOKOKUROU` **no** cuenta como arma: es un dispositivo de brazo con gimmick de
-sellos y está archivado en `DX SETS`, no en `ARMAS`. La categoría que le puso el
-usuario manda sobre lo que parezca en la foto.
-
-### Decisiones propias de Myth, con su porqué
-
-**Una Random Box marcada cuenta sus 6 contenidos.** El usuario asume caja
-completa. No implementar checks individuales por pieza sorpresa.
-
-**Tres estados por producto:** Pendiente / Reservado / Obtenido. Solo `owned`
-cuenta. "Reservado" existe porque el eje de la página son las fechas y hace falta
-ver qué ya se pidió de una wave futura.
-
-**Los model kits y SO-DO no alimentan la checklist de Eggs.** La propia caja avisa
-de que sus piezas son exclusivas de esa serie y no funcionan con el Driver:
-contarlas inflaría el progreso con algo que no puedes usar.
-
-**`RIDE-SEED EGGS PROMOCIONALES`** agrupa gimmicks de revista, campaña y
-exclusivas de tienda. Procedencia irregular: alguno no tiene precio porque es
-premio.
-
-**Sin galería desplegable.** Se implementó una tira de miniaturas en la tarjeta y
-se quitó: metía una fila de ruido en las 46. Las fotos se abren pulsando la
-portada, que lanza un visor en superposición. **Nunca una segunda página por
-producto**: es una checklist, no una tienda.
-
-**El `.xlsx` de apoyo** sirve para fechas y precios. Para nombres transcribe mal
-la mitad (Dad/Maoh/Lido/Tigre por DATT/MAOU/RID/TIGUL, "Ride Exe" por Ride Eggs).
-
-**Alcance acordado:** la página está terminada y en producción. Se admiten waves
-nuevas y correcciones; **no rediseños** sin pedirlo.
+**Ninguno de los dos primeros sigue la convención** (`Kamen-Rider_Myth_Checklist`
+/ `myth-catalog-v1`), y es a propósito (Maestro 3 §10): este repositorio se
+publicó antes de que la convención existiera, la web está en línea y
+compartida, y ya tiene visitantes con checklist guardada. Renombrar el repo
+deja la dirección vieja en 404; cambiar la clave no da error, deja la página
+en blanco al visitante con lo que llevaba marcado inaccesible bajo la clave
+vieja. **Ninguna de las dos se toca nunca.**
 
 ---
+
+## 2. Cuestionario del maestro, respondido
+
+**Coleccionable principal:** los **Eggs**, en dos familias — **Ride Eggs**
+(numerados, más las versiones Legend Rider) y **Seed Eggs** (temática animal,
+más las Legend). Es el gimmick masivo. El menor son los **Bone Buckles**.
+47 filas en total (41 DX, 6 SG).
+
+**Por qué "Eggs" y no otra transcripción:** Bandai escribe エグズ, en alfabeto
+latino EGZ (el título de SO-DO es `装動 仮面ライダーマイス EGZ1`). Se descartó
+EGZ por opaco y "Ex" por ser una transcripción inicial; se eligió **Eggs**
+porque son huevos y así se lee solo. Del mismo modo "Myceed" se occidentalizó
+a **"Myth Seed Eggs"**.
+
+**Categorías declaradas** (`ROTULOS` en `serie.py`): Protagonista → Riders,
+Dispositivo → Drivers, Arma → Armas, Gimmick → Eggs & Buckles, Apariciones y
+Extras sin producto todavía. `mecha` se omite: Myth no tiene mechas.
+
+**Las 4 declaradas son interactivas** (Maestro 1 §3): las 47 tarjetas se
+marcan en el catálogo central y alimentan la barra lateral por igual, sin
+reglas especiales por categoría.
+
+**Riders (8):** MY-TH (マイス), MAOU (マオウ), DATT, RID (リド), JAO, TIGUL,
+MUTON, VANKEN — romanización de la caja. Cada uno existe en una o varias
+líneas (TAF, Soft Vinyl, SO-DO, SG Model Kits); cada línea es su propia fila.
+
+**Dispositivo (1 objeto, 3 filas):** MY-TH Driver, en DX, SG Model Kits y SG
+Model Kits (Hammer On) — mismo objeto, tres acabados/procedencias. Más 3
+accesorios de dispositivo que no son arma ni gimmick: MY-TH Phone, Expack,
+Hokokuro (dispositivo de brazo con gimmick de sellos — decisión del usuario,
+manda sobre lo que sugiera la foto).
+
+**Armas (4):** MY-TH Edge suelta, más Rabbit Sword, Snake Size y Dog Gun, que
+vienen las tres en el Twelve Zodiac Alliance Rider Weapons Set 01.
+
+**Procedencias usadas:** `taf`, `sofv` (1·Protagonistas) · `sodo`, `sg-kit`,
+`sg-random` (2·Protagonistas/Dispositivos vía SG) · `dx`, `dx-random`,
+`buckles` (3·Gimmick/Armas/Dispositivos vía DX) · `promo` (Gimmick). `sg-kit`
+y `sg-random` van separadas aunque compartan el sello SG: una se elige, la
+otra es azar (Maestro 1 §5.1, aportado desde aquí).
+
+**Paleta:** dos tonos fuertes reservados al coleccionable principal — ámbar
+para la línea DX, cian para la línea SG — y tonos suaves para el resto de
+categorías (uno por categoría, no por procedencia).
+
+**Sets que absorben otros productos:** el DX Narikiri Set absorbe al DX RID
+SET, que a su vez absorbe al DX Driver suelto y al Hammer Bone Buckle; el
+Slashbone Buckle set es independiente. La cobertura es transitiva —cada uno
+declara solo lo que absorbe directamente— y cada absorbente declara en
+`contains` **todo** lo que entrega, incluida la pieza del dispositivo que
+absorbe (ver §10.2, fue un error real).
+
 ---
 
-# PARTE III — LO APRENDIDO
+## 3. Decisiones propias de Myth, con su porqué
 
-## 10. Errores que costaron tiempo
+**Entrega de las random box.** Las tres cajas sorpresa (`dx-random-box-01/02`,
+`sg-random-box-01`) van `entrega:"incierta"`: marcar la caja cuenta una de sus
+piezas posibles, sin decir cuál, y quedan fuera de la deducción de cobertura
+en los dos sentidos (Maestro 1 §2.1/§2.3).
 
-**Deducir a ojo qué set absorbe a cuál falló dos veces seguidas.** Primero se
-escapó un cinturón incluido en un set, luego otro. Por eso ahora se declara
-`componentes` en las categorías donde pasa y la auditoría **deduce** la cobertura
-comparando contenidos, avisando en los dos sentidos: la que falta declarar y la
-declarada que el contenido no respalda.
+**SCRATCH CARDDASS se queda, retitulado como campaña.** El maestro saca el TCG
+del catálogo, pero esta ficha no cataloga cartas: cataloga el **premio** de la
+campaña, un Ride Eggs 1 (Gold ver.) físico, y es su única vía de obtención. Va
+como `promo`, igual que TELEVI-KUN (premio de revista).
 
-**Inventarse reglas y hacérselas cumplir a la auditoría.** Se exigió que cada
-ficha se llamara igual que un producto. No era una regla real —`FICHA/` es de
-formato libre— y la auditoría pasó días gritando con nueve avisos falsos.
+**`HOKOKURO` no es arma.** Es un dispositivo de brazo con gimmick de sellos.
+La categoría que le puso el usuario manda sobre lo que sugiera la foto.
 
-**Fiarse de un número escrito en un documento.** El límite de barras de la
-cabecera estaba mal y nadie lo notó hasta medirlo.
+**Sin galería desplegable en la tarjeta.** Se probó una tira de miniaturas y
+se quitó: metía una fila de ruido en las 47. Las fotos se abren pulsando la
+portada, que lanza un visor en superposición. Nunca una segunda página por
+producto: es una checklist, no una tienda.
 
-**Reemplazos masivos sin comprobar los bordes.** Al pasar "Ex" a "Eggs", el
-límite de palabra protegió `EXPACK` pero un guion bloqueó una sustitución en una
-ficha, que se quedó atrás. Verificar siempre el resultado, no la intención.
+**El `.xlsx` de apoyo** sirve para fechas y precios. Para nombres transcribe
+mal la mitad (Dad/Maoh/Lido/Tigre por Datt/Maou/Rid/Tigul, "Ride Exe" por Ride
+Eggs) — mandan los nombres de las cajas, extraídos a mano.
 
-## 11. Lo que se probó y no funcionó
+---
 
-- **Checklists apiladas en un panel.** Quien colecciona una línea no debería
-  recorrer las demás para llegar a la suya.
-- **Desplegable de galería en la tarjeta.** Una fila de ruido en todas.
+## 4. Puntos abiertos
+
+- **SO-DO está incompleto.** Los tipos 9 y 10 siguen sin revelar y la fecha
+  del 15 de septiembre es una estimación: la ficha solo dice "septiembre 2026".
+- **`SHF` no está dada de alta.** La línea existe pero no tiene ningún
+  producto todavía; una procedencia sin ficha no se declara (Maestro 1 §4.2).
+  El día que entre su primer producto, cada figura suya añade una fila `shf`
+  a su rider correspondiente.
+- **Los originales en alta resolución y los `FICHA/` no están respaldados en
+  ningún repositorio Git** (correcto: `.gitignore` los excluye a propósito,
+  Maestro 3 §10). Verificar que el respaldo de Google Drive del usuario los
+  tiene antes de necesitarlos para una wave nueva.
+
+---
+
+## 5. Errores que costaron tiempo
+
+**Un ternario compacto disparó un falso ALTO en `audit_maestro.py`.** El check
+que cuenta productos busca el patrón textual `title:`; un `fuente?fuente.title:""`
+en el propio motor coincide con ese patrón sin ser un producto. Se corrigió el
+check con una exclusión `(?<!\.)` en vez de retorcer el código para
+esquivarlo — el síntoma se corrige en la herramienta, no en el dato.
+
+**Un nombre de función cambiado rompió un check del maestro.** `audit_maestro.py`
+comprobaba la ausencia de una restricción buscando literalmente el string
+`entregaGimmick` en el código; al generalizar esa función bajo otro nombre, el
+check se disparó igual sin que hubiera ningún problema real. Se corrigió para
+que inspeccione el cuerpo real de la función, no su nombre.
+
+**Un producto sin subcarpeta numerada rompió su portada silenciosamente.**
+`MY-TH FIRST KIT 02` vivía en una subcarpeta pero sus imágenes conservaban el
+nombre largo del producto en vez de `00`/`00-thumb`; `index.html` lo
+referenciaba como archivo suelto. `check_urls.py` no lo vio (las mayúsculas
+cuadraban), `audit.py` sí, con dos avisos distintos que apuntaban al mismo
+origen.
+
+**Deducir a ojo qué set absorbe a cuál falló dos veces seguidas**, antes del
+pivote a `PIEZAS_CATALOG`. Por eso `componentes` existe y la auditoría
+**deduce** la cobertura comparando contenidos en vez de fiarse de lo declarado
+a mano.
+
+---
+
+## 6. Lo que se probó y no funcionó
+
+- **Restringir el marcado a una sola categoría (solo Gimmicks).** Diagnóstico
+  correcto —el proyecto se había diluido dando checklist a todo sin un motor
+  común—, cura mal dirigida —reducir alcance en vez de unificar el mecanismo.
+  Revertido: las 7 categorías comparten un solo motor (Maestro 1 §1, §3).
+- **Calendario de waves como vista principal.** Fue la pregunta fundacional
+  del proyecto y funcionó bien con 46 productos en cinco meses, pero no
+  escala a una franquicia con décadas de trasfondo (otros riders, sentai):
+  demasiados acordeones de mes. Sustituido por catálogo central navegado por
+  categoría → procedencia, con una caja de "nuevos lanzamientos" que solo se
+  dibuja cuando el repositorio se declara `cerrado` (§7 del maestro).
+- **Checklists apiladas en un solo panel sin pestañas.** Quien colecciona una
+  línea no debería recorrer las demás para llegar a la suya — de ahí las
+  pestañas por categoría en la barra lateral.
+- **Desplegable de galería en la tarjeta del catálogo.** Una fila de ruido en
+  todas las tarjetas.
 - **Una página por producto.** Descartada de entrada: es una checklist.
-- **Entradas separadas enlazadas con un campo `related`.** Tres líneas del panel
-  repitiendo enlaces cruzados, peor de leer que el problema que resolvía.
-- **Etiqueta "Estimado"** para datos sin confirmar. Si un dato no está
-  confirmado, o se omite o se pone sin anunciarlo.
-- **Enlaces de Drive** como origen de las imágenes.
-- **Exigir que cada ficha se llamara igual que un producto.**
-- **Fiarse del `.xlsx` para los nombres.**
-
-## 12. Puntos abiertos
-
-- **SO-DO está incompleto.** Los tipos 9 y 10 siguen sin revelar y la fecha del
-  15 de septiembre es una estimación: la ficha solo dice "septiembre 2026".
-- **`SHF` está declarada y vacía**, esperando su primer producto.
-- **`TAF/DX Ridewatter Eggs/`** es la copia espejo del producto puente. La
-  auditoría avisa de que nadie la referencia, y es correcto: la web usa la de
-  `DX SETS`. Es el único aviso MEDIO que queda.
-- **Los seis avisos BAJO** son minúsculas dentro de nombres, ya decididas.
-- **Las miniaturas de la galería** cargan el WebP de 1600 px. Se decidió dejarlo:
-  precarga lo que el visor va a mostrar. Si molesta, generar `-thumb` para las 204
-  fotos sube el despliegue ~6 MB y divide por seis lo que baja quien navegue.
-- **`SHF` no aporta riders todavía.** Cuando tenga producto, cada figura suya
-  añade una variante `shf` a su rider.
-
----
-
----
-
-## 13. Cuestionario para la serie siguiente
-
-Responder antes de escribir una línea. Es lo que **no** se hereda:
-
-1. ¿Cuál es el coleccionable principal, cómo se llama y cómo se escribe en el
-   catálogo? ¿Cuántos hay aproximadamente?
-2. ¿Tiene familias? Son los grupos dentro del panel.
-3. ¿Hay líneas de producto que saquen piezas exclusivas? Si sí, contadores
-   separados.
-4. ¿Qué categorías de producto, y en qué orden?
-5. ¿Cuáles llevan checklist propia?
-6. ¿Hay sets que traigan dentro otros productos?
-7. ¿Qué colores? Los dos fuertes para el coleccionable.
-8. Clave de `localStorage` propia.
+- **Exigir que cada ficha de referencia se llamara igual que un producto.**
+  `FICHA/` es de formato libre; la regla inventada disparó avisos falsos
+  durante días antes de corregirla.
+- **Fiarse del `.xlsx` para los nombres de producto.** Transcribe mal la
+  mitad; mandan los nombres extraídos a mano de las cajas.

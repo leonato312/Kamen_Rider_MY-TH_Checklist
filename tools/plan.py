@@ -1,106 +1,138 @@
 # -*- coding: utf-8 -*-
-"""Construye el plan: portada + galeria de cada producto. Modo simulacro."""
-import io, os, re, json
+"""Construye el plan de imagenes: portada + galeria de cada producto.
 
-import os as _os
-BASE = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-HTML = os.path.join(BASE, u'index.html')
+SOLO LECTURA. Correr esto antes de build_all para ver que saldria.
 
-# El Ridewatter sale de su categoria primaria (DX SETS), aunque tenga
-# carpeta espejo en TAF por ser producto puente.
-CARPETA = {
- 'dx-myth-edge':            u'ARMAS/DX MY-TH EDGE',
- 'dx-zodiac-weapons-01':    u'ARMAS/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01',
- 'dx-bite-bone-buckle':     u'BUCKLES SETS/DX BITE BONE BUCKLE & Ride Eggs 6 SET',
- 'dx-hammer-bone-buckle':   u'BUCKLES SETS/DX HAMMER BONE BUCKLE',
- 'dx-shot-bone-buckle':     u'BUCKLES SETS/DX SHOT BONE BUCKLE & Ride Eggs 10 SET',
- 'dx-slashbone-buckle':     u'BUCKLES SETS/DX SLASHBONE BUCKLE & Ride Eggs 4 SET',
- 'dx-myth-driver':          u'DX DRIVERS/DX MY-TH DRIVER',
- 'dx-myth-driver-rid-set':  u'DX DRIVERS/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET',
- 'dx-myth-driver-narikiri': u'DX DRIVERS/DX MY-TH DRIVER SPECIAL NARIKIRI SET',
- 'dx-random-box-01':        u'DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01',
- 'dx-random-box-02':        u'DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 02',
- 'dx-expack':               u'DX SETS/DX EXPACK',
- 'dx-hokokuro':             u'DX SETS/DX HOKOKURO',
- 'dx-legend-set-00':        u'DX SETS/DX LEGEND RIDER EGGS SET 00',
- 'dx-legend-set-01':        u'DX SETS/DX LEGEND RIDER EGGS SET 01',
- 'dx-legend-set-02':        u'DX SETS/DX LEGEND RIDER EGGS SET 02',
- 'dx-myth-phone':           u'DX SETS/DX MY-TH PHONE',
- 'dx-rider-ex-set-01':      u'DX SETS/DX RIDER EGGS SET 01',
- 'dx-rider-ex-set-02':      u'DX SETS/DX RIDER EGGS SET 02',
- 'dx-ridewatter-ex':        u'DX SETS/DX Ridewatter Eggs',
- 'sg-random-box-01':        u'SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01',
- 'sg-sodo-myth':            u'SG SO-DO/SO-DO MY-TH',
- 'sg-sodo-maou':            u'SG SO-DO/SO-DO MAOU',
- 'sg-sodo-datt':            u'SG SO-DO/SO-DO DATT',
- 'sg-sodo-rid':             u'SG SO-DO/SO-DO RID',
- 'sv-datt':                 u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT',
- 'sv-jao':                  u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO',
- 'sv-mao':                  u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU',
- 'sv-myth':                 u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH',
- 'sv-rido':                 u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID',
- 'sv-tigul':                u'SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL',
- 'taf-datt':                u'TAF/TAF KAMEN RIDER DATT',
- 'taf-jao':                 u'TAF/TAF KAMEN RIDER JAO',
- 'taf-mao':                 u'TAF/TAF KAMEN RIDER MAOU',
- 'taf-muton':               u'TAF/TAF KAMEN RIDER MUTON',
- 'taf-myth':                u'TAF/TAF KAMEN RIDER MY-TH',
- 'taf-rido':                u'TAF/TAF KAMEN RIDER RID',
- 'taf-vanken':              u'TAF/TAF KAMEN RIDER VANKEN',
-}
+MOTOR. No contiene ni un dato de serie: el mapa de carpetas vive en serie.py,
+en la raiz del repositorio. Antes iba incrustado aqui y era la causa de que
+este script divergiera en las cinco series -206 lineas de datos contra 40 de
+logica-, ademas del paso que mas se olvidaba al anadir un producto.
+
+NUMERACION. La caja se guarda como 00 y las fotos del producto desde 01. Con eso
+el orden es puramente numerico y la portada es "el numero mas bajo": no hay
+nombre especial que reconocer ni mayusculas que comparar.
+
+  EXCEPCION, declarada en serie.py -> PORTADA_01:
+  en cajas sorpresa, shokugan de despiece y model kits de varias piezas la
+  portada salta el 00 y usa el 01, porque la caja es identica para todas las
+  variantes y lo que identifica al producto es la figura.
+
+Dos clases de producto:
+  · CARPETA  -> subcarpeta propia con varias fotos numeradas.
+  · SUELTO   -> una sola imagen, sin subcarpeta.
+
+Un producto cruzado (`alsoIn`) tiene carpeta espejo en la otra categoria, pero
+se lista SOLO por su categoria primaria: la copia espejo no recibe .webp.
+"""
+import os
+import sys
+
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HTML = os.path.join(BASE, 'index.html')
+
+sys.path.insert(0, BASE)
+try:
+    import serie
+except ImportError:
+    print('No se encuentra serie.py en %s' % BASE)
+    print('')
+    print('  Es el unico archivo propio del repositorio. Debe declarar:')
+    print('    CARPETA     {id de producto: ruta de su carpeta}')
+    print('    SUELTO      {id de producto: ruta de su unica imagen}')
+    print('    PORTADA_01  [ids cuya portada salta el 00 y usa el 01]')
+    sys.exit(2)
+
+CARPETA = getattr(serie, 'CARPETA', {})
+SUELTO = getattr(serie, 'SUELTO', {})
+PORTADA_01 = set(getattr(serie, 'PORTADA_01', []))
+
+IMG_EXT = ('.jpg', '.jpeg', '.png')
+
 
 def orden(nombre):
-    """PACKAGE primero, luego 01, 02, 03..."""
+    """00, 01, 02... Orden numerico y nada mas.
+
+    Antes habia que reconocer el nombre PACKAGE y ponerlo delante a mano. Con
+    la caja guardada como 00 eso desaparece: el orden del archivo ES el orden
+    de la galeria, y la portada es el primero.
+    """
     stem = os.path.splitext(nombre)[0]
-    if stem.upper() == u'PACKAGE':
-        return (0, 0)
-    return (1, int(stem)) if stem.isdigit() else (2, 0)
+    return (0, int(stem)) if stem.isdigit() else (1, 0)
+
+
+def portada_de(pid, files):
+    """El numero mas bajo, salvo que el producto pida saltarse la caja.
+
+    Devuelve (portada, aviso). El aviso no es un error: un producto declarado
+    en PORTADA_01 que solo tenga la caja se queda con ella y lo dice, en vez de
+    quedarse sin portada.
+    """
+    if pid not in PORTADA_01:
+        return files[0], ''
+    sin_caja = [f for f in files if os.path.splitext(f)[0] != '00']
+    if sin_caja:
+        return sin_caja[0], ''
+    return files[0], 'pide portada 01 y solo tiene la caja (00)'
+
 
 def plan():
+    """[(pid, ruta, portada, [archivos], es_suelto, error)]
+
+    Para un producto suelto, `ruta` es el archivo y `portada` su nombre.
+    """
     filas = []
     for pid, carpeta in sorted(CARPETA.items()):
         full = os.path.join(BASE, carpeta)
         if not os.path.isdir(full):
-            filas.append((pid, carpeta, None, [], u'CARPETA NO EXISTE'))
+            filas.append((pid, carpeta, None, [], False, 'CARPETA NO EXISTE'))
             continue
-        # Solo originales: los .webp son derivados y contarlos duplica
-        # cada numero, ademas de arrastrar los -thumb de la portada.
-        files = [f for f in os.listdir(full)
-                 if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-        files.sort(key=orden)
+        # Solo originales: los .webp son derivados y contarlos duplicaria cada
+        # numero, ademas de arrastrar el -thumb de la portada.
+        files = [f for f in os.listdir(full) if f.lower().endswith(IMG_EXT)]
         if not files:
-            filas.append((pid, carpeta, None, [], u'VACIA'))
+            filas.append((pid, carpeta, None, [], False, 'VACIA'))
             continue
-        filas.append((pid, carpeta, files[0], files, u''))
+        files.sort(key=orden)
+        portada, aviso = portada_de(pid, files)
+        filas.append((pid, carpeta, portada, files, False, aviso))
+
+    for pid, ruta in sorted(SUELTO.items()):
+        full = os.path.join(BASE, ruta)
+        if not os.path.isfile(full):
+            filas.append((pid, ruta, None, [], True, 'ARCHIVO NO EXISTE'))
+            continue
+        nombre = os.path.basename(ruta)
+        filas.append((pid, ruta, nombre, [nombre], True, ''))
+
     return filas
+
 
 if __name__ == '__main__':
     filas = plan()
-    print(u'%-26s %-46s %-11s %s' % (u'PRODUCTO', u'CARPETA', u'PORTADA', u'GALERIA'))
-    print(u'-' * 104)
-    pkg = uno = 0
-    total_img = 0
-    for pid, carpeta, portada, files, err in filas:
-        if err:
-            print(u'%-26s %-46s  !! %s' % (pid, carpeta[:46], err))
+    print('%-24s %-50s %-11s %s' % ('PRODUCTO', 'RUTA', 'PORTADA', 'GALERIA'))
+    print('-' * 108)
+    pkg = uno = total = errores = 0
+    peso = 0
+    for pid, ruta, portada, files, suelto, err in filas:
+        if portada is None:
+            print('%-24s %-50s  !! %s' % (pid, ruta[:50], err))
+            errores += 1
             continue
-        if portada.upper().startswith(u'PACKAGE'):
+        if os.path.splitext(portada)[0] == '00':
             pkg += 1
         else:
             uno += 1
-        total_img += len(files)
-        print(u'%-26s %-46s %-11s %d img  (%s)'
-              % (pid, carpeta[:46], portada, len(files),
-                 u', '.join(os.path.splitext(f)[0] for f in files[:6])
-                 + (u'...' if len(files) > 6 else u'')))
-    print(u'-' * 104)
-    print(u'%d productos   portada PACKAGE: %d   portada 01: %d   imagenes en galerias: %d'
-          % (len(filas), pkg, uno, total_img))
-
-    # Peso actual de las portadas (lo que hoy se descargaria al abrir)
-    peso = 0
-    for pid, carpeta, portada, files, err in filas:
-        if portada:
-            peso += os.path.getsize(os.path.join(BASE, carpeta, portada))
-    print(u'Peso de las 34 portadas hoy (JPG): %.1f MB  ->  se convertiran a WebP'
-          % (peso / 1048576.0))
+        total += len(files)
+        base = os.path.dirname(ruta) if suelto else ruta
+        peso += os.path.getsize(os.path.join(BASE, base, portada))
+        etiqueta = ' (suelto)' if suelto else ''
+        if err:
+            etiqueta += '  ~ ' + err
+        print('%-24s %-50s %-11s %d img%s'
+              % (pid, ruta[:50], portada[:11], len(files), etiqueta))
+    print('-' * 108)
+    print('%d productos   portada caja (00): %d   portada 01/suelto: %d   imagenes: %d'
+          % (len(filas), pkg, uno, total))
+    print('Peso de las %d portadas hoy: %.1f MB  ->  se convertiran a WebP'
+          % (len(filas) - errores, peso / 1048576.0))
+    sys.exit(1 if errores else 0)
