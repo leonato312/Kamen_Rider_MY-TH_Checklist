@@ -51,9 +51,11 @@ a **"Myth Seed Eggs"**.
 Dispositivo → Drivers, Arma → Armas, Gimmick → Eggs & Buckles, Apariciones y
 Extras sin producto todavía. `mecha` se omite: Myth no tiene mechas.
 
-**Las 4 declaradas son interactivas** (Maestro 1 §3): las 47 tarjetas se
-marcan en el catálogo central y alimentan la barra lateral por igual, sin
-reglas especiales por categoría.
+**Solo Gimmicks es interactiva** (Maestro 1 §1, §3): es la única categoría
+cuyas tarjetas llevan estado y alimentan la barra lateral. Riders, Drivers y
+Armas son catálogo de consulta — se probó marcarlas también (§10.2) y se
+revirtió el mismo día: no aportaba nada y volvía más engorrosos el panel y
+el catálogo.
 
 **Riders (8):** MY-TH (マイス), MAOU (マオウ), DATT, RID (リド), JAO, TIGUL,
 MUTON, VANKEN — romanización de la caja. Cada uno existe en una o varias
@@ -158,19 +160,19 @@ a mano.
 
 ## 6. Lo que se probó y no funcionó
 
-- **Restringir el marcado a una sola categoría (solo Gimmicks).** Diagnóstico
-  correcto —el proyecto se había diluido dando checklist a todo sin un motor
-  común—, cura mal dirigida —reducir alcance en vez de unificar el mecanismo.
-  Revertido: las 7 categorías comparten un solo motor (Maestro 1 §1, §3).
+- **Ampliar el marcado a las 7 categorías.** Se probó el mismo día del pivote
+  a enciclopedia: un solo motor (`PIEZAS_CATALOG` + `piezaEstado`) sirviendo
+  por igual a Riders, Drivers, Armas y Gimmicks, con pestañas por categoría en
+  la barra lateral. Se revirtió en producción: nadie iba a "completar su
+  colección de Drivers" como objetivo, y la pestaña extra solo volvía más
+  engorrosos el panel y el catálogo. Solo Gimmicks vuelve a marcarse
+  (Maestro 1 §1, §3) — Riders/Drivers/Armas quedan en el catálogo, sin estado.
 - **Calendario de waves como vista principal.** Fue la pregunta fundacional
   del proyecto y funcionó bien con 46 productos en cinco meses, pero no
   escala a una franquicia con décadas de trasfondo (otros riders, sentai):
   demasiados acordeones de mes. Sustituido por catálogo central navegado por
   categoría → procedencia, con una caja de "nuevos lanzamientos" que solo se
   dibuja cuando el repositorio se declara `cerrado` (§7 del maestro).
-- **Checklists apiladas en un solo panel sin pestañas.** Quien colecciona una
-  línea no debería recorrer las demás para llegar a la suya — de ahí las
-  pestañas por categoría en la barra lateral.
 - **Desplegable de galería en la tarjeta del catálogo.** Una fila de ruido en
   todas las tarjetas.
 - **Una página por producto.** Descartada de entrada: es una checklist.

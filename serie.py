@@ -16,11 +16,12 @@ otros riders o sentai- por navegacion categoria > procedencia > divisor. La
 caja de nuevos lanzamientos (Maestro 1 §7) sustituye al calendario para lo que
 llegue tras el cierre.
 
-Con el pivote se revirtio tambien "solo Gimmicks interactivo": las 7
-categorias se marcan por igual (Maestro 1 §3, revisado), con un unico motor
-(PIEZAS_CATALOG + piezaEstado) sin reglas especiales por categoria. Quedan
-fuera del marcado Apariciones (espejo de otro repo) y Extras (no enumerable),
-por motivos propios, no por importar menos.
+Con el pivote se probo tambien ampliar el marcado a las 7 categorias (un
+unico motor, PIEZAS_CATALOG + piezaEstado, sin reglas especiales por
+categoria) y se revirtio el mismo dia: en produccion, con visitantes reales,
+anadia una pestaña y un contador por cada Rider/Driver/Arma sin que nadie
+fuera a "completarlos" como coleccion -solo volvia mas engorrosos el panel y
+el catalogo. Solo Gimmicks vuelve a ser interactivo (Maestro 1 §1, §3).
 """
 
 # ---------------------------------------------------------------- IDENTIDAD
@@ -42,9 +43,8 @@ ESTADO = 'abierto'
 
 
 # --------------------------------------------------------------- CATEGORIAS
-# 'mecha' se omite: Myth no tiene mechas. Las 4 declaradas son interactivas
-# (Maestro 1 §3): se marcan en su propia tarjeta y alimentan la barra
-# lateral, igual Riders que Eggs.
+# 'mecha' se omite: Myth no tiene mechas. Solo Gimmicks es interactiva
+# (Maestro 1 §3) — el resto es catalogo de consulta.
 ROTULOS = {
     'protagonista': 'Riders',
     'dispositivo':  'Drivers',

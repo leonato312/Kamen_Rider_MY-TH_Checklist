@@ -436,22 +436,6 @@ body::before{
 .panel__global-bar{ height:6px; margin-top:7px; border-radius:99px; background:var(--surface-3); overflow:hidden; }
 .panel__global-fill{ height:100%; border-radius:99px; background:var(--dx); width:0; transition:width .35s ease; }
 
-/* Pestañas de categoria (Riders / Drivers / Armas / Eggs & Buckles...). Una
-   por cada entrada de CATEGORIAS_TRACKEABLES; el color es el de su
-   categoria (Maestro 1 §3), nunca el del gimmick, para no competir con el. */
-.panel__tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; }
-.panel__tab{
-  padding:5px 11px; border-radius:99px; font-size:11px; font-weight:700;
-  letter-spacing:.03em; cursor:pointer; border:1px solid var(--border);
-  background:var(--surface-2); color:var(--text-dim);
-  transition:background .15s ease, color .15s ease, border-color .15s ease;
-}
-.panel__tab:hover{ border-color:var(--border-strong); }
-.panel__tab[aria-selected="true"]{
-  background:var(--tab-color, var(--dx)); color:#111; border-color:transparent;
-}
-.panel__tab__n{ margin-left:6px; opacity:.75; font-variant-numeric:tabular-nums; }
-
 .panel__filter{ display:flex; align-items:center; gap:8px; margin-top:13px; font-size:12px; color:var(--text-dim); cursor:pointer; }
 .panel__filter input{ accent-color:var(--dx); width:15px; height:15px; cursor:pointer; }
 
@@ -507,16 +491,9 @@ body::before{
 .pieza--tengo    .pieza__dot{ background:var(--owned); box-shadow:none; }
 .pieza--cubierto .pieza__dot{ background:var(--owned); box-shadow:none; opacity:.55; }
 .pieza--sinvia   .pieza__dot{ background:#e25555; box-shadow:none; }
-/* Fila agrupada por NOMBRE (protagonista/dispositivo/arma): el punto resume
-   VARIAS filas -una por linea-, asi que necesita un tercer estado a medias
-   que el gimmick, de una sola fila, nunca tiene. */
-.pieza--completo .pieza__dot{ background:var(--owned); box-shadow:none; }
-.pieza--parcial  .pieza__dot{ background:var(--reserved); box-shadow:none; }
 .pieza__main{ flex:1; min-width:0; }
 .pieza__name{ font-size:12.5px; color:var(--text-dim); }
-.pieza__n{ margin-left:6px; font-size:10px; color:var(--text-mute); font-variant-numeric:tabular-nums; }
-.pieza--tengo .pieza__name, .pieza--cubierto .pieza__name,
-.pieza--completo .pieza__name, .pieza--parcial .pieza__name{ color:var(--text); }
+.pieza--tengo .pieza__name, .pieza--cubierto .pieza__name{ color:var(--text); }
 .pieza__acabado{
   margin-left:5px; padding:1px 5px; border-radius:4px; font-size:9px;
   font-weight:700; letter-spacing:.05em; text-transform:uppercase;
@@ -631,8 +608,6 @@ body::before{
       <div class="panel__global-bar"><div class="panel__global-fill" id="globalBar"></div></div>
     </div>
 
-    <div class="panel__tabs" id="panelTabs" role="tablist"></div>
-
     <label class="panel__filter">
       <input type="checkbox" id="hideOwned"> Ocultar lo que ya tengo
     </label>
@@ -673,13 +648,13 @@ const ROTULOS = {
   extra:        "Extras"
 };
 
-/* Categorias con seguimiento de coleccion (Maestro 1 §3, revisado). Quedan
-   fuera 'aparicion' -seccion espejo de OTRO repositorio, sin estado por
-   diseno (§6.1)- y 'extra' -no enumerable, no hay universo que rastrear
-   (§3.1)-. Las demas siempre son interactivas si la serie las declara. */
-const CATEGORIAS_NO_TRACKEABLES = new Set(["aparicion","extra"]);
-const CATEGORIAS_TRACKEABLES = CATEGORIA_ORDEN.filter(c =>
-  (c in ROTULOS) && !CATEGORIAS_NO_TRACKEABLES.has(c));
+/* SOLO Gimmicks es interactiva (Maestro 1 §3): es la unica categoria cuyas
+   tarjetas llevan estado y alimentan la barra lateral. Se probo ampliar el
+   marcado a las 7 categorias y se revirtio: anadia una pestaña, un contador
+   y una fila de chips por cada Rider/Driver/Arma sin que nadie fuera a
+   "completar" esas categorias como coleccion -solo estorbaba la pagina y
+   la checklist real, que es la de Eggs & Buckles. */
+const CATEGORIA_INTERACTIVA = "gimmick";
 
 /* Color por CATEGORIA, no por procedencia (Maestro 3 §7). */
 const CAT_COLOR = {
@@ -1384,7 +1359,7 @@ function loadState(){
   const ids = new Set(PRODUCTS.map(p=>p.id));
   const products = {};
   for(const id in (raw.products||{})) if(ids.has(id)) products[id] = raw.products[id];
-  return { products, ui: Object.assign({ hideOwned:false, cats:{}, grupos:{}, panelCat:null }, raw.ui||{}) };
+  return { products, ui: Object.assign({ hideOwned:false, cats:{}, grupos:{} }, raw.ui||{}) };
 }
 const state = loadState();
 function saveState(){
@@ -1476,23 +1451,14 @@ function categoriasDe(p){
 const CATEGORIA_DE_PROCEDENCIA = {};
 PIEZAS_CATALOG.forEach(p => { CATEGORIA_DE_PROCEDENCIA[p.procedencia] = p.categoria; });
 
-/* Interactivo = "entrega al menos una pieza de categoria TRACKEABLE", sin
-   pasar por el filtro de categoriasDe(). Son preguntas distintas:
-   categoriasDe() decide DONDE se pinta la tarjeta (y ahi gimmick se retira
-   si hay mezcla, §3.2); esto decide si hay algo que marcar. Un driver que ya
-   no aparece en Eggs sigue entregando un Ride Eggs y sigue necesitando su
-   selector de estado, o esa pieza nunca podria conseguirse.
-
-   Antes esto se restringia a "entrega gimmick" (una sola categoria). Se
-   amplio a las 7: el catalogo dejo de ser una enciclopedia de un solo
-   coleccionable con un catalogo de consulta alrededor, y paso a ser una
-   enciclopedia donde TODO lo enumerable se rastrea -salvo Apariciones y
-   Extras, que quedan fuera por razones propias, no por ser "menos
-   importantes" (ver CATEGORIAS_TRACKEABLES). */
-const esInteractivo = p => (p.contains||[]).some(pid => {
-  const pz = PIEZAS_BY_ID[pid];
-  return pz && CATEGORIAS_TRACKEABLES.includes(pz.categoria);
-});
+/* Interactivo = "entrega al menos una pieza de gimmick", SIN pasar por el
+   filtro de categoriasDe(). Son preguntas distintas: categoriasDe() decide
+   DONDE se pinta la tarjeta (y ahi gimmick se retira si hay mezcla, §3.2);
+   esto decide si hay algo que marcar. Un driver que ya no aparece en Eggs
+   sigue entregando un Ride Eggs y sigue necesitando su selector de estado,
+   o esa pieza nunca podria conseguirse. */
+const esInteractivo = p => (p.contains||[]).some(pid =>
+  (PIEZAS_BY_ID[pid]||{}).categoria === "gimmick");
 
 
 /* ===========================================================================
@@ -1527,15 +1493,14 @@ const CHEVRON_S = `<svg class="grupo__chevron" viewBox="0 0 24 24" fill="none" s
 const catalogEl = document.getElementById("catalog");
 
 function contenidoHTML(p, owned, cubiertos){
-  /* El desplegable existe para avisar "esto trae ademas...", no para
-     relistar la propia figura/driver/arma que el producto YA ES (Maestro 1
-     §4.6, revisado). Con una sola pieza en `contains` esa pieza ES la
-     tarjeta -no hay nada que anadir-, asi que no hay desplegable. Con mas de
-     una, se listan TODAS: ya no hace falta filtrar por categoria, porque
-     ahora cualquier categoria se marca y cualquier pieza extra es
-     informacion util (el Narikiri que ademas trae el Driver, no solo Eggs). */
-  const piezas = (p.contains||[]).map(id => PIEZAS_BY_ID[id]).filter(Boolean);
-  if(piezas.length < 2) return "";
+  /* Estricto a gimmick (Maestro 1 §3.2 y §4.6): el desplegable existe para
+     avisar "esto ademas te da un gimmick", no para relistar la propia figura,
+     driver o arma que el producto YA ES. Una TAF que trae un Seed Eggs de
+     regalo enseña ese Seed Eggs, no "rider-myth-taf" -listar el producto
+     dentro de si mismo no informa de nada-. */
+  const piezas = (p.contains||[]).map(id => PIEZAS_BY_ID[id])
+    .filter(pz => pz && pz.categoria === "gimmick");
+  if(!piezas.length) return "";
   const azar = p.entrega === "incierta";
   const items = piezas.map(pz => {
     const e = piezaEstado(pz.id, owned, cubiertos);
@@ -1627,7 +1592,7 @@ function renderCatalog(){
     const productos = productosDe(cat);
     if(!productos.length) return;                 // sin producto, no se dibuja
 
-    const interactiva = CATEGORIAS_TRACKEABLES.includes(cat);
+    const interactiva = cat === CATEGORIA_INTERACTIVA;
     const abierta = state.ui.cats[cat] !== false; // por defecto abiertas
 
     let bloques = "";
@@ -1677,42 +1642,28 @@ function renderCatalog(){
 
 
 /* ===========================================================================
-   BLOQUE 8 · RENDER — BARRA LATERAL (checklist derivada, por categoria)
+   BLOQUE 8 · RENDER — BARRA LATERAL (checklist de Gimmicks)
    ---------------------------------------------------------------------------
-   Una pestaña por categoria TRACKEABLE (Maestro 1 §3 revisado). Cada una
-   agrupa sus piezas con la estrategia que le toca:
+   Unico panel interactivo del sistema (Maestro 1 §5). Se probo ampliar la
+   interactividad a las 7 categorias -una pestaña por categoria, agrupacion
+   por nombre para las entidades- y se revirtio: para una checklist de
+   merchandising, nadie va a "completar" su coleccion de Drivers o Armas
+   como un objetivo aparte, y la pestaña extra solo volvia mas engorrosos
+   tanto el panel como el catalogo. Riders, Drivers y Armas se quedan en el
+   catalogo central como referencia, sin estado.
 
-     - GIMMICK se agrupa por SUBTIPO (familia: Ride Eggs, Legend...) y dentro
-       por PROCEDENCIA (linea comercial): orden invertido respecto al
-       catalogo (§5.1) porque la pregunta es "que Legend me falta", no "que
-       hay en DX".
-
-     - PROTAGONISTA / DISPOSITIVO / ARMA se agrupan por NOMBRE (el
-       personaje u objeto): MY-TH es una fila con cuatro vias -TAF, Soft
-       Vinyl, SO-DO, kit-, no cuatro filas sueltas. Es la misma pregunta
-       agrupada de otra forma: "de MY-TH, que lineas me faltan".
-
-   Las dos comparten motor (piezaEstado, SOURCES, cadena de cobertura); solo
-   cambia como se pliegan las filas en pantalla.
+   Orden INVERTIDO respecto al catalogo, a proposito (Maestro 1 §5.1): aqui la
+   pregunta es "que Legend me falta", no "que hay en DX".
    =========================================================================== */
 const panelBody = document.getElementById("panelBody");
-const panelTabsEl = document.getElementById("panelTabs");
-
-/* Gimmick se agrupa por subtipo/procedencia; el resto por nombre. Es la
-   unica decision de presentacion que varia entre categorias. */
-const AGRUPA_POR_NOMBRE = new Set(["protagonista", "dispositivo", "arma"]);
-
-function piezasDeCategoria(cat){
-  return PIEZAS_CATALOG.filter(pz => pz.categoria === cat);
-}
 
 function viasHTML(piezaId, owned, cubiertos){
   return (SOURCES[piezaId] || []).map(p => {
     const tengo = owned.has(p.id) || cubiertos.has(p.id);
     const azar  = p.entrega === "incierta";
-    return "<span class=\"via" + (tengo?" via--tengo":"") + (azar?" via--azar":"") + "\""
-      + " data-goto=\"" + esc(p.id) + "\" role=\"link\" tabindex=\"0\""
-      + " title=\"" + esc(p.title) + "\">" + esc(p.title) + "</span>";
+    return `<span class="via${tengo?' via--tengo':''}${azar?' via--azar':''}"
+                  data-goto="${esc(p.id)}" role="link" tabindex="0"
+                  title="${esc(p.title)}">${esc(p.title)}</span>`;
   }).join("");
 }
 
@@ -1721,53 +1672,62 @@ function piezaHTML(pz, owned, cubiertos){
   if(state.ui.hideOwned && esConseguida(estado)) return "";
   const acab = (ACABADOS[pz.acabado]||{}).label || "";
   const sinvia = estado === "sinvia"
-    ? "<div class=\"panel__sinvia\">Ningún producto la entrega: no se podrá marcar nunca.</div>" : "";
-  return "\n    <div class=\"pieza pieza--" + estado + "\">\n"
-    + "      <span class=\"pieza__dot\"></span>\n"
-    + "      <div class=\"pieza__main\">\n"
-    + "        <span class=\"pieza__name\">" + esc(pz.name) + "</span>"
-    + (acab?("<span class=\"pieza__acabado\">" + esc(acab) + "</span>"):"") + "\n"
-    + "        <div class=\"pieza__vias\">" + viasHTML(pz.id, owned, cubiertos) + "</div>\n"
-    + "        " + sinvia + "\n"
-    + "      </div>\n"
-    + "    </div>";
+    ? `<div class="panel__sinvia">Ningún producto la entrega: no se podrá marcar nunca.</div>` : "";
+  return `
+    <div class="pieza pieza--${estado}">
+      <span class="pieza__dot"></span>
+      <div class="pieza__main">
+        <span class="pieza__name">${esc(pz.name)}</span>${acab?`<span class="pieza__acabado">${esc(acab)}</span>`:""}
+        <div class="pieza__vias">${viasHTML(pz.id, owned, cubiertos)}</div>
+        ${sinvia}
+      </div>
+    </div>`;
 }
 
-/* Fila agrupada por NOMBRE: un personaje/objeto, una fila, un chip por linea
-   en la que existe. El chip reusa PROCEDENCIAS -el mismo registro del
-   catalogo central- porque estas piezas ya usan esa granularidad fina, a
-   diferencia de Gimmick (ver PROCEDENCIAS_GIMMICK, mas grueso a proposito). */
-function piezaAgrupadaHTML(nombre, filas, owned, cubiertos){
-  const estados = filas.map(pz => piezaEstado(pz.id, owned, cubiertos));
-  const n = estados.filter(esConseguida).length;
-  if(state.ui.hideOwned && n === filas.length) return "";
-  const estadoFila = n === filas.length ? "completo" : (n === 0 ? "" : "parcial");
-  const chips = filas.map(pz => {
-    const e = piezaEstado(pz.id, owned, cubiertos);
-    const tengo = esConseguida(e);
-    const azar  = (SOURCES[pz.id]||[]).some(p => p.entrega === "incierta" && !owned.has(p.id));
-    const fuente = (SOURCES[pz.id] || [])[0];
-    const fuenteTitulo = fuente ? fuente.title : "";
-    const acab = (ACABADOS[pz.acabado]||{}).label;
-    const etiqueta = (PROCEDENCIAS[pz.procedencia]||{label:pz.procedencia}).label
-      + (acab ? (" (" + acab + ")") : "");
-    return "<span class=\"via" + (tengo?" via--tengo":"") + (azar?" via--azar":"") + "\""
-      + (fuente?(" data-goto=\"" + esc(fuente.id) + "\" role=\"link\" tabindex=\"0\""):"")
-      + " title=\"" + esc(fuenteTitulo) + "\">" + esc(etiqueta) + "</span>";
-  }).join("");
-  return "\n    <div class=\"pieza pieza--" + estadoFila + "\">\n"
-    + "      <span class=\"pieza__dot\"></span>\n"
-    + "      <div class=\"pieza__main\">\n"
-    + "        <span class=\"pieza__name\">" + esc(nombre) + "</span>"
-    + "<span class=\"pieza__n\">" + n + "/" + filas.length + "</span>\n"
-    + "        <div class=\"pieza__vias\">" + chips + "</div>\n"
-    + "      </div>\n"
-    + "    </div>";
-}
+function renderPanel(){
+  const { owned, cubiertos } = productosCubiertos();
+  const piezas = PIEZAS_CATALOG.filter(p => p.categoria === "gimmick");
 
-/* --- Cuerpo de la pestaña Gimmick: subtipo > procedencia > piezas --- */
-function panelGimmickHTML(owned, cubiertos, cuenta){
-  const piezas = piezasDeCategoria("gimmick");
+  const cuenta = lista => lista.filter(pz => esConseguida(piezaEstado(pz.id, owned, cubiertos))).length;
+
+  /* --- Progreso global y mini barras de la cabecera --- */
+  const total = piezas.length;
+  const hechas = cuenta(piezas);
+  document.getElementById("globalN").textContent   = `${hechas}/${total}`;
+  document.getElementById("globalBar").style.width = total ? (hechas/total*100)+"%" : "0%";
+  document.getElementById("headerCount").textContent = `${hechas}/${total}`;
+
+  /* Mini barras: una por linea del gimmick masivo, mas el menor aparte.
+     Los dos tonos fuertes se reservan al principal. */
+  const mini = [];
+  Object.entries(PROCEDENCIAS_GIMMICK).forEach(([proc, cfg]) => {
+    const lista = piezas.filter(pz => pz.procedencia===proc && !(SUBTIPOS[pz.subtipo]||{}).menor);
+    if(!lista.length) return;
+    const n = cuenta(lista);
+    mini.push(`
+      <div class="mini-stat mini-stat--${proc}">
+        <div class="mini-stat__top">
+          <span class="mini-stat__label">${esc(cfg.label.toUpperCase())}</span>
+          <span class="mini-stat__count">${n}/${lista.length}</span>
+        </div>
+        <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${n/lista.length*100}%"></div></div>
+      </div>`);
+  });
+  const menores = piezas.filter(pz => (SUBTIPOS[pz.subtipo]||{}).menor);
+  if(menores.length){
+    const n = cuenta(menores);
+    mini.push(`
+      <div class="mini-stat mini-stat--menor">
+        <div class="mini-stat__top">
+          <span class="mini-stat__label">BUCKLES</span>
+          <span class="mini-stat__count">${n}/${menores.length}</span>
+        </div>
+        <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${n/menores.length*100}%"></div></div>
+      </div>`);
+  }
+  document.getElementById("miniStats").innerHTML = mini.join("");
+
+  /* --- Grupos por subtipo --- */
   let html = "";
   Object.entries(SUBTIPOS).forEach(([subId, sub]) => {
     const piezasSub = piezas.filter(pz => pz.subtipo === subId);
@@ -1784,105 +1744,41 @@ function panelGimmickHTML(owned, cubiertos, cuenta){
       const ln = cuenta(lista);
       const lcolor = sub.menor ? "var(--menor)" : cfg.color;
       const filas = lista.map(pz => piezaHTML(pz, owned, cubiertos)).join("");
-      lineas += "\n        <div class=\"linea\">\n"
-        + "          <div class=\"linea__head\" style=\"color:" + lcolor + "\">\n"
-        + "            " + esc(cfg.label) + " <span class=\"linea__n\">" + ln + "/" + lista.length + "</span>\n"
-        + "          </div>\n"
-        + "          <div class=\"linea__bar\">\n"
-        + "            <div class=\"linea__fill\" style=\"width:" + (ln/lista.length*100) + "%;background:" + lcolor + "\"></div>\n"
-        + "          </div>\n"
-        + "          " + (filas || "<p class=\"panel__empty\">Todo conseguido en esta línea.</p>") + "\n"
-        + "        </div>";
+      lineas += `
+        <div class="linea">
+          <div class="linea__head" style="color:${lcolor}">
+            ${esc(cfg.label)} <span class="linea__n">${ln}/${lista.length}</span>
+          </div>
+          <div class="linea__bar">
+            <div class="linea__fill" style="width:${ln/lista.length*100}%;background:${lcolor}"></div>
+          </div>
+          ${filas || `<p class="panel__empty">Todo conseguido en esta línea.</p>`}
+        </div>`;
     });
 
-    html += "\n      <section class=\"grupo\" data-open=\"" + abierto + "\">\n"
-      + "        <button class=\"grupo__head\" data-grupo=\"" + subId + "\" aria-expanded=\"" + abierto + "\">\n"
-      + "          " + CHEVRON_S + "\n"
-      + "          <span class=\"grupo__name\" style=\"color:" + color + "\">" + esc(sub.label) + "</span>\n"
-      + "          " + (sub.menor?"<span class=\"grupo__tag\">menor</span>":"") + "\n"
-      + "          <span class=\"grupo__count\">" + n + "/" + piezasSub.length + "</span>\n"
-      + "        </button>\n"
-      + "        <div class=\"grupo__bar\">\n"
-      + "          <div class=\"grupo__fill\" style=\"width:" + (n/piezasSub.length*100) + "%;background:" + color + "\"></div>\n"
-      + "        </div>\n"
-      + "        <div class=\"grupo__body\">" + lineas + "</div>\n"
-      + "      </section>";
-  });
-  return html;
-}
-
-/* --- Cuerpo de una pestaña por NOMBRE: protagonista / dispositivo / arma --- */
-function panelPorNombreHTML(cat, owned, cubiertos){
-  const piezas = piezasDeCategoria(cat);
-  const orden = [], grupos = {};
-  piezas.forEach(pz => {
-    if(!(pz.name in grupos)){ grupos[pz.name] = []; orden.push(pz.name); }
-    grupos[pz.name].push(pz);
-  });
-  const filas = orden.map(nombre => piezaAgrupadaHTML(nombre, grupos[nombre], owned, cubiertos))
-    .filter(Boolean).join("");
-  return filas || "<p class=\"panel__empty\">Todo conseguido en esta categoría.</p>";
-}
-
-function renderPanelTabs(activa, progresoPorCategoria){
-  panelTabsEl.innerHTML = CATEGORIAS_TRACKEABLES.map(cat => {
-    const p = progresoPorCategoria[cat];
-    return "\n      <button class=\"panel__tab\" data-tab=\"" + cat + "\" role=\"tab\"\n"
-      + "              aria-selected=\"" + (cat===activa) + "\" style=\"--tab-color:" + CAT_COLOR[cat] + "\">\n"
-      + "        " + esc(ROTULOS[cat]) + " <span class=\"panel__tab__n\">" + p.n + "/" + p.total + "</span>\n"
-      + "      </button>";
-  }).join("");
-}
-
-function renderPanel(){
-  const { owned, cubiertos } = productosCubiertos();
-  const cuenta = lista => lista.filter(pz => esConseguida(piezaEstado(pz.id, owned, cubiertos))).length;
-
-  /* --- Progreso por categoria, para las pestañas y el total global --- */
-  const progresoPorCategoria = {};
-  CATEGORIAS_TRACKEABLES.forEach(cat => {
-    const lista = piezasDeCategoria(cat);
-    progresoPorCategoria[cat] = { n: cuenta(lista), total: lista.length };
+    html += `
+      <section class="grupo" data-open="${abierto}">
+        <button class="grupo__head" data-grupo="${subId}" aria-expanded="${abierto}">
+          ${CHEVRON_S}
+          <span class="grupo__name" style="color:${color}">${esc(sub.label)}</span>
+          ${sub.menor?'<span class="grupo__tag">menor</span>':''}
+          <span class="grupo__count">${n}/${piezasSub.length}</span>
+        </button>
+        <div class="grupo__bar">
+          <div class="grupo__fill" style="width:${n/piezasSub.length*100}%;background:${color}"></div>
+        </div>
+        <div class="grupo__body">${lineas}</div>
+      </section>`;
   });
 
-  const totalGlobal  = CATEGORIAS_TRACKEABLES.reduce((s,c) => s + progresoPorCategoria[c].total, 0);
-  const hechasGlobal = CATEGORIAS_TRACKEABLES.reduce((s,c) => s + progresoPorCategoria[c].n, 0);
-  document.getElementById("globalN").textContent   = hechasGlobal + "/" + totalGlobal;
-  document.getElementById("globalBar").style.width = totalGlobal ? (hechasGlobal/totalGlobal*100)+"%" : "0%";
-  document.getElementById("headerCount").textContent = hechasGlobal + "/" + totalGlobal;
+  panelBody.innerHTML = html;
 
-  /* --- Mini barras de cabecera: una por categoria, no por linea comercial.
-     El detalle por linea (DX/SG, TAF/SO-DO...) vive dentro de cada pestaña. */
-  const mini = CATEGORIAS_TRACKEABLES.map(cat => {
-    const p = progresoPorCategoria[cat];
-    if(!p.total) return "";
-    return "\n      <div class=\"mini-stat\" style=\"--tab-color:" + CAT_COLOR[cat] + "\">\n"
-      + "        <div class=\"mini-stat__top\">\n"
-      + "          <span class=\"mini-stat__label\" style=\"color:" + CAT_COLOR[cat] + "\">" + esc(ROTULOS[cat].toUpperCase()) + "</span>\n"
-      + "          <span class=\"mini-stat__count\">" + p.n + "/" + p.total + "</span>\n"
-      + "        </div>\n"
-      + "        <div class=\"mini-stat__bar\"><div class=\"mini-stat__fill\" style=\"width:" + (p.n/p.total*100) + "%;background:" + CAT_COLOR[cat] + "\"></div></div>\n"
-      + "      </div>";
-  }).join("");
-  document.getElementById("miniStats").innerHTML = mini;
-
-  /* --- Pestaña activa: por defecto Gimmick si existe, si no la primera --- */
-  const activa = CATEGORIAS_TRACKEABLES.includes(state.ui.panelCat)
-    ? state.ui.panelCat
-    : (CATEGORIAS_TRACKEABLES.includes("gimmick") ? "gimmick" : CATEGORIAS_TRACKEABLES[0]);
-  state.ui.panelCat = activa;
-  renderPanelTabs(activa, progresoPorCategoria);
-
-  panelBody.innerHTML = AGRUPA_POR_NOMBRE.has(activa)
-    ? panelPorNombreHTML(activa, owned, cubiertos)
-    : panelGimmickHTML(owned, cubiertos, cuenta);
-
-  const prog = progresoPorCategoria[activa];
-  const restantes = prog.total - prog.n;
+  const restantes = total - hechas;
   document.getElementById("panelHint").textContent = restantes
-    ? ("Marca un producto como Obtenido en el catálogo y sus piezas de " + ROTULOS[activa] + " se cuentan aquí. Te faltan " + restantes + ".")
-    : ("Colección completa en " + ROTULOS[activa] + ".");
+    ? `Marca un producto como Obtenido en el catálogo y sus Eggs se cuentan aquí. Te faltan ${restantes}.`
+    : `Colección completa.`;
 }
+
 
 /* ===========================================================================
    BLOQUE 9 · VISOR DE GALERIA
@@ -1932,14 +1828,6 @@ backdropEl.addEventListener("click", cerrarPanel);
 
 document.getElementById("hideOwned").addEventListener("change", e => {
   state.ui.hideOwned = e.target.checked;
-  saveState();
-  renderPanel();
-});
-
-panelTabsEl.addEventListener("click", e => {
-  const btn = e.target.closest("[data-tab]");
-  if(!btn) return;
-  state.ui.panelCat = btn.dataset.tab;
   saveState();
   renderPanel();
 });
