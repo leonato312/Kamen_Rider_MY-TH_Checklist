@@ -1,0 +1,2143 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kamen Rider Myth — Checklist</title>
+<!--
+  ============================================================================
+  KAMEN RIDER MY-TH — CATALOGO + CHECKLIST
+  ============================================================================
+  Archivo unico: HTML5 + CSS3 + Vanilla JS. Sin frameworks, sin build.
+
+  DOS SUPERFICIES (Maestro 1 §1):
+
+    1. CATALOGO CENTRAL — las 7 categorias, referencia historica.
+       categoria [seccion plegable] > procedencia [divisor de texto] > tarjetas
+       Las tarjetas muestran imagen, fecha y precio. Solo las de GIMMICK
+       llevan selector de estado: son la unica superficie interactiva.
+
+    2. BARRA LATERAL — checklist, EXCLUSIVA de Gimmicks.
+       subtipo/acabado [acordeon] > procedencia de gimmick > piezas
+       Orden invertido respecto al catalogo a proposito: aqui la pregunta es
+       "que Legend me falta", no "que hay en DX".
+
+  DONDE EDITAR: PIEZAS_CATALOG (BLOQUE 2) y PRODUCTS (BLOQUE 3). Contadores,
+  barras, indices inversos y cobertura se derivan solos.
+  ============================================================================
+-->
+<style>
+/* ===========================================================================
+   1. TOKENS DE DISENO — cambiar aqui un color lo cambia en toda la pagina
+   =========================================================================== */
+:root{
+  /* Superficies (de mas profunda a mas elevada) */
+  --bg:            #0b0d12;
+  --surface-1:     #12151d;
+  --surface-2:     #181c26;
+  --surface-3:     #212636;
+  --border:        #2a3040;
+  --border-strong: #3a4256;
+
+  /* Texto */
+  --text:      #e8eaf0;
+  --text-dim:  #99a1b3;
+  --text-mute: #667085;
+
+  /* Acentos del GIMMICK: oro = linea DX, cian = linea SG.
+     Son los dos tonos fuertes y se reservan al coleccionable principal
+     (Maestro 3 §7): si todo grita igual, se pierde cual importa. */
+  --dx:      #f0b429;
+  --dx-soft: rgba(240,180,41,.13);
+  --sg:      #35d0d8;
+  --sg-soft: rgba(53,208,216,.13);
+  --menor:   #ff8fab;   /* gimmick menor: Bone Buckles */
+
+  /* Un color por CATEGORIA, no por procedencia. Tonos suaves: el gimmick
+     manda y estos no deben competir. */
+  --protagonista: #7ee0c2;
+  --dispositivo:  #e8c26a;
+  --arma:         #d98cf0;
+  --aparicion:    #9b8fb0;
+  --extra:        #8a8a8a;
+
+  /* Estados de producto */
+  --pending:    #667085;
+  --reserved:   #f0b429;
+  --owned:      #37d67a;
+  --owned-soft: rgba(55,214,122,.13);
+  --covered:    #9db6ff;
+  --covered-soft: rgba(120,160,255,.12);
+
+  /* Metricas */
+  --radius:   14px;
+  --radius-s: 9px;
+  --gap:      18px;
+  --panel-w:  400px;
+
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ===========================================================================
+   2. BASE
+   =========================================================================== */
+*,*::before,*::after{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; scroll-padding-top:150px; }
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{ font:inherit; color:inherit; cursor:pointer; border:none; background:none; }
+ul{ margin:0; padding:0; list-style:none; }
+img{ display:block; max-width:100%; }
+:focus-visible{ outline:2px solid var(--dx); outline-offset:2px; border-radius:4px; }
+
+/* Halo de fondo para que el dark no se sienta plano */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(240,180,41,.07), transparent 60%),
+    radial-gradient(760px 380px at 92% 4%, rgba(53,208,216,.06), transparent 60%);
+}
+
+/* ===========================================================================
+   3. CABECERA — titulo + progreso del gimmick + acceso a la checklist
+   =========================================================================== */
+.header{
+  position:sticky; top:0; z-index:40;
+  background:rgba(11,13,18,.86); backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.header__inner{
+  max-width:1560px; margin:0 auto; padding:14px 26px;
+  display:flex; align-items:center; gap:26px; flex-wrap:wrap;
+}
+.brand{ display:flex; flex-direction:column; gap:2px; margin-right:auto; }
+.brand__title{ margin:0; font-size:19px; font-weight:700; letter-spacing:.02em; }
+.brand__title span{ color:var(--dx); }
+.brand__sub{
+  font-size:11px; color:var(--text-mute);
+  letter-spacing:.09em; text-transform:uppercase;
+}
+
+/* Mini barras del gimmick, siempre visibles. Solo las lineas del
+   coleccionable: las demas categorias no llevan progreso. */
+.mini-stats{ display:flex; gap:12px; }
+.mini-stat{
+  min-width:136px; padding:9px 13px; border-radius:var(--radius-s);
+  background:var(--surface-1); border:1px solid var(--border);
+}
+.mini-stat__top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.mini-stat__label{ font-size:11px; font-weight:700; letter-spacing:.09em; }
+.mini-stat__count{ font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.mini-stat__bar{ height:4px; margin-top:7px; border-radius:99px; background:var(--surface-3); overflow:hidden; }
+.mini-stat__fill{ height:100%; border-radius:99px; width:0; transition:width .35s ease; }
+.mini-stat--dx    .mini-stat__label{ color:var(--dx); }
+.mini-stat--dx    .mini-stat__fill { background:var(--dx); }
+.mini-stat--sg    .mini-stat__label{ color:var(--sg); }
+.mini-stat--sg    .mini-stat__fill { background:var(--sg); }
+.mini-stat--menor{ min-width:110px; }
+.mini-stat--menor .mini-stat__label{ color:var(--menor); }
+.mini-stat--menor .mini-stat__fill { background:var(--menor); }
+
+.btn-panel{
+  display:flex; align-items:center; gap:9px;
+  padding:10px 17px; border-radius:var(--radius-s);
+  background:var(--dx); color:#1a1405; font-weight:700; font-size:13px;
+  transition:filter .15s ease, transform .15s ease;
+}
+.btn-panel:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+.btn-panel__n{ font-variant-numeric:tabular-nums; background:rgba(0,0,0,.16);
+  border-radius:6px; padding:1px 7px; }
+
+/* ===========================================================================
+   4. CAJA DE NUEVOS LANZAMIENTOS
+   Solo se dibuja si el repositorio esta CERRADO (Maestro 1 §7).
+   =========================================================================== */
+.novedades{
+  max-width:1560px; margin:22px auto 0; padding:14px 20px;
+  border-radius:var(--radius); background:var(--surface-1);
+  border:1px solid rgba(240,180,41,.45);
+  box-shadow:0 0 0 1px rgba(240,180,41,.10);
+  position:relative; z-index:1;
+}
+.novedades__title{
+  font-size:10.5px; font-weight:800; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--dx); margin-bottom:5px;
+}
+.novedades__body{ font-size:12.5px; color:var(--text-dim); }
+
+/* ===========================================================================
+   5. CATALOGO CENTRAL — categoria > procedencia > tarjetas
+   =========================================================================== */
+.main{ position:relative; z-index:1; max-width:1560px; margin:0 auto; padding:30px 26px 90px; }
+
+.cat{
+  margin-bottom:16px; border-radius:var(--radius); overflow:hidden;
+  background:var(--surface-1); border:1px solid var(--border);
+}
+.cat__head{
+  width:100%; display:flex; align-items:center; gap:16px;
+  padding:19px 22px; text-align:left;
+  background:linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  transition:background .18s ease;
+}
+.cat__head:hover{ background:var(--surface-3); }
+.cat__chevron{
+  flex:0 0 auto; width:20px; height:20px; color:var(--text-dim);
+  transition:transform .28s ease, color .28s ease;
+}
+.cat[data-open="true"] .cat__chevron{ transform:rotate(90deg); color:var(--cat); }
+.cat__title{ font-size:20px; font-weight:700; color:var(--cat); }
+.cat__meta{ margin-left:auto; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+
+.chip{
+  padding:4px 11px; border-radius:99px; font-size:11px; font-weight:700;
+  letter-spacing:.05em; text-transform:uppercase; white-space:nowrap;
+  background:var(--surface-3); color:var(--text-dim); border:1px solid var(--border);
+}
+.chip--count{ color:var(--text); }
+.chip--track{ background:var(--dx-soft); color:var(--dx); border-color:rgba(240,180,41,.4); }
+.chip--done{ background:var(--owned-soft); color:var(--owned); border-color:rgba(55,214,122,.35); }
+
+/* Animacion con max-height: sin librerias y sin saltos de layout */
+.cat__body{ max-height:0; overflow:hidden; transition:max-height .38s ease; }
+.cat[data-open="true"] .cat__body{ max-height:40000px; }
+.cat__inner{ padding:6px 22px 26px; }
+
+/* --- Procedencia: DIVISOR DE TEXTO, sin acordeon (Maestro 1 §4) --- */
+.proc{ margin-top:24px; }
+.proc__head{
+  display:flex; align-items:center; gap:12px; margin-bottom:14px;
+  padding-bottom:9px; border-bottom:1px solid var(--border);
+}
+.proc__name{
+  font-size:12px; font-weight:700; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--text-dim);
+}
+.proc__rule{ flex:1; }
+.proc__n{ font-size:12px; color:var(--text-mute); font-variant-numeric:tabular-nums; }
+
+.grid{
+  display:grid; gap:var(--gap);
+  grid-template-columns:repeat(auto-fill, minmax(252px, 1fr));
+}
+
+/* ===========================================================================
+   6. TARJETA DE PRODUCTO
+   =========================================================================== */
+.card{
+  display:flex; flex-direction:column;
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius); overflow:hidden;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  scroll-margin-top:160px;
+}
+.card:hover{
+  transform:translateY(-3px); border-color:var(--border-strong);
+  box-shadow:0 12px 28px rgba(0,0,0,.4);
+}
+.card[data-state="reserved"]{ border-color:rgba(240,180,41,.5); }
+.card[data-state="owned"]{ border-color:rgba(55,214,122,.5); }
+/* Producto que ya no hace falta porque viene dentro de otro que tienes.
+   Se atenua sin ocultarse: sigue siendo comprable si lo quieres suelto. */
+.card[data-covered="true"]{ border-color:rgba(120,160,255,.35); }
+.card[data-covered="true"] .card__media{ opacity:.5; }
+.card[data-covered="true"] .card__title{ color:var(--text-dim); }
+.card__covered{
+  margin:0; padding:6px 9px; border-radius:7px;
+  font-size:10.5px; line-height:1.4; font-weight:600;
+  background:var(--covered-soft); color:var(--covered);
+  border:1px solid rgba(120,160,255,.3);
+}
+.card--flash{ animation:flash 1.6s ease; }
+@keyframes flash{
+  0%,100%{ box-shadow:0 0 0 0 rgba(240,180,41,0); }
+  20%    { box-shadow:0 0 0 3px rgba(240,180,41,.55); }
+}
+
+/* Zona de imagen: relacion fija para que el grid no baile con fotos dispares.
+   `contain` y no `cover`: las fichas de Bandai vienen recortadas de formas
+   distintas y `cover` corta cabezas. */
+.card__media{
+  position:relative; aspect-ratio:4/3; background:var(--surface-1);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  cursor:zoom-in;
+}
+.card__img{
+  width:100%; height:100%; object-fit:contain; padding:10px;
+  transition:transform .3s ease;
+}
+.card:hover .card__img{ transform:scale(1.045); }
+/* Placeholder visible mientras la imagen no haya cargado */
+.card__ph{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:var(--text-mute); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  background:repeating-linear-gradient(45deg,#141821,#141821 11px,#171c26 11px,#171c26 22px);
+}
+.card__media.is-loaded .card__ph{ display:none; }
+
+/* Badges sobre la imagen */
+.card__badges{
+  position:absolute; top:9px; left:9px; display:flex; gap:6px; flex-wrap:wrap;
+  max-width:calc(100% - 18px); z-index:2;
+}
+.badge{
+  padding:3px 8px; border-radius:6px; font-size:10px; font-weight:800;
+  letter-spacing:.07em; text-transform:uppercase; backdrop-filter:blur(6px);
+}
+.badge--dx{ background:var(--dx-soft); color:var(--dx); box-shadow:inset 0 0 0 1px rgba(240,180,41,.4); }
+.badge--sg{ background:var(--sg-soft); color:var(--sg); box-shadow:inset 0 0 0 1px rgba(53,208,216,.4); }
+.badge--promo{ background:rgba(190,120,255,.15); color:#c79bff; box-shadow:inset 0 0 0 1px rgba(190,120,255,.4); }
+.badge--azar{ background:rgba(255,255,255,.09); color:var(--text-dim); box-shadow:inset 0 0 0 1px var(--border-strong); }
+/* Producto que pertenece a mas de una categoria (figura + gimmick) */
+.badge--cross{ background:var(--covered-soft); color:var(--covered); box-shadow:inset 0 0 0 1px rgba(120,160,255,.4); }
+
+/* Marca de obtenido, esquina superior derecha */
+.card__tick{
+  position:absolute; top:9px; right:9px; width:24px; height:24px; border-radius:50%;
+  display:none; align-items:center; justify-content:center; z-index:2;
+  background:var(--owned); color:#05230f; font-size:14px; font-weight:900;
+}
+.card[data-state="owned"] .card__tick{ display:flex; }
+
+.card__body{ padding:13px 14px 14px; display:flex; flex-direction:column; gap:11px; flex:1; }
+.card__title{ font-size:13.5px; font-weight:600; line-height:1.35; }
+.card__row{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-top:auto; }
+.card__price{ font-size:15px; font-weight:700; color:var(--dx); font-variant-numeric:tabular-nums; }
+.card__price--nr{ color:var(--text-mute); font-size:12px; font-weight:600; font-style:italic; }
+.card__date{
+  font-size:11px; font-weight:600; color:var(--text-dim);
+  white-space:nowrap; text-transform:uppercase; letter-spacing:.04em;
+}
+.card__date--past{ color:var(--text-mute); font-weight:500; }
+
+/* ---- Selector de estado: solo en tarjetas de GIMMICK ---- */
+.states{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:4px;
+  padding:3px; background:var(--surface-1);
+  border:1px solid var(--border); border-radius:8px;
+}
+.state-btn{
+  padding:6px 4px; border-radius:6px; font-size:10.5px; font-weight:700;
+  letter-spacing:.04em; color:var(--text-mute); text-align:center;
+  transition:background .15s ease, color .15s ease;
+}
+.state-btn:hover{ background:var(--surface-3); color:var(--text-dim); }
+.state-btn[aria-pressed="true"]{ color:#0b0d12; }
+.state-btn[data-state="pending"][aria-pressed="true"]{ background:var(--pending); color:#e8eaf0; }
+.state-btn[data-state="reserved"][aria-pressed="true"]{ background:var(--reserved); }
+.state-btn[data-state="owned"][aria-pressed="true"]{ background:var(--owned); }
+
+/* ---- Desplegable de contenidos ----
+   Borde CONTINUO si la entrega esta garantizada, PUNTEADO si es de azar:
+   llamarlos igual daria a entender que comprar un set es una loteria. */
+.contents{
+  border:1px solid var(--border); border-radius:var(--radius-s);
+  background:var(--surface-1); overflow:hidden;
+}
+.contents--azar{ border-style:dashed; border-color:var(--border-strong); }
+.contents__toggle{
+  display:flex; align-items:center; gap:8px; padding:8px 11px;
+  font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--text-dim); cursor:pointer; list-style:none;
+  transition:background .15s ease, color .15s ease;
+}
+.contents__toggle::-webkit-details-marker{ display:none; }
+.contents__toggle:hover{ background:var(--surface-3); color:var(--text); }
+.contents__arrow{ margin-left:auto; transition:transform .25s ease; }
+.contents[open] .contents__arrow{ transform:rotate(90deg); }
+.contents__n{
+  padding:1px 6px; border-radius:99px; font-size:10px;
+  background:var(--surface-3); color:var(--text-dim);
+}
+.contents__list{ padding:4px 10px 11px; display:flex; flex-direction:column; gap:5px; }
+.contents__item{
+  display:flex; align-items:center; gap:8px;
+  padding:5px 7px; border-radius:6px; font-size:12px;
+  background:var(--surface-2);
+}
+.contents__dot{ flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:var(--text-mute); }
+.contents__item--tengo .contents__dot{ background:var(--owned); }
+.contents__item--tengo .contents__name{ color:var(--owned); }
+.contents__item--cubierto .contents__dot{ background:var(--owned); opacity:.55; }
+.contents__name{ flex:1; min-width:0; }
+
+/* ===========================================================================
+   7. VISOR DE GALERIA
+   Pulsar la portada abre las fotos en superposicion. Nunca una segunda
+   pagina por producto: esto es una checklist, no una tienda.
+   =========================================================================== */
+.viewer{
+  position:fixed; inset:0; z-index:80;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(5,7,11,.94); backdrop-filter:blur(6px);
+  opacity:0; visibility:hidden; transition:opacity .22s ease, visibility .22s ease;
+}
+.viewer[data-open="true"]{ opacity:1; visibility:visible; }
+.viewer__img{
+  max-width:88vw; max-height:82vh; object-fit:contain;
+  border-radius:8px; box-shadow:0 24px 60px rgba(0,0,0,.6);
+}
+.viewer__bar{
+  position:absolute; top:0; left:0; right:0;
+  display:flex; align-items:center; gap:14px; padding:14px 18px;
+  background:linear-gradient(180deg, rgba(0,0,0,.65), transparent);
+}
+.viewer__title{ font-size:13px; font-weight:700; letter-spacing:.03em; }
+.viewer__count{ font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.viewer__close{
+  margin-left:auto; width:34px; height:34px; border-radius:8px;
+  font-size:22px; color:var(--text-dim); background:rgba(255,255,255,.06);
+}
+.viewer__close:hover{ background:var(--surface-3); color:var(--text); }
+.viewer__nav{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:46px; height:70px; border-radius:8px; font-size:30px; line-height:1;
+  color:var(--text-dim); background:rgba(255,255,255,.06);
+  transition:background .15s ease, color .15s ease;
+}
+.viewer__nav:hover{ background:var(--surface-3); color:var(--text); }
+.viewer__prev{ left:14px; }
+.viewer__next{ right:14px; }
+
+/* ===========================================================================
+   8. BARRA LATERAL — CHECKLIST DE GIMMICKS
+   =========================================================================== */
+.backdrop{
+  position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6);
+  opacity:0; visibility:hidden; transition:opacity .25s ease, visibility .25s ease;
+}
+.backdrop[data-open="true"]{ opacity:1; visibility:visible; }
+
+.panel{
+  position:fixed; top:0; right:0; z-index:60;
+  width:var(--panel-w); max-width:100%; height:100%;
+  display:flex; flex-direction:column;
+  background:var(--surface-1); border-left:1px solid var(--border);
+  transform:translateX(102%); transition:transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:-18px 0 44px rgba(0,0,0,.5);
+}
+.panel[data-open="true"]{ transform:translateX(0); }
+
+.panel__head{ padding:18px 20px 14px; border-bottom:1px solid var(--border); }
+.panel__top{ display:flex; align-items:center; gap:12px; }
+.panel__title{ margin:0; font-size:16px; font-weight:700; }
+.panel__close{ margin-left:auto; width:30px; height:30px; border-radius:7px; color:var(--text-dim); font-size:18px; }
+.panel__close:hover{ background:var(--surface-3); color:var(--text); }
+.panel__hint{ margin:8px 0 0; font-size:11.5px; color:var(--text-mute); line-height:1.45; }
+
+/* Progreso global del gimmick */
+.panel__global{ margin-top:14px; }
+.panel__global-top{ display:flex; align-items:baseline; gap:10px; font-size:12px; color:var(--text-dim); }
+.panel__global-n{ font-size:15px; font-weight:800; color:var(--text); font-variant-numeric:tabular-nums; }
+.panel__global-bar{ height:6px; margin-top:7px; border-radius:99px; background:var(--surface-3); overflow:hidden; }
+.panel__global-fill{ height:100%; border-radius:99px; background:var(--dx); width:0; transition:width .35s ease; }
+
+.panel__filter{ display:flex; align-items:center; gap:8px; margin-top:13px; font-size:12px; color:var(--text-dim); cursor:pointer; }
+.panel__filter input{ accent-color:var(--dx); width:15px; height:15px; cursor:pointer; }
+
+.panel__body{ flex:1; overflow-y:auto; padding:8px 20px 40px; }
+.panel__body::-webkit-scrollbar{ width:9px; }
+.panel__body::-webkit-scrollbar-thumb{ background:var(--surface-3); border-radius:9px; }
+
+/* Grupo por SUBTIPO (Ride Eggs, Legend, Bone Buckles...) */
+.grupo{ margin-top:20px; }
+.grupo__head{
+  display:flex; align-items:center; gap:10px; margin-bottom:9px;
+  width:100%; text-align:left; cursor:pointer; padding:2px 0;
+}
+.grupo__chevron{
+  flex:0 0 auto; width:14px; height:14px; color:var(--text-mute);
+  transition:transform .25s ease;
+}
+.grupo[data-open="true"] .grupo__chevron{ transform:rotate(90deg); }
+.grupo__name{ font-size:12.5px; font-weight:800; letter-spacing:.11em; text-transform:uppercase; }
+.grupo__tag{
+  padding:1px 6px; border-radius:99px; font-size:9px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+  background:var(--surface-3); color:var(--text-mute);
+}
+.grupo__count{ margin-left:auto; font-size:12px; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+/* Cerrado esconde las piezas, NUNCA el resumen: nombre, contador y barra
+   quedan fuera del bloque plegable a proposito (Maestro 1 §9). */
+.grupo__bar{ height:5px; border-radius:99px; background:var(--surface-3); overflow:hidden; margin-bottom:12px; }
+.grupo__fill{ height:100%; width:0; border-radius:99px; transition:width .35s ease; }
+.grupo__body{ max-height:0; overflow:hidden; transition:max-height .35s ease; }
+.grupo[data-open="true"] .grupo__body{ max-height:8000px; }
+
+/* Linea de procedencia del gimmick (DX / SG) dentro del subtipo */
+.linea{ margin-bottom:14px; }
+.linea__head{
+  display:flex; align-items:baseline; gap:8px; margin-bottom:6px;
+  font-size:10.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
+}
+.linea__n{ margin-left:auto; color:var(--text-mute); font-variant-numeric:tabular-nums; }
+.linea__bar{ height:4px; border-radius:99px; background:var(--surface-3); overflow:hidden; margin-bottom:8px; }
+.linea__fill{ height:100%; width:0; border-radius:99px; transition:width .35s ease; }
+
+.pieza{
+  display:flex; align-items:flex-start; gap:9px;
+  padding:7px 9px; border-radius:7px; margin-bottom:3px;
+  transition:background .15s ease;
+}
+.pieza:hover{ background:var(--surface-2); }
+.pieza__dot{
+  flex:0 0 auto; margin-top:5px; width:8px; height:8px; border-radius:50%;
+  background:var(--surface-3); box-shadow:inset 0 0 0 1px var(--border-strong);
+}
+.pieza--tengo    .pieza__dot{ background:var(--owned); box-shadow:none; }
+.pieza--cubierto .pieza__dot{ background:var(--owned); box-shadow:none; opacity:.55; }
+.pieza--sinvia   .pieza__dot{ background:#e25555; box-shadow:none; }
+.pieza__main{ flex:1; min-width:0; }
+.pieza__name{ font-size:12.5px; color:var(--text-dim); }
+.pieza--tengo .pieza__name, .pieza--cubierto .pieza__name{ color:var(--text); }
+.pieza__acabado{
+  margin-left:5px; padding:1px 5px; border-radius:4px; font-size:9px;
+  font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  background:var(--surface-3); color:var(--text-mute);
+}
+/* Vias de obtencion: todas, no solo la primera. Es la mitad del valor de
+   la enciclopedia (Maestro 1 §5.6). */
+.pieza__vias{ display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+.via{
+  padding:2px 7px; border-radius:5px; font-size:9.5px; font-weight:700;
+  letter-spacing:.03em; cursor:pointer;
+  background:var(--surface-3); color:var(--text-mute);
+  transition:background .15s ease, color .15s ease;
+}
+.via:hover{ background:var(--dx-soft); color:var(--dx); }
+.via--tengo{ background:var(--owned-soft); color:var(--owned); }
+.via--azar::after{ content:" · azar"; opacity:.7; }
+
+.panel__empty{ padding:22px 4px; text-align:center; font-size:12px; color:var(--text-mute); }
+.panel__sinvia{
+  margin-top:8px; padding:8px 10px; border-radius:7px; font-size:11px;
+  background:rgba(226,85,85,.10); color:#ff9b9b; border:1px solid rgba(226,85,85,.3);
+}
+
+/* ===========================================================================
+   9. RESPONSIVE
+   El umbral hay que MEDIRLO, no estimarlo: con tres barras y el boton, la
+   cabecera aguanta en una linea hasta ~1180. Va en su propia consulta para
+   no adelantar el resto del responsive.
+   =========================================================================== */
+@media (max-width: 1180px){
+  .mini-stats{ order:3; width:100%; }
+  .mini-stat{ flex:1; min-width:0; }
+}
+@media (max-width: 1080px){
+  .header__inner{ gap:14px; }
+}
+@media (max-width: 720px){
+  .main{ padding:20px 14px 70px; }
+  .header__inner{ padding:12px 14px; }
+  .cat__inner{ padding:4px 13px 20px; }
+  .cat__head{ padding:15px 14px; gap:11px; }
+  .cat__title{ font-size:17px; }
+  .cat__meta{ width:100%; margin-left:0; }
+  .grid{ grid-template-columns:repeat(auto-fill, minmax(158px, 1fr)); gap:12px; }
+  .panel{ width:100%; }
+  .brand__sub{ display:none; }
+  .viewer__img{ max-width:96vw; max-height:74vh; }
+  .viewer__nav{ width:38px; height:56px; font-size:24px; }
+  .viewer__prev{ left:6px; }
+  .viewer__next{ right:6px; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ==========================================================================
+     CABECERA
+     ========================================================================== -->
+<header class="header">
+  <div class="header__inner">
+    <div class="brand">
+      <h1 class="brand__title">KAMEN RIDER <span>MY-TH</span></h1>
+      <span class="brand__sub">Catálogo &amp; checklist de Eggs</span>
+    </div>
+    <div class="mini-stats" id="miniStats"></div>
+    <button class="btn-panel" id="openPanel">
+      Checklist <span class="btn-panel__n" id="headerCount">0/0</span>
+    </button>
+  </div>
+</header>
+
+<div class="novedades" id="novedades" hidden>
+  <div class="novedades__title">Nuevos lanzamientos</div>
+  <div class="novedades__body" id="novedadesBody"></div>
+</div>
+
+<main class="main" id="catalog"></main>
+
+<!-- ==========================================================================
+     VISOR DE GALERIA
+     ========================================================================== -->
+<div class="viewer" id="viewer" data-open="false">
+  <div class="viewer__bar">
+    <span class="viewer__title" id="viewerTitle"></span>
+    <span class="viewer__count" id="viewerCount"></span>
+    <button class="viewer__close" id="viewerClose" aria-label="Cerrar">&times;</button>
+  </div>
+  <button class="viewer__nav viewer__prev" id="viewerPrev" aria-label="Anterior">&#8249;</button>
+  <img class="viewer__img" id="viewerImg" alt="">
+  <button class="viewer__nav viewer__next" id="viewerNext" aria-label="Siguiente">&#8250;</button>
+</div>
+
+<!-- ==========================================================================
+     BARRA LATERAL — CHECKLIST DE GIMMICKS
+     ========================================================================== -->
+<div class="backdrop" id="backdrop" data-open="false"></div>
+<aside class="panel" id="panel" data-open="false" aria-label="Checklist de gimmicks">
+  <div class="panel__head">
+    <div class="panel__top">
+      <h2 class="panel__title" id="panelTitle">Checklist</h2>
+      <button class="panel__close" id="closePanel" aria-label="Cerrar">&times;</button>
+    </div>
+    <p class="panel__hint" id="panelHint"></p>
+
+    <div class="panel__global">
+      <div class="panel__global-top">
+        <span class="panel__global-n" id="globalN">0/0</span>
+        <span>piezas conseguidas</span>
+      </div>
+      <div class="panel__global-bar"><div class="panel__global-fill" id="globalBar"></div></div>
+    </div>
+
+    <label class="panel__filter">
+      <input type="checkbox" id="hideOwned"> Ocultar lo que ya tengo
+    </label>
+  </div>
+  <div class="panel__body" id="panelBody"></div>
+</aside>
+
+<script>
+/* ===========================================================================
+   BLOQUE 1 · CONFIGURACION
+   =========================================================================== */
+
+const STORAGE_KEY = "myth-catalog-v1";
+const REPO_ESTADO = "abierto";       // 'abierto' | 'cerrado' — Maestro 1 §7
+
+/* Las 7 categorias, EN ORDEN. Una categoria que la serie no tiene se deja
+   fuera de ROTULOS y no se dibuja. 'mecha' se omite: Myth no tiene mechas. */
+const CATEGORIA_ORDEN = ["protagonista","dispositivo","mecha","arma","gimmick","aparicion","extra"];
+/* Los dos huecos de la jerarquia masivo/menor (Maestro 1 §5.2). 'gimmick1' es
+   el masivo, siempre existe si la categoria 5 existe; 'gimmick2' es el menor,
+   opcional. El titulo de la seccion 5 se arma con los dos: no es el nombre de
+   uno solo, es la categoria entera. */
+const GIMMICKS = {
+  gimmick1: "Eggs",     // masivo — Ride/Seed Eggs, lineas DX y SG
+  gimmick2: "Buckles"   // menor  — Bone Buckles
+};
+
+const ROTULOS = {
+  protagonista: "Riders",
+  dispositivo:  "Drivers",
+  arma:         "Armas",
+  gimmick:      GIMMICKS.gimmick2 ? `${GIMMICKS.gimmick1} & ${GIMMICKS.gimmick2}` : GIMMICKS.gimmick1,
+  aparicion:    "Apariciones",
+  extra:        "Extras"
+};
+
+/* SOLO Gimmicks es interactiva (Maestro 1 §3): es la unica categoria cuyas
+   tarjetas llevan estado y alimentan la barra lateral. Se probo ampliar el
+   marcado a las 7 categorias y se revirtio: anadia una pestaña, un contador
+   y una fila de chips por cada Rider/Driver/Arma sin que nadie fuera a
+   "completar" esas categorias como coleccion -solo estorbaba la pagina y
+   la checklist real, que es la de Eggs & Buckles. */
+const CATEGORIA_INTERACTIVA = "gimmick";
+
+/* Color por CATEGORIA, no por procedencia (Maestro 3 §7). */
+const CAT_COLOR = {
+  protagonista: "var(--protagonista)",
+  dispositivo:  "var(--dispositivo)",
+  arma:         "var(--arma)",
+  gimmick:      "var(--dx)",
+  aparicion:    "var(--aparicion)",
+  extra:        "var(--extra)"
+};
+
+/* Registro de PROCEDENCIAS del catalogo central (Maestro 1 §4.1). Abierto:
+   cada linea comercial es su propia entrada, sin emparejar con otras.
+   `badge` es el distintivo DECLARADO, no deducido del nombre: sin entrada,
+   sin distintivo -mejor nada que una linea equivocada-. */
+const PROCEDENCIAS = {
+  "taf":        { label:"TAF" },
+  "sofv":       { label:"Soft Vinyl" },
+  "shf":        { label:"S.H.Figuarts" },
+  "sodo":       { label:"SO-DO",           badge:"sg" },
+  "sg-kit":     { label:"SG Model Kits",   badge:"sg" },
+  "sg-random":  { label:"SG Random Box",   badge:"sg" },
+  "dx":         { label:"DX",              badge:"dx" },
+  "dx-random":  { label:"DX Random Box",   badge:"dx" },
+  "buckles":    { label:"Bone Buckles",    badge:"dx" },
+  "promo":      { label:"Promocional",     badge:"promo" },
+  "gp":         { label:"Gashapon (GP)" }
+};
+
+/* Registro de procedencias de GIMMICK (barra lateral): mas grueso que el de
+   arriba a proposito -es el CANAL del gimmick (DX/SG), no la linea concreta
+   del producto que lo trae-. Viven en subsistemas separados (Maestro 1 §5.1). */
+const PROCEDENCIAS_GIMMICK = {
+  "dx": { label:"Linea DX", color:"var(--dx)" },
+  "sg": { label:"Linea SG", color:"var(--sg)" },
+  "gp": { label:"Gashapon (GP)", color:"var(--menor)" }
+};
+
+/* Subtipo: agrupa la barra lateral. El orden aqui es el orden del panel.
+   'menor':true = coleccion hermana, con contador PROPIO (Maestro 1 §5.2). */
+const SUBTIPOS = {
+  "ride-eggs":        { label:"Ride Eggs" },
+  "legend-ride-eggs": { label:"Legend Ride Eggs" },
+  "seed-eggs":        { label:"Seed Eggs" },
+  "legend-seed-eggs": { label:"Legend Seed Eggs" },
+  "otros-eggs":       { label:"Otros Eggs" },
+  "bone-buckles":     { label:"Bone Buckles", menor:true }
+};
+
+/* Acabado: como esta acabada la pieza. "estandar" no lleva chip. */
+const ACABADOS = {
+  "estandar":  { label:"" },
+  "special":   { label:"Special ver." },
+  "gold":      { label:"Gold ver." },
+  "tokyo":     { label:"Store Tokyo" },
+  "nagoya":    { label:"Store Nagoya" },
+  "hammer-on": { label:"Hammer On" },
+  "flame":     { label:"Flame ver." },
+  "charadeco": { label:"Charadeco ver." },
+  "xmas":      { label:"Christmas ver." }
+};
+
+const STATES = { pending:"Pendiente", reserved:"Reservado", owned:"Obtenido" };
+const CURRENCY = { symbol:"¥", locale:"ja-JP" };
+const HOY = new Date().toISOString().slice(0,10);
+
+
+/* ===========================================================================
+   BLOQUE 2 · PIEZAS_CATALOG  (fuente de verdad de la checklist de Gimmicks)
+   ---------------------------------------------------------------------------
+   id · name · categoria (una de las 7) · procedencia · subtipo · acabado
+   =========================================================================== */
+
+const PIEZAS_CATALOG = [
+
+  /* ---------- PROTAGONISTA · Riders. Una fila POR LINEA: quien va a por el Soft
+     Vinyl no da MY-TH por hecho porque tenga el TAF ---------- */
+  { id:"rider-myth-taf",          name:"MY-TH",                         categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-myth-sofv",         name:"MY-TH",                         categoria:"protagonista", procedencia:"sofv",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-myth-sodo",         name:"MY-TH",                         categoria:"protagonista", procedencia:"sodo",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-myth-sg-kit",       name:"MY-TH",                         categoria:"protagonista", procedencia:"sg-kit", subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-maou-taf",          name:"MAOU",                          categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-maou-sofv",         name:"MAOU",                          categoria:"protagonista", procedencia:"sofv",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-maou-sodo",         name:"MAOU",                          categoria:"protagonista", procedencia:"sodo",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-datt-taf",          name:"DATT",                          categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-datt-sofv",         name:"DATT",                          categoria:"protagonista", procedencia:"sofv",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-datt-sodo",         name:"DATT",                          categoria:"protagonista", procedencia:"sodo",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-rid-taf",           name:"RID",                           categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-rid-sofv",          name:"RID",                           categoria:"protagonista", procedencia:"sofv",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-rid-sodo",          name:"RID",                           categoria:"protagonista", procedencia:"sodo",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-rid-sg-kit",        name:"RID",                           categoria:"protagonista", procedencia:"sg-kit", subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-jao-taf",           name:"JAO",                           categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-jao-sofv",          name:"JAO",                           categoria:"protagonista", procedencia:"sofv",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-tigul-sofv",        name:"TIGUL",                         categoria:"protagonista", procedencia:"sofv",   subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-myth-shf",          name:"MY-TH",                         categoria:"protagonista", procedencia:"shf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-maou-shf",          name:"MAOU",                          categoria:"protagonista", procedencia:"shf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-muton-taf",         name:"MUTON",                         categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-vanken-taf",        name:"VANKEN",                        categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-kei-taf",           name:"KEI",                           categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+  { id:"rider-tigul-taf",         name:"TIGUL",                         categoria:"protagonista", procedencia:"taf",    subtipo:"rider",             acabado:"estandar" },
+
+  /* ---------- DISPOSITIVO · Drivers. Un solo cinturon, tres presentaciones.
+     Las cajas DX que lo incluyen no lo declaran: ya lo cubren por `reemplaza` ---------- */
+  { id:"drv-myth-dx",             name:"MY-TH Driver",                  categoria:"dispositivo",  procedencia:"dx",     subtipo:"driver",            acabado:"estandar" },
+  { id:"drv-myth-sg-kit",         name:"MY-TH Driver",                  categoria:"dispositivo",  procedencia:"sg-kit", subtipo:"driver",            acabado:"estandar" },
+  { id:"drv-myth-sg-kit-hammer",  name:"MY-TH Driver",                  categoria:"dispositivo",  procedencia:"sg-kit", subtipo:"driver",            acabado:"hammer-on" },
+  { id:"drv-maou-dx",             name:"MAOU Driver",                   categoria:"dispositivo",  procedencia:"dx",     subtipo:"driver",            acabado:"estandar" },
+
+  /* Accesorios del Driver que son dispositivo por derecho propio, no arma ni
+     gimmick. Hokokuro en particular: "es un dispositivo de brazo con gimmick
+     de sellos", no un arma -decision del usuario, manda sobre la foto-. */
+  { id:"dev-myth-phone",          name:"MY-TH Phone",                   categoria:"dispositivo",  procedencia:"dx",     subtipo:"accesorio",         acabado:"estandar" },
+  { id:"dev-expack",              name:"Expack",                        categoria:"dispositivo",  procedencia:"dx",     subtipo:"accesorio",         acabado:"estandar" },
+  { id:"dev-hokokuro",            name:"Hokokuro",                      categoria:"dispositivo",  procedencia:"dx",     subtipo:"accesorio",         acabado:"estandar" },
+
+  /* ---------- ARMA · solo las que SON el producto, no accesorios de una figura ---------- */
+  { id:"arma-myth-edge-dx",       name:"MY-TH Edge",                    categoria:"arma",         procedencia:"dx",     subtipo:"arma",              acabado:"estandar" },
+  { id:"arma-rabbit-sword-dx",    name:"Rabbit Sword",                  categoria:"arma",         procedencia:"dx",     subtipo:"arma",              acabado:"estandar" },
+  { id:"arma-snake-size-dx",      name:"Snake Size",                    categoria:"arma",         procedencia:"dx",     subtipo:"arma",              acabado:"estandar" },
+  { id:"arma-dog-gun-dx",         name:"Dog Gun",                       categoria:"arma",         procedencia:"dx",     subtipo:"arma",              acabado:"estandar" },
+  { id:"arma-magnum-rid-dx",      name:"Rid Magnum",                    categoria:"arma",         procedencia:"dx",     subtipo:"arma",              acabado:"estandar" },
+  { id:"arma-maou-blade-dx",      name:"Maou Blade",                    categoria:"arma",         procedencia:"dx",     subtipo:"arma",              acabado:"estandar" },
+
+  /* ---------- GIMMICK · Eggs. Cada acabado es una fila propia ---------- */
+  /* -- DX · Ride Eggs numerados -- */
+  { id:"ride-eggs-1",             name:"Ride Eggs 1",                   categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
+  { id:"ride-eggs-1-special",     name:"Ride Eggs 1 (Special ver.)",    categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"special" },
+  { id:"ride-eggs-1-gold",        name:"Ride Eggs 1 (Gold ver.)",       categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"gold" },
+  { id:"ride-eggs-1-origin",      name:"Ride Eggs 1 Origin",            categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
+  { id:"ride-eggs-1-flame",       name:"Ride Eggs 1 (Flame ver.)",      categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"flame" },
+  { id:"ride-eggs-4",             name:"Ride Eggs 4",                   categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
+  { id:"ride-eggs-4-special",     name:"Ride Eggs 4 (Special ver.)",    categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"special" },
+  { id:"ride-eggs-6",             name:"Ride Eggs 6",                   categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
+  { id:"ride-eggs-8",             name:"Ride Eggs 8",                   categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
+  { id:"ride-eggs-10",            name:"Ride Eggs 10",                  categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
+  { id:"ride-eggs-11",            name:"Ride Eggs 11",                  categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
+  { id:"ride-eggs-11-special",    name:"Ride Eggs 11 (Special ver.)",   categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"special" },
+  /* -- DX · Legend Ride Eggs -- */
+  { id:"kuuga-ride-eggs",         name:"Kuuga Ride Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"ooz-ride-eggs",           name:"Ooz Ride Eggs",                 categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"zeztz-ride-eggs",         name:"Zeztz Ride Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"agito-ride-eggs",         name:"Agito Ride Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"gavv-ride-eggs",          name:"Gavv Ride Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"revice-ride-eggs",        name:"Revice Ride Eggs",              categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"gotchard-ride-eggs",      name:"Gotchard Ride Eggs",            categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"build-ride-eggs",         name:"Build Ride Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"faiz-ride-eggs",          name:"Faiz Ride Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"gaim-ride-eggs",          name:"Gaim Ride Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"hibiki-ride-eggs",        name:"Hibiki Ride Eggs",              categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"kabuto20th-seed-eggs",    name:"Kabuto 20th Seed Eggs",         categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  { id:"hercules-beetle-seed-eggs", name:"Hercules Beetle Seed Eggs",   categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  /* -- DX · Seed Eggs -- */
+  { id:"myth-seed-eggs",          name:"Myth Seed Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"myth-seed-eggs-tokyo",    name:"Myth Seed Eggs (KR Store Tokyo ver.)", categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"tokyo" },
+  { id:"myth-seed-eggs-nagoya",   name:"Myth Seed Eggs (KR Store Nagoya ver.)", categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"nagoya" },
+  { id:"myth-seed-eggs-charadeco", name:"Myth Seed Eggs (Charadeco ver.)",     categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"charadeco" },
+  { id:"myth-seed-eggs-xmas",      name:"Myth Seed Eggs (Christmas ver.)",     categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"xmas" },
+  { id:"hato-seed-eggs",          name:"Hato Seed Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"koala-seed-eggs",         name:"Koala Seed Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"zou-seed-eggs",           name:"Zou Seed Eggs",                 categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"owl-seed-eggs",           name:"Owl Seed Eggs",                 categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"taka-seed-eggs",          name:"Taka Seed Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"stag-beetle-seed-eggs",   name:"Stag Beetle Seed Eggs",         categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"crocodile-seed-eggs",     name:"Crocodile Seed Eggs",           categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"chameleon-seed-eggs",     name:"Chameleon Seed Eggs",           categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"armadillo-seed-eggs",     name:"Armadillo Seed Eggs",           categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"grasshopper-seed-eggs",   name:"Grasshopper Seed Eggs",         categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"giraffe-seed-eggs",       name:"Giraffe Seed Eggs",             categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"gorilla-seed-eggs",       name:"Gorilla Seed Eggs",             categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"reindeer-seed-eggs",      name:"Reindeer Seed Eggs",            categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"penguin-seed-eggs",       name:"Penguin Seed Eggs",             categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"panda-seed-eggs",         name:"Panda Seed Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"pillbug-seed-eggs",       name:"Pillbug Seed Eggs",             categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"hedgehog-seed-eggs",      name:"Hedgehog Seed Eggs",            categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"lion-seed-eggs",          name:"Lion Seed Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"cheetah-seed-eggs",       name:"Cheetah Seed Eggs",             categoria:"gimmick",      procedencia:"dx",     subtipo:"seed-eggs",         acabado:"estandar" },
+  { id:"gp-kabuto-seed-eggs",     name:"Kabuto Seed Eggs (GP)",         categoria:"gimmick",      procedencia:"gp",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  { id:"gp-denou-seed-eggs",      name:"Den-O Seed Eggs (GP)",          categoria:"gimmick",      procedencia:"gp",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  { id:"gp-zeronos-seed-eggs",    name:"Zeronos Seed Eggs (GP)",        categoria:"gimmick",      procedencia:"gp",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  { id:"gp-varen-seed-eggs",      name:"Varen Seed Eggs (GP)",          categoria:"gimmick",      procedencia:"gp",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  { id:"gp-nox-seed-eggs",        name:"Nox Seed Eggs (GP)",            categoria:"gimmick",      procedencia:"gp",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  /* -- DX · Legend Seed Eggs -- */
+  { id:"no1-seed-eggs",           name:"No. 1 Seed Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  { id:"gp-stagbeetle-seed-eggs", name:"Stag Beetle Seed Eggs (GP)",    categoria:"gimmick",      procedencia:"gp",     subtipo:"seed-eggs",         acabado:"estandar" },
+  /* -- DX · Otros Eggs -- */
+  { id:"ridewatter-eggs",         name:"Ridewatter Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"otros-eggs",        acabado:"estandar" },
+  /* -- SG · Ride Eggs numerados -- */
+  { id:"sg-ride-eggs-4",          name:"Ride Eggs 4 (SG ver.)",         categoria:"gimmick",      procedencia:"sg",     subtipo:"ride-eggs",         acabado:"estandar" },
+  /* -- SG · Legend Ride Eggs -- */
+  { id:"sg-zio-ride-eggs",        name:"Zi-O Ride Eggs (SG)",           categoria:"gimmick",      procedencia:"sg",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"sg-zeroone-ride-eggs",    name:"ZeroOne Ride Eggs (SG)",        categoria:"gimmick",      procedencia:"sg",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  /* -- SG · Legend Seed Eggs -- */
+  { id:"sg-kaixa-seed-eggs",      name:"Kaixa Seed Eggs (SG)",          categoria:"gimmick",      procedencia:"sg",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  { id:"sg-garren-seed-eggs",     name:"Garren Seed Eggs (SG)",         categoria:"gimmick",      procedencia:"sg",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  { id:"sg-diend-seed-eggs",      name:"DiEnd Seed Eggs (SG)",          categoria:"gimmick",      procedencia:"sg",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
+  /* -- DX * Bone Buckles (gimmick MENOR, coleccion hermana de los Eggs) -- */
+  { id:"buckle-hammerbone", name:"Hammerbone Buckle", categoria:"gimmick", procedencia:"dx", subtipo:"bone-buckles", acabado:"estandar" },
+  { id:"buckle-slashbone",  name:"Slashbone Buckle",  categoria:"gimmick", procedencia:"dx", subtipo:"bone-buckles", acabado:"estandar" },
+  { id:"buckle-bitebone",   name:"Bite Bone Buckle",  categoria:"gimmick", procedencia:"dx", subtipo:"bone-buckles", acabado:"estandar" },
+  { id:"buckle-shotbone",   name:"Shot Bone Buckle",  categoria:"gimmick", procedencia:"dx", subtipo:"bone-buckles", acabado:"estandar" }
+];
+
+/* Vistas derivadas. No reagrupan nada: solo filtran. */
+const PIEZAS_BY_ID = PIEZAS_CATALOG.reduce((m,p)=>{ m[p.id]=p; return m; },{});
+
+
+/* ===========================================================================
+   BLOQUE 3 · PRODUCTS
+   ---------------------------------------------------------------------------
+   id · title · procedencia · entrega (garantizada|incierta|identificada) ·
+   date (de ENTREGA, no de reserva) · price (null -> N/R) ·
+   contains (piezas que entrega) · reemplaza (productos que absorbe) ·
+   alsoIn (procedencia extra: producto puente)
+   =========================================================================== */
+
+const PRODUCTS = [
+
+  /* =================== JULIO 2026 =================== */
+  { id:"sv-myth", title:"RIDER HERO SERIES KAMEN RIDER MY-TH", procedencia:"sofv", entrega:"garantizada",
+    date:"2026-07-25", dateType:"release", price:880,
+    img:"PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH/01-thumb.webp",
+    gallery:["PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH/01.webp",
+              "PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MY-TH/02.webp"],contains:["rider-myth-sofv"] },
+
+  /* =================== AGOSTO 2026 =================== */
+  { id:"dx-legend-set-00", title:"DX LEGEND RIDER EGGS SET 00", procedencia:"dx", entrega:"garantizada",
+    date:"2026-08-29", dateType:"release", price:1540,
+    img:"GIMMICK/DX/DX LEGEND RIDER EGGS SET 00/01-thumb.webp",
+    gallery:["GIMMICK/DX/DX LEGEND RIDER EGGS SET 00/01.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 00/02.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 00/03.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 00/04.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 00/05.webp"],contains:["zeztz-ride-eggs","no1-seed-eggs"] },
+
+  /* ---- MY-TH FIRST KIT (Shokugan) ----
+     Los cuatro salen el mismo dia y al mismo precio: Bandai anuncia una sola
+     fecha y un solo precio para toda la coleccion, no uno por caja.
+     La caja avisa de que sus Ride Eggs son exclusivos de esta serie y NO
+     funcionan con el DX MY-TH DRIVER, asi que no alimentan la checklist:
+     son miniaturas del kit, no los gimmicks de la temporada. Entre ellas si
+     encajan: los huevos del 04 valen para los drivers del 01 y el 02.
+     Shokugan: cada caja lleva ademas un caramelo ramune, y se vende en la
+     seccion de golosinas de tiendas de todo el pais, sin ser exclusivo.
+     Precio Bandai: 380 yenes, 418 con impuestos (usamos el segundo, como
+     en el resto del catalogo). Publico a partir de 3 anos. */
+  { id:"sg-kit-01", title:"MY-TH FIRST KIT 01 - MY-TH DRIVER & RIDE EGGS 1 (NEZUMI)", procedencia:"sg-kit", entrega:"garantizada",
+    date:"2026-08-31", dateType:"release", price:418,
+    img:"DISPOSITIVO/SG MODEL KITS/MY-TH FIRST KIT 01-MYTH DRIVER, RIDE EGGS 1 (NEZUMI)/00-thumb.webp",
+    gallery:["DISPOSITIVO/SG MODEL KITS/MY-TH FIRST KIT 01-MYTH DRIVER, RIDE EGGS 1 (NEZUMI)/00.webp",
+             "DISPOSITIVO/SG MODEL KITS/MY-TH FIRST KIT 01-MYTH DRIVER, RIDE EGGS 1 (NEZUMI)/01.webp",
+             "DISPOSITIVO/SG MODEL KITS/MY-TH FIRST KIT 01-MYTH DRIVER, RIDE EGGS 1 (NEZUMI)/02.webp"],
+    contains:["drv-myth-sg-kit"] },
+
+  { id:"sg-kit-02", title:"MY-TH FIRST KIT 02 - MY-TH DRIVER HAMMER ON & RIDE EGGS 1 (NEKO)", procedencia:"sg-kit", entrega:"garantizada",
+    date:"2026-08-31", dateType:"release", price:418,
+    img:"DISPOSITIVO/SG MODEL KITS/MY-TH FIRST KIT 02-MYTH DRIVER HAMMER ON, RIDE EGGS 1 (NEKO)/00-thumb.webp",
+    gallery:["DISPOSITIVO/SG MODEL KITS/MY-TH FIRST KIT 02-MYTH DRIVER HAMMER ON, RIDE EGGS 1 (NEKO)/00.webp"],
+    contains:["drv-myth-sg-kit-hammer"] },
+
+  { id:"sg-kit-03", title:"MY-TH FIRST KIT 03 - KAMEN RIDER MY-TH & RIDEWATTER", procedencia:"sg-kit", entrega:"garantizada",
+    date:"2026-08-31", dateType:"release", price:418,
+    img:"PROTAGONISTA/SG MODEL KITS/MY-TH FIRST KIT 03-KAMEN RIDER MYTH, RIDEWATTER-thumb.webp",
+    gallery:["PROTAGONISTA/SG MODEL KITS/MY-TH FIRST KIT 03-KAMEN RIDER MYTH, RIDEWATTER.webp"],
+    contains:["rider-myth-sg-kit"] },
+
+  { id:"sg-kit-04", title:"MY-TH FIRST KIT 04 - KAMEN RIDER RID & RIDE EGGS 1 (NEZUMI Y NEKO)", procedencia:"sg-kit", entrega:"garantizada",
+    date:"2026-08-31", dateType:"release", price:418,
+    img:"PROTAGONISTA/SG MODEL KITS/MY-TH FIRST KIT 04-KAMEN RIDER RID, RIDE EGGS 1 (NEZUMI Y NEKO)-thumb.webp",
+    gallery:["PROTAGONISTA/SG MODEL KITS/MY-TH FIRST KIT 04-KAMEN RIDER RID, RIDE EGGS 1 (NEZUMI Y NEKO).webp"],
+    contains:["rider-rid-sg-kit"] },
+
+  /* =================== SEPTIEMBRE 2026 =================== */
+  /* --- Tanda del 5 --- */
+  { id:"dx-myth-driver", title:"DX MY-TH DRIVER", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:7920,
+    componentes:["driver-myth"],
+    img:"DISPOSITIVO/DX/DX MY-TH DRIVER/00-thumb.webp",
+    gallery:["DISPOSITIVO/DX/DX MY-TH DRIVER/00.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER/01.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER/02.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER/03.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER/04.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER/05.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER/06.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER/07.webp"],contains:["ride-eggs-1", "drv-myth-dx"] },
+
+  /* La caja trae el Driver y el Hammer Bone Buckle, asi que comprarlo hace
+     innecesarios los dos sueltos. */
+  { id:"dx-myth-driver-rid-set", title:"DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:10670,
+    reemplaza:["dx-myth-driver","dx-hammer-bone-buckle"],
+    componentes:["driver-myth","buckle-hammerbone"],
+    img:"DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/00-thumb.webp",
+    gallery:["DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/00.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/01.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/02.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/03.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/04.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/05.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/06.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/07.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER KAMEN RIDER MY-TH & RID SET/08.webp"],contains:["ride-eggs-1", "drv-myth-dx"] },
+
+  /* Edicion limitada. Es upgrade de dos sets a la vez: el MY-TH & RID SET
+     (que a su vez trae el Driver suelto y el Hammer Bone Buckle) y el
+     SLASHBONE BUCKLE & RIDE EGGS 4 SET. Solo hay que declarar esos dos:
+     lo que ellos absorbian se hereda por la cadena. */
+  { id:"dx-myth-driver-narikiri", title:"DX MY-TH DRIVER SPECIAL NARIKIRI SET", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:14960,
+    reemplaza:["dx-myth-driver-rid-set","dx-slashbone-buckle"],
+    componentes:["driver-myth","buckle-hammerbone","buckle-slashbone"],
+    img:"DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/00-thumb.webp",
+    gallery:["DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/00.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/01.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/02.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/03.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/04.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/05.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/06.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/07.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/08.webp",
+              "DISPOSITIVO/DX/DX MY-TH DRIVER SPECIAL NARIKIRI SET/09.webp"],contains:["ride-eggs-1","ride-eggs-4","ride-eggs-1-origin", "drv-myth-dx"] },
+
+  { id:"dx-myth-edge", title:"DX MY-TH EDGE", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:5830,
+    img:"ARMA/DX/DX MY-TH EDGE/00-thumb.webp",
+    gallery:["ARMA/DX/DX MY-TH EDGE/00.webp",
+              "ARMA/DX/DX MY-TH EDGE/01.webp",
+              "ARMA/DX/DX MY-TH EDGE/02.webp",
+              "ARMA/DX/DX MY-TH EDGE/03.webp",
+              "ARMA/DX/DX MY-TH EDGE/04.webp",
+              "ARMA/DX/DX MY-TH EDGE/05.webp",
+              "ARMA/DX/DX MY-TH EDGE/06.webp"],contains:["zou-seed-eggs", "arma-myth-edge-dx"] },
+
+  { id:"dx-hammer-bone-buckle", title:"DX HAMMER BONE BUCKLE", procedencia:"buckles", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:2750,
+    componentes:["buckle-hammerbone"],
+    img:"GIMMICK/BONE BUCKLES/DX HAMMER BONE BUCKLE/00-thumb.webp",
+    gallery:["GIMMICK/BONE BUCKLES/DX HAMMER BONE BUCKLE/00.webp",
+              "GIMMICK/BONE BUCKLES/DX HAMMER BONE BUCKLE/01.webp",
+              "GIMMICK/BONE BUCKLES/DX HAMMER BONE BUCKLE/02.webp",
+              "GIMMICK/BONE BUCKLES/DX HAMMER BONE BUCKLE/03.webp",
+              "GIMMICK/BONE BUCKLES/DX HAMMER BONE BUCKLE/04.webp",
+              "GIMMICK/BONE BUCKLES/DX HAMMER BONE BUCKLE/05.webp",
+              "GIMMICK/BONE BUCKLES/DX HAMMER BONE BUCKLE/06.webp"],contains:["buckle-hammerbone"] },
+
+  { id:"dx-rider-eggs-set-01", title:"DX RIDER EGGS SET 01", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:2200,
+    img:"GIMMICK/DX/DX RIDER EGGS SET 01/00-thumb.webp",
+    gallery:["GIMMICK/DX/DX RIDER EGGS SET 01/00.webp",
+              "GIMMICK/DX/DX RIDER EGGS SET 01/01.webp",
+              "GIMMICK/DX/DX RIDER EGGS SET 01/02.webp",
+              "GIMMICK/DX/DX RIDER EGGS SET 01/03.webp",
+              "GIMMICK/DX/DX RIDER EGGS SET 01/04.webp",
+              "GIMMICK/DX/DX RIDER EGGS SET 01/05.webp",
+              "GIMMICK/DX/DX RIDER EGGS SET 01/06.webp",
+              "GIMMICK/DX/DX RIDER EGGS SET 01/07.webp"],contains:["ride-eggs-8","kuuga-ride-eggs","stag-beetle-seed-eggs"] },
+
+  { id:"dx-legend-set-01", title:"DX LEGEND RIDER EGGS SET 01", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:1540,
+    img:"GIMMICK/DX/DX LEGEND RIDER EGGS SET 01/00-thumb.webp",
+    gallery:["GIMMICK/DX/DX LEGEND RIDER EGGS SET 01/00.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 01/01.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 01/02.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 01/03.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 01/04.webp"],contains:["agito-ride-eggs","gavv-ride-eggs"] },
+
+  { id:"dx-expack", title:"DX EXPACK", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:3080,
+    img:"DISPOSITIVO/DX/DX EXPACK/00-thumb.webp",
+    gallery:["DISPOSITIVO/DX/DX EXPACK/00.webp",
+              "DISPOSITIVO/DX/DX EXPACK/01.webp",
+              "DISPOSITIVO/DX/DX EXPACK/02.webp",
+              "DISPOSITIVO/DX/DX EXPACK/03.webp",
+              "DISPOSITIVO/DX/DX EXPACK/04.webp",
+              "DISPOSITIVO/DX/DX EXPACK/05.webp",
+              "DISPOSITIVO/DX/DX EXPACK/06.webp"],contains:["build-ride-eggs","dev-expack"] },
+
+  /* Caso especial: es figura Y gimmick a la vez (interactua con el Driver),
+     asi que pertenece de verdad a DX SETS y a TAF. Por eso su PNG esta en las
+     dos carpetas. `alsoIn` lo hace aparecer en ambas subcategorias siendo un
+     unico producto: un solo estado, y cuenta una sola vez en el mes. */
+  { id:"dx-ridewatter-eggs", title:"DX RIDEWATTER EGGS", procedencia:"dx", entrega:"garantizada", alsoIn:["taf"],
+    date:"2026-09-05", dateType:"release", price:3630,
+    img:"GIMMICK/DX/DX RIDEWATTER EGGS/00-thumb.webp",
+    gallery:["GIMMICK/DX/DX RIDEWATTER EGGS/00.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/01.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/02.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/03.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/04.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/05.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/06.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/07.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/08.webp",
+              "GIMMICK/DX/DX RIDEWATTER EGGS/09.webp"],contains:["ridewatter-eggs"] },
+
+  { id:"taf-myth", title:"TAF KAMEN RIDER MY-TH", procedencia:"taf", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:4180,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/00-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/00.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/01.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/02.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/03.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/04.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/05.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/06.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/07.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/08.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MY-TH/09.webp"],contains:["myth-seed-eggs", "rider-myth-taf"] },
+
+  { id:"taf-maou", title:"TAF KAMEN RIDER MAOU", procedencia:"taf", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:4400,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/00-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/00.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/01.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/02.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/03.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/04.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/05.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/06.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/07.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/08.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MAOU/09.webp"],contains:["rider-maou-taf"] },
+
+  { id:"sv-datt", title:"RIDER HERO SERIES KAMEN RIDER DATT", procedencia:"sofv", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:990,
+    img:"PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/01-thumb.webp",
+    gallery:["PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/01.webp",
+              "PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER DATT/02.webp"],contains:["rider-datt-sofv"] },
+
+  { id:"sv-maou", title:"RIDER HERO SERIES KAMEN RIDER MAOU", procedencia:"sofv", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:990,
+    img:"PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/01-thumb.webp",
+    gallery:["PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/01.webp",
+              "PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER MAOU/02.webp"],contains:["rider-maou-sofv"] },
+
+  { id:"sv-rid", title:"RIDER HERO SERIES KAMEN RIDER RID", procedencia:"sofv", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:990,
+    img:"PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/01-thumb.webp",
+    gallery:["PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/01.webp",
+              "PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER RID/02.webp"],contains:["rider-rid-sofv"] },
+
+  /* --- Tanda del 15: SO-DO (Shokugan) ---
+     装動 仮面ライダーマイス EGGS1 Feat. 装動 仮面ライダーゼッツ.
+     La ficha de Bandai solo dice "septiembre 2026" y sale a quincena, asi
+     que se fija el 15. Los tipos 9 y 10 siguen sin revelar y no se incluyen.
+     Cada personaje son dos cajas, la A y la B: ¥649 cada una.
+     No alimentan la checklist, igual que los model kits: son figuras de
+     montar, no los gimmicks que se usan con el Driver. */
+  { id:"sg-sodo-myth", title:"SO-DO MY-TH", procedencia:"sodo", entrega:"garantizada",
+    date:"2026-09-15", dateType:"release", price:1298,
+    priceLabel:"¥649 por caja · tipos 1 y 2 (A y B)",
+    img:"PROTAGONISTA/SO-DO/SO-DO MY-TH/00-thumb.webp",
+    gallery:["PROTAGONISTA/SO-DO/SO-DO MY-TH/00.webp",
+             "PROTAGONISTA/SO-DO/SO-DO MY-TH/01.webp",
+             "PROTAGONISTA/SO-DO/SO-DO MY-TH/02.webp",
+             "PROTAGONISTA/SO-DO/SO-DO MY-TH/03.webp",
+             "PROTAGONISTA/SO-DO/SO-DO MY-TH/04.webp"],
+    contains:["rider-myth-sodo"] },
+
+  { id:"sg-sodo-maou", title:"SO-DO MAOU", procedencia:"sodo", entrega:"garantizada",
+    date:"2026-09-15", dateType:"release", price:1298,
+    priceLabel:"¥649 por caja · tipos 3 y 4 (A y B)",
+    img:"PROTAGONISTA/SO-DO/SO-DO MAOU/01-thumb.webp",
+    gallery:["PROTAGONISTA/SO-DO/SO-DO MAOU/01.webp",
+             "PROTAGONISTA/SO-DO/SO-DO MAOU/02.webp",
+             "PROTAGONISTA/SO-DO/SO-DO MAOU/03.webp"],
+    contains:["rider-maou-sodo"] },
+
+  { id:"sg-sodo-datt", title:"SO-DO DATT", procedencia:"sodo", entrega:"garantizada",
+    date:"2026-09-15", dateType:"release", price:1298,
+    priceLabel:"¥649 por caja · tipos 5 y 6 (A y B)",
+    img:"PROTAGONISTA/SO-DO/SO-DO DATT/01-thumb.webp",
+    gallery:["PROTAGONISTA/SO-DO/SO-DO DATT/01.webp",
+             "PROTAGONISTA/SO-DO/SO-DO DATT/02.webp",
+             "PROTAGONISTA/SO-DO/SO-DO DATT/03.webp"],
+    contains:["rider-datt-sodo"] },
+
+  { id:"sg-sodo-rid", title:"SO-DO RID", procedencia:"sodo", entrega:"garantizada",
+    date:"2026-09-15", dateType:"release", price:1298,
+    priceLabel:"¥649 por caja · tipos 7 y 8 (A y B)",
+    img:"PROTAGONISTA/SO-DO/SO-DO RID/01-thumb.webp",
+    gallery:["PROTAGONISTA/SO-DO/SO-DO RID/01.webp",
+             "PROTAGONISTA/SO-DO/SO-DO RID/02.webp",
+             "PROTAGONISTA/SO-DO/SO-DO RID/03.webp"],
+    contains:["rider-rid-sodo"] },
+
+  /* --- Tanda del 12 --- */
+  { id:"dx-slashbone-buckle", title:"DX SLASHBONE BUCKLE & RIDE EGGS 4 SET", procedencia:"buckles", entrega:"garantizada",
+    date:"2026-09-12", dateType:"release", price:3520,
+    componentes:["buckle-slashbone"],
+    img:"GIMMICK/BONE BUCKLES/DX SLASHBONE BUCKLE & RIDE EGGS 4 SET/00-thumb.webp",
+    gallery:["GIMMICK/BONE BUCKLES/DX SLASHBONE BUCKLE & RIDE EGGS 4 SET/00.webp",
+              "GIMMICK/BONE BUCKLES/DX SLASHBONE BUCKLE & RIDE EGGS 4 SET/01.webp",
+              "GIMMICK/BONE BUCKLES/DX SLASHBONE BUCKLE & RIDE EGGS 4 SET/02.webp",
+              "GIMMICK/BONE BUCKLES/DX SLASHBONE BUCKLE & RIDE EGGS 4 SET/03.webp",
+              "GIMMICK/BONE BUCKLES/DX SLASHBONE BUCKLE & RIDE EGGS 4 SET/04.webp",
+              "GIMMICK/BONE BUCKLES/DX SLASHBONE BUCKLE & RIDE EGGS 4 SET/05.webp",
+              "GIMMICK/BONE BUCKLES/DX SLASHBONE BUCKLE & RIDE EGGS 4 SET/06.webp"],contains:["ride-eggs-4","buckle-slashbone"] },
+
+  { id:"dx-hokokuro", title:"DX HOKOKURO", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-12", dateType:"release", price:3850,
+    img:"DISPOSITIVO/DX/DX HOKOKURO/00-thumb.webp",
+    gallery:["DISPOSITIVO/DX/DX HOKOKURO/00.webp",
+              "DISPOSITIVO/DX/DX HOKOKURO/01.webp",
+              "DISPOSITIVO/DX/DX HOKOKURO/02.webp",
+              "DISPOSITIVO/DX/DX HOKOKURO/03.webp",
+              "DISPOSITIVO/DX/DX HOKOKURO/04.webp",
+              "DISPOSITIVO/DX/DX HOKOKURO/05.webp",
+              "DISPOSITIVO/DX/DX HOKOKURO/06.webp",
+              "DISPOSITIVO/DX/DX HOKOKURO/07.webp"],contains:["owl-seed-eggs","dev-hokokuro"] },
+
+  { id:"taf-datt", title:"TAF KAMEN RIDER DATT", procedencia:"taf", entrega:"garantizada",
+    date:"2026-09-12", dateType:"release", price:4400,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/00-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/00.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/01.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/02.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/03.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/04.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/05.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/06.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/07.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/08.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER DATT/09.webp"],contains:["rider-datt-taf"] },
+
+  /* --- Tanda del 19 --- */
+  { id:"taf-rid", title:"TAF KAMEN RIDER RID", procedencia:"taf", entrega:"garantizada",
+    date:"2026-09-19", dateType:"release", price:4400,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER RID/00-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER RID/00.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/01.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/02.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/03.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/04.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/05.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/06.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/07.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/08.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER RID/09.webp"],contains:["rider-rid-taf"] },
+
+  /* --- Tanda del 26 --- */
+  { id:"dx-random-box-01", title:"DX RIDER EGGS RANDOM BOX 01", procedencia:"dx-random", entrega:"garantizada",
+    date:"2026-09-26", dateType:"release", price:770,
+    img:"GIMMICK/DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01/00-thumb.webp",
+    gallery:["GIMMICK/DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01/00.webp",
+              "GIMMICK/DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01/01.webp",
+              "GIMMICK/DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 01/02.webp"],contains:["ride-eggs-4-special","crocodile-seed-eggs","chameleon-seed-eggs",
+              "armadillo-seed-eggs","grasshopper-seed-eggs","giraffe-seed-eggs"] },
+
+  { id:"dx-myth-phone", title:"DX MY-TH PHONE", procedencia:"dx", entrega:"garantizada",
+    date:"2026-09-26", dateType:"release", price:4400,
+    img:"DISPOSITIVO/DX/DX MY-TH PHONE/00-thumb.webp",
+    gallery:["DISPOSITIVO/DX/DX MY-TH PHONE/00.webp",
+              "DISPOSITIVO/DX/DX MY-TH PHONE/01.webp",
+              "DISPOSITIVO/DX/DX MY-TH PHONE/02.webp",
+              "DISPOSITIVO/DX/DX MY-TH PHONE/03.webp",
+              "DISPOSITIVO/DX/DX MY-TH PHONE/04.webp",
+              "DISPOSITIVO/DX/DX MY-TH PHONE/05.webp"],contains:["faiz-ride-eggs","dev-myth-phone"] },
+
+  /* La hoja oficial de Bandai Shokugan no trae fecha ni precio: ambos son
+     estimados (septiembre, alineado con la Random Box DX). Cambialos cuando
+     se anuncien. */
+  /* Tirada individual de maquina de capsulas: caso genuino de `incierta`
+     (Maestro 1 §2.3). Se marca el producto como un todo -Pendiente/
+     Reservado/Obtenido-, nunca pieza por pieza. Excluido de la deduccion de
+     cobertura en los dos sentidos. */
+  { id:"gp-rider-eggs-01", title:"GP RIDER EGGS 01", procedencia:"gp", entrega:"incierta",
+    date:"2026-09-05", dateType:"release", price:500,
+    img:"GIMMICK/GP/GP RIDER EGGS 01/01-thumb.webp",
+    gallery:["GIMMICK/GP/GP RIDER EGGS 01/01.webp",
+             "GIMMICK/GP/GP RIDER EGGS 01/02.webp",
+             "GIMMICK/GP/GP RIDER EGGS 01/03.webp",
+             "GIMMICK/GP/GP RIDER EGGS 01/04.webp",
+             "GIMMICK/GP/GP RIDER EGGS 01/05.webp",
+             "GIMMICK/GP/GP RIDER EGGS 01/06.webp",
+             "GIMMICK/GP/GP RIDER EGGS 01/07.webp"],
+    contains:["gp-stagbeetle-seed-eggs","gp-kabuto-seed-eggs","gp-denou-seed-eggs",
+              "gp-zeronos-seed-eggs","gp-varen-seed-eggs","gp-nox-seed-eggs"] },
+
+  { id:"sg-random-box-01", title:"SG RIDER EGGS RANDOM BOX 01", procedencia:"sg-random", entrega:"garantizada",
+    date:"2026-09-26", dateType:"release", price:550,
+    img:"GIMMICK/SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/00-thumb.webp",
+    gallery:["GIMMICK/SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/00.webp",
+              "GIMMICK/SG RANDOM BOX/SG RIDER EGGS RANDOM BOX 01/01.webp"],contains:["sg-ride-eggs-4","sg-zio-ride-eggs","sg-zeroone-ride-eggs",
+              "sg-kaixa-seed-eggs","sg-garren-seed-eggs","sg-diend-seed-eggs"] },
+
+  /* =================== OCTUBRE 2026 =================== */
+  /* --- Tanda del 3 --- */
+  { id:"dx-zodiac-weapons-01", title:"DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01", procedencia:"dx", entrega:"garantizada",
+    date:"2026-10-03", dateType:"release", price:4400,
+    img:"ARMA/DX/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/01-thumb.webp",
+    gallery:["ARMA/DX/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/01.webp",
+              "ARMA/DX/DX TWELVE ZODIAC ALLIANCE RIDER WEAPONS SET 01/02.webp"],contains:["arma-rabbit-sword-dx", "arma-snake-size-dx", "arma-dog-gun-dx"] },
+
+  { id:"dx-bite-bone-buckle", title:"DX BITE BONE BUCKLE & RIDE EGGS 6 SET", procedencia:"buckles", entrega:"garantizada",
+    date:"2026-10-03", dateType:"release", price:3520,
+    componentes:["buckle-bitebone"],
+    img:"GIMMICK/BONE BUCKLES/DX BITE BONE BUCKLE & RIDE EGGS 6 SET/00-thumb.webp",
+    gallery:["GIMMICK/BONE BUCKLES/DX BITE BONE BUCKLE & RIDE EGGS 6 SET/00.webp",
+              "GIMMICK/BONE BUCKLES/DX BITE BONE BUCKLE & RIDE EGGS 6 SET/01.webp",
+              "GIMMICK/BONE BUCKLES/DX BITE BONE BUCKLE & RIDE EGGS 6 SET/02.webp",
+              "GIMMICK/BONE BUCKLES/DX BITE BONE BUCKLE & RIDE EGGS 6 SET/03.webp",
+              "GIMMICK/BONE BUCKLES/DX BITE BONE BUCKLE & RIDE EGGS 6 SET/04.webp",
+              "GIMMICK/BONE BUCKLES/DX BITE BONE BUCKLE & RIDE EGGS 6 SET/05.webp",
+              "GIMMICK/BONE BUCKLES/DX BITE BONE BUCKLE & RIDE EGGS 6 SET/06.webp"],contains:["ride-eggs-6","buckle-bitebone"] },
+
+  { id:"dx-shot-bone-buckle", title:"DX SHOT BONE BUCKLE & RIDE EGGS 10 SET", procedencia:"buckles", entrega:"garantizada",
+    date:"2026-10-03", dateType:"release", price:3520,
+    componentes:["buckle-shotbone"],
+    img:"GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/00-thumb.webp",
+    gallery:["GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/00.webp",
+              "GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/01.webp",
+              "GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/02.webp",
+              "GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/03.webp",
+              "GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/04.webp",
+              "GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/05.webp",
+              "GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/06.webp",
+              "GIMMICK/BONE BUCKLES/DX SHOT BONE BUCKLE & RIDE EGGS 10 SET/07.webp"],contains:["ride-eggs-10","buckle-shotbone"] },
+
+  { id:"dx-rider-eggs-set-02", title:"DX RIDER EGGS SET 02", procedencia:"dx", entrega:"garantizada",
+    date:"2026-10-03", dateType:"release", price:2200,
+    img:"GIMMICK/DX/DX RIDER EGGS SET 02/01-thumb.webp",
+    gallery:["GIMMICK/DX/DX RIDER EGGS SET 02/01.webp"],contains:["ride-eggs-11","ooz-ride-eggs","taka-seed-eggs"] },
+
+  { id:"dx-legend-set-02", title:"DX LEGEND RIDER EGGS SET 02", procedencia:"dx", entrega:"garantizada",
+    date:"2026-10-03", dateType:"release", price:1540,
+    img:"GIMMICK/DX/DX LEGEND RIDER EGGS SET 02/00-thumb.webp",
+    gallery:["GIMMICK/DX/DX LEGEND RIDER EGGS SET 02/00.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 02/01.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 02/02.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 02/03.webp",
+              "GIMMICK/DX/DX LEGEND RIDER EGGS SET 02/04.webp"],contains:["revice-ride-eggs","gotchard-ride-eggs"] },
+
+  { id:"taf-jao", title:"TAF KAMEN RIDER JAO", procedencia:"taf", entrega:"garantizada",
+    date:"2026-10-03", dateType:"release", price:4620,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/00-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/00.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/01.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/02.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/03.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/04.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/05.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/06.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/07.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/08.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER JAO/09.webp"],contains:["rider-jao-taf"] },
+
+  { id:"taf-vanken", title:"TAF KAMEN RIDER VANKEN", procedencia:"taf", entrega:"garantizada",
+    date:"2026-10-03", dateType:"release", price:4400,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/01-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/01.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/02.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/03.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/04.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/05.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/06.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/07.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER VANKEN/08.webp"],contains:["rider-vanken-taf"] },
+
+  { id:"sv-jao", title:"RIDER HERO SERIES KAMEN RIDER JAO", procedencia:"sofv", entrega:"garantizada",
+    date:"2026-10-03", dateType:"release", price:990,
+    img:"PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/01-thumb.webp",
+    gallery:["PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/01.webp",
+              "PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER JAO/02.webp"],contains:["rider-jao-sofv"] },
+
+  /* --- Tanda del 17 --- */
+  { id:"taf-muton", title:"TAF KAMEN RIDER MUTON", procedencia:"taf", entrega:"garantizada",
+    date:"2026-10-17", dateType:"release", price:4400,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/01-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/01.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/02.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/03.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/04.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/05.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/06.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/07.webp",
+              "PROTAGONISTA/TAF/TAF KAMEN RIDER MUTON/08.webp"],contains:["rider-muton-taf"] },
+
+  /* --- Tanda del 24 --- */
+  { id:"dx-random-box-02", title:"DX RIDER EGGS RANDOM BOX 02", procedencia:"dx-random", entrega:"garantizada",
+    date:"2026-10-24", dateType:"release", price:770,
+    img:"GIMMICK/DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 02/01-thumb.webp",
+    gallery:["GIMMICK/DX RANDOM BOX/DX RIDER EGGS RANDOM BOX 02/01.webp"],contains:["ride-eggs-11-special","gorilla-seed-eggs","reindeer-seed-eggs",
+              "penguin-seed-eggs","panda-seed-eggs","pillbug-seed-eggs"] },
+
+  /* ---- Promocionales de septiembre ----
+     Sin subcarpeta: una sola imagen por producto, que hace de portada. */
+  /* Keki de cumpleanos con huevo exclusivo de regalo. Reaparece en diciembre
+     como version navidena (mismo huevo, decoracion distinta) -no se duplica
+     el producto por eso, es la misma pieza-. */
+  { id:"promo-charadeco-cake", title:"CHARADECO CAKE KAMEN RIDER MY-TH",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-09-24", dateType:"release", price:4320,
+    img:"GIMMICK/PROMOCIONALES/CHARADECO CAKE KAMEN RIDER MY-TH-Myth Seed Eggs (Charadeco ver.)-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/CHARADECO CAKE KAMEN RIDER MY-TH-Myth Seed Eggs (Charadeco ver.).webp"],
+    contains:["myth-seed-eggs-charadeco"] },
+
+  { id:"promo-heart-boots", title:"HEART KAMEN RIDER MY-TH BOOTS SNACK SET",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-10-26", dateType:"release", price:1870,
+    img:"GIMMICK/PROMOCIONALES/HEART KAMEN RIDER MY-TH BOOTS SNACK SET-Myth Seed Eggs (Christmas ver.)-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/HEART KAMEN RIDER MY-TH BOOTS SNACK SET-Myth Seed Eggs (Christmas ver.).webp"],
+    contains:["myth-seed-eggs-xmas"] },
+
+  { id:"promo-telemaga-gaim", title:"TELEVI MAGAZINE WINTER 2026 (Gaim Ride Eggs)",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-11-27", dateType:"release", price:2200,
+    img:"GIMMICK/PROMOCIONALES/TELEVI MAGAZINE WINTER-Gaim Ride Eggs-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/TELEVI MAGAZINE WINTER-Gaim Ride Eggs.webp"],
+    contains:["gaim-ride-eggs"] },
+
+  /* Apareceria en 10 variantes de estampado (una por personaje), todas con el
+     mismo regalo -no se duplica el producto por eso, es la misma pieza en
+     las diez-. Reserva cerrada 2026-09-23; envio solo "octubre", sin dia. */
+  { id:"promo-hero-tshirt", title:"HERO T-SHIRT KAMEN RIDER MY-TH (Hibiki Ride Eggs ver.)",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-10-15", dateExact:false, dateType:"release", price:4400,
+    img:"GIMMICK/PROMOCIONALES/HERO T-SHIRT KAMEN RIDER MY-TH-Hibiki Ride Eggs-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/HERO T-SHIRT KAMEN RIDER MY-TH-Hibiki Ride Eggs.webp"],
+    contains:["hibiki-ride-eggs"] },
+
+  /* Campaña oficial de Bandai (no bono de una tienda sola): comprar CUALQUIERA
+     de 5 productos -Myth Driver, Myth Driver&Rid Set, Myth Driver Narikiri
+     Set, Maou Driver, Maou Driver&Blade Set- da este Egg de regalo mientras
+     dure el stock. No se declara `reemplaza` de ninguno -no absorbe el
+     producto entero, es un regalo aparte-, igual que promo-scratch. */
+  { id:"promo-hedgehog-campaign", title:"HEDGEHOG SEED EGGS GET CAMPAIGN",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-10-17", dateType:"release", price:null,
+    priceLabel:"Regalo por compra",
+    img:"GIMMICK/PROMOCIONALES/HEDGEHOG SEED EGGS GET CAMPAIGN-Hedgehog Seed Eggs-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/HEDGEHOG SEED EGGS GET CAMPAIGN-Hedgehog Seed Eggs.webp"],
+    contains:["hedgehog-seed-eggs"] },
+
+  /* Evento "Kamen Rider Kabuto World 20th CAST OFF" (Bandai Namco Cross
+     Store Yokohama/Kyoto/Hakata, 19 sep - 23 nov 2026). Compatible con el
+     DX Myth Driver aunque conmemora el 20 aniversario de Kabuto. */
+  { id:"promo-kabuto20th-set", title:"DX LEGEND RIDER EGGS KABUTO 20TH SET",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-09-19", dateType:"release", price:1540,
+    img:"GIMMICK/PROMOCIONALES/DX LEGEND RIDER EGGS KABUTO 20TH SET-Kabuto 20th Seed Eggs, Hercules Beetle Seed Eggs-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/DX LEGEND RIDER EGGS KABUTO 20TH SET-Kabuto 20th Seed Eggs, Hercules Beetle Seed Eggs.webp"],
+    contains:["kabuto20th-seed-eggs","hercules-beetle-seed-eggs"] },
+
+  /* Misma pieza que promo-hero-tshirt -"Hibiki Ride Eggs" es una pieza de
+     regalo EXCLUSIVA DE ROPA, no de un producto en concreto (Maestro 3 §5:
+     una pieza vive en tantos productos como la traigan de verdad, no solo
+     el primero). Shimamura la vendio primero, mas barata, un mes antes. */
+  { id:"promo-shimamura-trainer", title:"SHIMAMURA KIDS TRAINER KAMEN RIDER MY-TH",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-09-19", dateType:"release", price:2739,
+    img:"GIMMICK/PROMOCIONALES/SHIMAMURA KIDS TRAINER KAMEN RIDER MY-TH-Hibiki Ride Eggs-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/SHIMAMURA KIDS TRAINER KAMEN RIDER MY-TH-Hibiki Ride Eggs.webp"],
+    contains:["hibiki-ride-eggs"] },
+
+  { id:"promo-store-tokyo", title:"DX RIDER EGGS KAMEN RIDER STORE TOKYO SET",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:1650,
+    img:"GIMMICK/PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE TOKYO SET-Myth Seed Eggs (Kamen Rider Store Tokyo ver.), Hato Seed Eggs-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE TOKYO SET-Myth Seed Eggs (Kamen Rider Store Tokyo ver.), Hato Seed Eggs.webp"],
+    contains:["myth-seed-eggs-tokyo","hato-seed-eggs"] },
+
+  { id:"promo-store-nagoya", title:"DX RIDER EGGS KAMEN RIDER STORE NAGOYA SET",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:1650,
+    img:"GIMMICK/PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE NAGOYA SET-Myth Seed Eggs (Kamen Rider Store Nagoya ver.), Koala Seed Eggs-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE NAGOYA SET-Myth Seed Eggs (Kamen Rider Store Nagoya ver.), Koala Seed Eggs.webp"],
+    contains:["myth-seed-eggs-nagoya","koala-seed-eggs"] },
+
+  /* Premio de la campana Scratch: no se compra, no tiene precio.
+     Reparto de tarjetas en tres rondas: 5 sep, 17 oct y 5 dic de 2026.
+     Se toma la primera como fecha; las otras dos quedan aqui anotadas. */
+  { id:"promo-scratch", title:"SCRATCH CARDDASS",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-09-05", dateType:"release", price:null,
+    priceLabel:"Premio de campaña",
+    img:"GIMMICK/PROMOCIONALES/SCRATCH CARDDASS-Ride Eggs 1 (Gold ver.)-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/SCRATCH CARDDASS-Ride Eggs 1 (Gold ver.).webp"],
+    contains:["ride-eggs-1-gold"] },
+
+  /* Furoku de la revista Televi-Kun. El precio es el de la revista. */
+  { id:"promo-televi-kun", title:"TELEVI-KUN",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-09-30", dateType:"release", price:2090,
+    priceLabel:"Precio de la revista",
+    img:"GIMMICK/PROMOCIONALES/TELEVI-KUN-Ride Eggs 1 (Special ver.)-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/TELEVI-KUN-Ride Eggs 1 (Special ver.).webp"],
+    contains:["ride-eggs-1-special"] },
+
+  /* =================== OCTUBRE 2026 · Segundo Rider (Maou) =================== */
+  { id:"dx-maou-driver", title:"DX MAOU DRIVER", procedencia:"dx", entrega:"garantizada",
+    date:"2026-10-17", dateType:"release", price:7920,
+    componentes:["drv-maou-dx"],
+    img:"DISPOSITIVO/DX/DX MAOU DRIVER/00-thumb.webp",
+    gallery:["DISPOSITIVO/DX/DX MAOU DRIVER/00.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER/01.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER/02.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER/03.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER/04.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER/05.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER/06.webp"],contains:["drv-maou-dx","ride-eggs-1-flame"] },
+
+  { id:"dx-maou-blade", title:"DX MAOU BLADE", procedencia:"dx", entrega:"garantizada",
+    date:"2026-10-17", dateType:"release", price:5830,
+    img:"ARMA/DX/DX MAOU BLADE/00-thumb.webp",
+    gallery:["ARMA/DX/DX MAOU BLADE/00.webp",
+             "ARMA/DX/DX MAOU BLADE/01.webp",
+             "ARMA/DX/DX MAOU BLADE/02.webp",
+             "ARMA/DX/DX MAOU BLADE/03.webp",
+             "ARMA/DX/DX MAOU BLADE/04.webp",
+             "ARMA/DX/DX MAOU BLADE/05.webp",
+             "ARMA/DX/DX MAOU BLADE/06.webp"],contains:["arma-maou-blade-dx","lion-seed-eggs"] },
+
+  { id:"dx-maou-driver-blade-set", title:"DX MAOU DRIVER & MAOU BLADE SET", procedencia:"dx", entrega:"garantizada",
+    date:"2026-10-17", dateType:"release", price:13750,
+    reemplaza:["dx-maou-driver","dx-maou-blade"],
+    componentes:["drv-maou-dx"],
+    img:"DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/00-thumb.webp",
+    gallery:["DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/00.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/01.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/02.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/03.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/04.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/05.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/06.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/07.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/08.webp",
+             "DISPOSITIVO/DX/DX MAOU DRIVER & MAOU BLADE SET/09.webp"],contains:["drv-maou-dx","arma-maou-blade-dx","ride-eggs-1-flame","lion-seed-eggs"] },
+
+  { id:"dx-rid-magnum", title:"DX RID MAGNUM", procedencia:"dx", entrega:"garantizada",
+    date:"2026-10-24", dateType:"release", price:4620,
+    img:"ARMA/DX/DX RID MAGNUM/00-thumb.webp",
+    gallery:["ARMA/DX/DX RID MAGNUM/00.webp",
+             "ARMA/DX/DX RID MAGNUM/01.webp",
+             "ARMA/DX/DX RID MAGNUM/02.webp",
+             "ARMA/DX/DX RID MAGNUM/03.webp",
+             "ARMA/DX/DX RID MAGNUM/04.webp",
+             "ARMA/DX/DX RID MAGNUM/05.webp",
+             "ARMA/DX/DX RID MAGNUM/06.webp"],contains:["arma-magnum-rid-dx","cheetah-seed-eggs"] },
+
+  /* =================== NOVIEMBRE 2026 =================== */
+  { id:"sv-tigul", title:"RIDER HERO SERIES KAMEN RIDER TIGUL", procedencia:"sofv", entrega:"garantizada",
+    date:"2026-11-07", dateType:"release", price:990,
+    img:"PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/01-thumb.webp",
+    gallery:["PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/01.webp",
+              "PROTAGONISTA/SOFT VINYL/RIDER HERO SERIES KAMEN RIDER TIGUL/02.webp"],
+    contains:["rider-tigul-sofv"] },
+
+  { id:"taf-tigul", title:"TAF KAMEN RIDER TIGUL", procedencia:"taf", entrega:"garantizada",
+    date:"2026-11-07", dateType:"release", price:4400,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER TIGUL/00-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER TIGUL/00.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER TIGUL/01.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER TIGUL/02.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER TIGUL/03.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER TIGUL/04.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER TIGUL/05.webp"],contains:["rider-tigul-taf"] },
+
+  { id:"taf-kei", title:"TAF KAMEN RIDER KEI", procedencia:"taf", entrega:"garantizada",
+    date:"2026-11-21", dateType:"release", price:4620,
+    img:"PROTAGONISTA/TAF/TAF KAMEN RIDER KEI/00-thumb.webp",
+    gallery:["PROTAGONISTA/TAF/TAF KAMEN RIDER KEI/00.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER KEI/01.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER KEI/02.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER KEI/03.webp",
+             "PROTAGONISTA/TAF/TAF KAMEN RIDER KEI/04.webp"],contains:["rider-kei-taf"] },
+
+  /* =================== S.H.FIGUARTS (Tamashii Nations / venta general) ===================
+     `date` es la de ENTREGA (mes de venta general), no la de apertura de
+     reserva -esa va aqui, en el comentario, para no inventar un campo nuevo
+     fuera del contrato de PRODUCTS-.
+     shf-myth: reserva abierta desde 2026-08-27. Precio inicial 7150 (tirada
+     inicial); en reposicion sube a 9900. */
+  { id:"shf-myth", title:"S.H.FIGUARTS KAMEN RIDER MY-TH", procedencia:"shf", entrega:"garantizada",
+    date:"2027-02-01", dateType:"release", price:7150,
+    img:"PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/01-thumb.webp",
+    gallery:["PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/01.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/02.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/03.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/04.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/05.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/06.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/07.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MY-TH/08.webp"],contains:["rider-myth-shf"] },
+
+  /* shf-maou: reserva abierta desde 2026-10-01. Trae Ride Egz intercambiable
+     de propina, pero Tamashii no nombra una pieza concreta del catalogo de
+     Eggs -no se inventa una entrada en PIEZAS_CATALOG para eso-. */
+  { id:"shf-maou", title:"S.H.FIGUARTS KAMEN RIDER MAOU", procedencia:"shf", entrega:"garantizada",
+    date:"2027-03-01", dateType:"release", price:9900,
+    img:"PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/01-thumb.webp",
+    gallery:["PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/01.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/02.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/03.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/04.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/05.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/06.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/07.webp",
+             "PROTAGONISTA/SH FIGUARTS/SH FIGUARTS KAMEN RIDER MAOU/08.webp"],contains:["rider-maou-shf"] }
+];
+
+PRODUCTS.forEach(p => { p.month = p.date.slice(0,7); });
+const PRODUCTS_BY_ID = PRODUCTS.reduce((m,p)=>{ m[p.id]=p; return m; },{});
+
+
+/* ===========================================================================
+   BLOQUE 4 · ESTADO PERSISTENTE
+   ---------------------------------------------------------------------------
+   Regla de oro (Maestro 1 §2): solo se persiste el estado del PRODUCTO. Las
+   piezas se DERIVAN en cada render — por eso los contadores no pueden mentir
+   ni desincronizarse.
+   =========================================================================== */
+function loadState(){
+  let raw = {};
+  try{ raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }catch(e){}
+  /* Se descartan ids que ya no existen: renombrar un producto no debe dejar
+     basura invisible engordando el guardado. */
+  const ids = new Set(PRODUCTS.map(p=>p.id));
+  const products = {};
+  for(const id in (raw.products||{})) if(ids.has(id)) products[id] = raw.products[id];
+  return { products, ui: Object.assign({ hideOwned:false, cats:{}, grupos:{} }, raw.ui||{}) };
+}
+const state = loadState();
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
+const getProductState = id => state.products[id] || "pending";
+
+function setProductState(id, valor){
+  if(valor === "pending") delete state.products[id];
+  else state.products[id] = valor;
+  saveState();
+  render();
+}
+
+
+/* ===========================================================================
+   BLOQUE 5 · INDICES Y DERIVADOS
+   =========================================================================== */
+
+/* pieza -> [productos que la traen], TODOS, no solo el primero. Es la mitad
+   del valor de la enciclopedia (Maestro 3 §5). Orden nuevo -> viejo. */
+const SOURCES = {};
+PRODUCTS.forEach(p => (p.contains||[]).forEach(pid => {
+  (SOURCES[pid] = SOURCES[pid] || []).push(p);
+}));
+Object.values(SOURCES).forEach(arr => arr.sort((a,b) => b.date.localeCompare(a.date)));
+
+/* Quien absorbe a quien. Solo para el aviso "viene dentro de" en la tarjeta. */
+const absorbidoPor = {};
+PRODUCTS.forEach(p => (p.reemplaza||[]).forEach(hijo => {
+  if(!(hijo in absorbidoPor)) absorbidoPor[hijo] = p.id;
+}));
+
+/* Cobertura TRANSITIVA: basta declarar lo que se absorbe directamente y las
+   cadenas se recorren solas (Maestro 3 §4). */
+function cadenaAbsorbida(pid, vistos){
+  vistos = vistos || new Set();
+  const out = new Set();
+  const p = PRODUCTS_BY_ID[pid];
+  (p && p.reemplaza || []).forEach(h => {
+    if(vistos.has(h)) return;               // corta ciclos
+    out.add(h);
+    cadenaAbsorbida(h, new Set([...vistos, h])).forEach(x => out.add(x));
+  });
+  return out;
+}
+
+/* owned    = productos marcados Obtenido a mano.
+   cubiertos = owned + todo lo que sus cadenas absorben.
+   La distincion importa: una pieza que solo llega por absorcion se marca
+   'cubierto' y dice en que caja viene, no 'tengo'. */
+function productosCubiertos(){
+  const owned = new Set(PRODUCTS.filter(p => getProductState(p.id)==="owned").map(p=>p.id));
+  const cubiertos = new Set(owned);
+  owned.forEach(id => cadenaAbsorbida(id).forEach(h => cubiertos.add(h)));
+  return { owned, cubiertos };
+}
+
+function piezaEstado(piezaId, owned, cubiertos){
+  const fuentes = SOURCES[piezaId] || [];
+  if(!fuentes.length) return "sinvia";      // error de datos: lo caza audit.py
+  if(fuentes.some(p => owned.has(p.id)))     return "tengo";
+  if(fuentes.some(p => cubiertos.has(p.id))) return "cubierto";
+  return "falta";
+}
+const esConseguida = e => e === "tengo" || e === "cubierto";
+
+/* La categoria de una tarjeta SE DERIVA de lo que el producto entrega, no se
+   declara (Maestro 3 §2.0: "la categoria ya vive en la pieza"). Un producto
+   que entrega figura Y gimmick aparece en las dos secciones siendo UNO solo,
+   con estado compartido. */
+function categoriasDe(p){
+  const cats = new Set();
+  (p.contains||[]).forEach(pid => {
+    const pz = PIEZAS_BY_ID[pid];
+    if(pz) cats.add(pz.categoria);
+  });
+  /* Gimmicks se reserva a lo que entrega EXCLUSIVAMENTE gimmick: sets, boxes
+     o promocionales puros. Un producto que ademas trae un driver, un arma o
+     una figura no se duplica en Eggs -vive solo en su categoria propia-,
+     porque esa es su identidad real y el gimmick que trae de propina ya se
+     ve en su desplegable "Incluye". Excepcion: DX RIDEWATTER EGGS, que es
+     figura Y gimmick a la vez y se declara aparte via `alsoIn`, no por
+     `contains` -asi que esta regla no lo toca-. */
+  if(cats.has("gimmick") && cats.size > 1) cats.delete("gimmick");
+  return cats;
+}
+/* alsoIn declara una procedencia extra donde la tarjeta tambien se dibuja. */
+const CATEGORIA_DE_PROCEDENCIA = {};
+PIEZAS_CATALOG.forEach(p => { CATEGORIA_DE_PROCEDENCIA[p.procedencia] = p.categoria; });
+
+
+/* ===========================================================================
+   BLOQUE 6 · UTILIDADES
+   =========================================================================== */
+const esc = s => String(s).replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* Si no consta, N/R. Antes que inventar un precio, se dice que no consta
+   (Maestro 1 §8). */
+const fmtPrice = v => (v==null) ? null : CURRENCY.symbol + v.toLocaleString(CURRENCY.locale);
+
+const MES_ABBR = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+/* dateExact:false (Maestro 1 §8): solo se sabe el mes, el dia ancla al 15
+   pero la tarjeta lo dice en vez de fingir precision que no hay. */
+function fmtDate(d, exact){
+  const [y,m,day] = d.split("-");
+  if(exact === false) return `N/D ${MES_ABBR[Number(m)-1]} ${y.slice(2)}`;
+  return `${day} ${MES_ABBR[Number(m)-1]} ${y.slice(2)}`;
+}
+
+const CHEVRON = `<svg class="cat__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <polyline points="9 18 15 12 9 6"/></svg>`;
+const CHEVRON_S = `<svg class="grupo__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <polyline points="9 18 15 12 9 6"/></svg>`;
+
+
+/* ===========================================================================
+   BLOQUE 7 · RENDER — CATALOGO CENTRAL
+   ---------------------------------------------------------------------------
+   categoria [seccion plegable] > procedencia [divisor de texto] > tarjetas
+   =========================================================================== */
+const catalogEl = document.getElementById("catalog");
+
+function contenidoHTML(p, owned, cubiertos){
+  /* Estricto a gimmick (Maestro 1 §3.2 y §4.6): el desplegable existe para
+     avisar "esto ademas te da un gimmick", no para relistar la propia figura,
+     driver o arma que el producto YA ES. Una TAF que trae un Seed Eggs de
+     regalo enseña ese Seed Eggs, no "rider-myth-taf" -listar el producto
+     dentro de si mismo no informa de nada-. */
+  const piezas = (p.contains||[]).map(id => PIEZAS_BY_ID[id])
+    .filter(pz => pz && pz.categoria === "gimmick");
+  if(!piezas.length) return "";
+  const azar = p.entrega === "incierta";
+  const items = piezas.map(pz => {
+    const e = piezaEstado(pz.id, owned, cubiertos);
+    const acab = (ACABADOS[pz.acabado]||{}).label;
+    return `<li class="contents__item contents__item--${e}">
+        <span class="contents__dot"></span>
+        <span class="contents__name">${esc(pz.name)}${acab?` (${esc(acab)})`:""}</span>
+      </li>`;
+  }).join("");
+  /* El texto distingue lo que de verdad es distinto: en una caja de azar las
+     piezas son POSIBLES; en un set vienen GARANTIZADAS. */
+  return `
+    <details class="contents${azar?' contents--azar':''}">
+      <summary class="contents__toggle">
+        ${azar ? "Ver posibles contenidos" : "Incluye"}
+        <span class="contents__n">${piezas.length}</span>
+        <span class="contents__arrow">&#8250;</span>
+      </summary>
+      <ul class="contents__list">${items}</ul>
+    </details>`;
+}
+
+function cardHTML(p, owned, cubiertos, catActual){
+  const st = getProductState(p.id);
+  const absorbe = absorbidoPor[p.id];
+  const cubierto = cubiertos.has(p.id) && !owned.has(p.id);
+
+  const badges = [];
+  const b = (PROCEDENCIAS[p.procedencia]||{}).badge;
+  if(b) badges.push(`<span class="badge badge--${b}">${esc(PROCEDENCIAS[p.procedencia].label)}</span>`);
+  if(p.entrega === "incierta") badges.push(`<span class="badge badge--azar">Azar</span>`);
+  if(categoriasDe(p).size > 1 || (p.alsoIn||[]).length)
+    badges.push(`<span class="badge badge--cross">Cruzado</span>`);
+
+  const precio = fmtPrice(p.price);
+  const precioHTML = precio
+    ? `<span class="card__price">${precio}</span>`
+    : `<span class="card__price card__price--nr">${esc(p.priceLabel || "N/R")}</span>`;
+
+  /* Pendiente/Reservado/Obtenido ya no se reserva a lo que trae gimmick
+     (Maestro 1 dejaba esto solo a Gimmicks; se reabre a proposito -ver
+     decision en el hilo de trabajo-). El marcado SIGUE sin afectar la
+     checklist de Eggs & Buckles salvo que el producto entregue una pieza
+     de gimmick: piezaEstado() deriva de `contains`, no de esta seccion. */
+  const estados = `
+    <div class="states" role="group" aria-label="Estado">
+      ${["pending","reserved","owned"].map(s => `
+        <button class="state-btn" data-state="${s}" data-set="${esc(p.id)}"
+                aria-pressed="${st===s}">${STATES[s]}</button>`).join("")}
+    </div>`;
+
+  const aviso = absorbe
+    ? `<p class="card__covered">Viene dentro de ${esc(PRODUCTS_BY_ID[absorbe].title)}</p>`
+    : "";
+
+  return `
+    <article class="card" id="prod-${esc(p.id)}"
+             data-state="${st}" data-covered="${cubierto}">
+      <div class="card__media" data-view="${esc(p.id)}">
+        <div class="card__ph">sin imagen</div>
+        ${badges.length ? `<div class="card__badges">${badges.join("")}</div>` : ""}
+        <span class="card__tick">&#10003;</span>
+        <img class="card__img" src="${esc(p.img)}" alt="${esc(p.title)}"
+             onload="this.parentNode.classList.add('is-loaded')">
+      </div>
+      <div class="card__body">
+        <h3 class="card__title">${esc(p.title)}</h3>
+        ${aviso}
+        ${contenidoHTML(p, owned, cubiertos)}
+        <div class="card__row">
+          <span class="card__date${p.date < HOY ? ' card__date--past':''}">${fmtDate(p.date, p.dateExact)}</span>
+          ${precioHTML}
+        </div>
+        ${estados}
+      </div>
+    </article>`;
+}
+
+/* Productos que le tocan a una categoria: los que entregan una pieza suya,
+   mas los puente que declaran una procedencia de esa categoria. */
+function productosDe(cat){
+  return PRODUCTS.filter(p =>
+    categoriasDe(p).has(cat) ||
+    (p.alsoIn||[]).some(proc => CATEGORIA_DE_PROCEDENCIA[proc] === cat));
+}
+
+function renderCatalog(){
+  const { owned, cubiertos } = productosCubiertos();
+  let html = "";
+
+  CATEGORIA_ORDEN.forEach(cat => {
+    if(!(cat in ROTULOS)) return;                 // categoria omitida
+    const productos = productosDe(cat);
+    if(!productos.length) return;                 // sin producto, no se dibuja
+
+    const interactiva = cat === CATEGORIA_INTERACTIVA;
+    const abierta = state.ui.cats[cat] !== false; // por defecto abiertas
+
+    let bloques = "";
+    Object.keys(PROCEDENCIAS).forEach(proc => {
+      const enEsta = productos.filter(p =>
+        (p.procedencia === proc && categoriasDe(p).has(cat)) ||
+        ((p.alsoIn||[]).includes(proc) && CATEGORIA_DE_PROCEDENCIA[proc] === cat)
+      ).sort((a,b) => b.date.localeCompare(a.date));   // nuevo -> viejo
+      if(!enEsta.length) return;
+
+      bloques += `
+        <section class="proc">
+          <div class="proc__head">
+            <span class="proc__name">${esc(PROCEDENCIAS[proc].label)}</span>
+            <span class="proc__rule"></span>
+            <span class="proc__n">${enEsta.length}</span>
+          </div>
+          <div class="grid">
+            ${enEsta.map(p => cardHTML(p, owned, cubiertos, cat)).join("")}
+          </div>
+        </section>`;
+    });
+
+    /* La categoria interactiva ademas dice cuantos de sus productos tienes.
+       Las de consulta solo cuentan cuantos hay: no llevan progreso. */
+    let chips = `<span class="chip chip--count">${productos.length} producto${productos.length!==1?'s':''}</span>`;
+    if(interactiva){
+      const n = productos.filter(p => owned.has(p.id)).length;
+      chips += n === productos.length
+        ? `<span class="chip chip--done">Completo</span>`
+        : `<span class="chip chip--track">${n}/${productos.length} obtenidos</span>`;
+    }
+
+    html += `
+      <section class="cat" data-open="${abierta}" style="--cat:${CAT_COLOR[cat]}">
+        <button class="cat__head" data-cat="${cat}" aria-expanded="${abierta}">
+          ${CHEVRON}
+          <span class="cat__title">${esc(ROTULOS[cat])}</span>
+          <span class="cat__meta">${chips}</span>
+        </button>
+        <div class="cat__body"><div class="cat__inner">${bloques}</div></div>
+      </section>`;
+  });
+
+  catalogEl.innerHTML = html || `<p class="panel__empty">Sin catálogo todavía.</p>`;
+}
+
+
+/* ===========================================================================
+   BLOQUE 8 · RENDER — BARRA LATERAL (checklist de Gimmicks)
+   ---------------------------------------------------------------------------
+   Unico panel interactivo del sistema (Maestro 1 §5). Se probo ampliar la
+   interactividad a las 7 categorias -una pestaña por categoria, agrupacion
+   por nombre para las entidades- y se revirtio: para una checklist de
+   merchandising, nadie va a "completar" su coleccion de Drivers o Armas
+   como un objetivo aparte, y la pestaña extra solo volvia mas engorrosos
+   tanto el panel como el catalogo. Riders, Drivers y Armas se quedan en el
+   catalogo central como referencia, sin estado.
+
+   Orden INVERTIDO respecto al catalogo, a proposito (Maestro 1 §5.1): aqui la
+   pregunta es "que Legend me falta", no "que hay en DX".
+   =========================================================================== */
+const panelBody = document.getElementById("panelBody");
+
+function viasHTML(piezaId, owned, cubiertos){
+  return (SOURCES[piezaId] || []).map(p => {
+    const tengo = owned.has(p.id) || cubiertos.has(p.id);
+    const azar  = p.entrega === "incierta";
+    return `<span class="via${tengo?' via--tengo':''}${azar?' via--azar':''}"
+                  data-goto="${esc(p.id)}" role="link" tabindex="0"
+                  title="${esc(p.title)}">${esc(p.title)}</span>`;
+  }).join("");
+}
+
+function piezaHTML(pz, owned, cubiertos){
+  const estado = piezaEstado(pz.id, owned, cubiertos);
+  if(state.ui.hideOwned && esConseguida(estado)) return "";
+  const acab = (ACABADOS[pz.acabado]||{}).label || "";
+  const sinvia = estado === "sinvia"
+    ? `<div class="panel__sinvia">Ningún producto la entrega: no se podrá marcar nunca.</div>` : "";
+  return `
+    <div class="pieza pieza--${estado}">
+      <span class="pieza__dot"></span>
+      <div class="pieza__main">
+        <span class="pieza__name">${esc(pz.name)}</span>${acab?`<span class="pieza__acabado">${esc(acab)}</span>`:""}
+        <div class="pieza__vias">${viasHTML(pz.id, owned, cubiertos)}</div>
+        ${sinvia}
+      </div>
+    </div>`;
+}
+
+function renderPanel(){
+  const { owned, cubiertos } = productosCubiertos();
+  const piezas = PIEZAS_CATALOG.filter(p => p.categoria === "gimmick");
+
+  const cuenta = lista => lista.filter(pz => esConseguida(piezaEstado(pz.id, owned, cubiertos))).length;
+
+  /* --- Progreso global y mini barras de la cabecera --- */
+  const total = piezas.length;
+  const hechas = cuenta(piezas);
+  document.getElementById("globalN").textContent   = `${hechas}/${total}`;
+  document.getElementById("globalBar").style.width = total ? (hechas/total*100)+"%" : "0%";
+  document.getElementById("headerCount").textContent = `${hechas}/${total}`;
+
+  /* Mini barras: una por linea del gimmick masivo, mas el menor aparte.
+     Los dos tonos fuertes se reservan al principal. */
+  const mini = [];
+  Object.entries(PROCEDENCIAS_GIMMICK).forEach(([proc, cfg]) => {
+    const lista = piezas.filter(pz => pz.procedencia===proc && !(SUBTIPOS[pz.subtipo]||{}).menor);
+    if(!lista.length) return;
+    const n = cuenta(lista);
+    mini.push(`
+      <div class="mini-stat mini-stat--${proc}">
+        <div class="mini-stat__top">
+          <span class="mini-stat__label">${esc(cfg.label.toUpperCase())}</span>
+          <span class="mini-stat__count">${n}/${lista.length}</span>
+        </div>
+        <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${n/lista.length*100}%"></div></div>
+      </div>`);
+  });
+  const menores = piezas.filter(pz => (SUBTIPOS[pz.subtipo]||{}).menor);
+  if(menores.length){
+    const n = cuenta(menores);
+    mini.push(`
+      <div class="mini-stat mini-stat--menor">
+        <div class="mini-stat__top">
+          <span class="mini-stat__label">BUCKLES</span>
+          <span class="mini-stat__count">${n}/${menores.length}</span>
+        </div>
+        <div class="mini-stat__bar"><div class="mini-stat__fill" style="width:${n/menores.length*100}%"></div></div>
+      </div>`);
+  }
+  document.getElementById("miniStats").innerHTML = mini.join("");
+
+  /* --- Grupos por subtipo --- */
+  let html = "";
+  Object.entries(SUBTIPOS).forEach(([subId, sub]) => {
+    const piezasSub = piezas.filter(pz => pz.subtipo === subId);
+    if(!piezasSub.length) return;
+
+    const n = cuenta(piezasSub);
+    const abierto = state.ui.grupos[subId] === true;   // cerrados de inicio
+    const color = sub.menor ? "var(--menor)" : "var(--dx)";
+
+    let lineas = "";
+    Object.entries(PROCEDENCIAS_GIMMICK).forEach(([proc, cfg]) => {
+      const lista = piezasSub.filter(pz => pz.procedencia === proc);
+      if(!lista.length) return;
+      const ln = cuenta(lista);
+      const lcolor = sub.menor ? "var(--menor)" : cfg.color;
+      const filas = lista.map(pz => piezaHTML(pz, owned, cubiertos)).join("");
+      lineas += `
+        <div class="linea">
+          <div class="linea__head" style="color:${lcolor}">
+            ${esc(cfg.label)} <span class="linea__n">${ln}/${lista.length}</span>
+          </div>
+          <div class="linea__bar">
+            <div class="linea__fill" style="width:${ln/lista.length*100}%;background:${lcolor}"></div>
+          </div>
+          ${filas || `<p class="panel__empty">Todo conseguido en esta línea.</p>`}
+        </div>`;
+    });
+
+    html += `
+      <section class="grupo" data-open="${abierto}">
+        <button class="grupo__head" data-grupo="${subId}" aria-expanded="${abierto}">
+          ${CHEVRON_S}
+          <span class="grupo__name" style="color:${color}">${esc(sub.label)}</span>
+          ${sub.menor?'<span class="grupo__tag">menor</span>':''}
+          <span class="grupo__count">${n}/${piezasSub.length}</span>
+        </button>
+        <div class="grupo__bar">
+          <div class="grupo__fill" style="width:${n/piezasSub.length*100}%;background:${color}"></div>
+        </div>
+        <div class="grupo__body">${lineas}</div>
+      </section>`;
+  });
+
+  panelBody.innerHTML = html;
+
+  const restantes = total - hechas;
+  document.getElementById("panelHint").textContent = restantes
+    ? `Marca un producto como Obtenido en el catálogo y sus Eggs se cuentan aquí. Te faltan ${restantes}.`
+    : `Colección completa.`;
+}
+
+
+/* ===========================================================================
+   BLOQUE 9 · VISOR DE GALERIA
+   =========================================================================== */
+const viewerEl = document.getElementById("viewer");
+const viewerImg = document.getElementById("viewerImg");
+let galeria = [], gIndex = 0, gTitulo = "";
+
+function abrirVisor(pid){
+  const p = PRODUCTS_BY_ID[pid];
+  if(!p) return;
+  galeria = (p.gallery && p.gallery.length) ? p.gallery : (p.img ? [p.img] : []);
+  if(!galeria.length) return;
+  gTitulo = p.title; gIndex = 0;
+  document.getElementById("viewerTitle").textContent = gTitulo;
+  pintarVisor();
+  viewerEl.dataset.open = "true";
+}
+function pintarVisor(){
+  viewerImg.src = galeria[gIndex];
+  viewerImg.alt = gTitulo;
+  document.getElementById("viewerCount").textContent = `${gIndex+1} / ${galeria.length}`;
+}
+function cerrarVisor(){ viewerEl.dataset.open = "false"; viewerImg.src = ""; }
+function moverVisor(d){
+  if(!galeria.length) return;
+  gIndex = (gIndex + d + galeria.length) % galeria.length;
+  pintarVisor();
+}
+
+
+/* ===========================================================================
+   BLOQUE 10 · EVENTOS
+   ---------------------------------------------------------------------------
+   Delegados en document: el HTML se regenera entero en cada render, asi que
+   enganchar listeners a cada nodo obligaria a re-enganchar siempre.
+   =========================================================================== */
+const panelEl    = document.getElementById("panel");
+const backdropEl = document.getElementById("backdrop");
+
+function abrirPanel(){ panelEl.dataset.open="true"; backdropEl.dataset.open="true"; }
+function cerrarPanel(){ panelEl.dataset.open="false"; backdropEl.dataset.open="false"; }
+
+document.getElementById("openPanel").addEventListener("click", abrirPanel);
+document.getElementById("closePanel").addEventListener("click", cerrarPanel);
+backdropEl.addEventListener("click", cerrarPanel);
+
+document.getElementById("hideOwned").addEventListener("change", e => {
+  state.ui.hideOwned = e.target.checked;
+  saveState();
+  renderPanel();
+});
+
+document.getElementById("viewerClose").addEventListener("click", cerrarVisor);
+document.getElementById("viewerPrev").addEventListener("click", e => { e.stopPropagation(); moverVisor(-1); });
+document.getElementById("viewerNext").addEventListener("click", e => { e.stopPropagation(); moverVisor(1); });
+viewerEl.addEventListener("click", e => { if(e.target === viewerEl) cerrarVisor(); });
+
+document.addEventListener("keydown", e => {
+  if(viewerEl.dataset.open === "true"){
+    if(e.key === "Escape")     cerrarVisor();
+    if(e.key === "ArrowLeft")  moverVisor(-1);
+    if(e.key === "ArrowRight") moverVisor(1);
+    return;
+  }
+  if(e.key === "Escape" && panelEl.dataset.open === "true") cerrarPanel();
+});
+
+document.addEventListener("click", e => {
+  /* Estado de un producto */
+  const btn = e.target.closest("[data-set]");
+  if(btn){ setProductState(btn.dataset.set, btn.dataset.state); return; }
+
+  /* Plegar/desplegar una categoria */
+  const cab = e.target.closest("[data-cat]");
+  if(cab){
+    const cat = cab.dataset.cat;
+    const sec = cab.closest(".cat");
+    const abierta = sec.dataset.open !== "true";
+    sec.dataset.open = abierta;
+    cab.setAttribute("aria-expanded", abierta);
+    state.ui.cats[cat] = abierta;
+    saveState();
+    return;
+  }
+
+  /* Plegar/desplegar un grupo del panel */
+  const gh = e.target.closest("[data-grupo]");
+  if(gh){
+    const id = gh.dataset.grupo;
+    const sec = gh.closest(".grupo");
+    const abierto = sec.dataset.open !== "true";
+    sec.dataset.open = abierto;
+    gh.setAttribute("aria-expanded", abierto);
+    state.ui.grupos[id] = abierto;
+    saveState();
+    return;
+  }
+
+  /* Salto desde una via de la checklist al producto que la trae */
+  const via = e.target.closest("[data-goto]");
+  if(via){ irAProducto(via.dataset.goto); return; }
+
+  /* Abrir la galeria */
+  const media = e.target.closest("[data-view]");
+  if(media){ abrirVisor(media.dataset.view); return; }
+});
+
+/* El salto tiene que ABRIR la categoria del producto antes de desplazarse:
+   si esta plegada, scrollIntoView apunta a un elemento de altura cero. */
+function irAProducto(pid){
+  cerrarPanel();
+  const el = document.getElementById("prod-"+pid);
+  if(!el) return;
+  const sec = el.closest(".cat");
+  if(sec && sec.dataset.open !== "true"){
+    sec.dataset.open = "true";
+    const cab = sec.querySelector("[data-cat]");
+    if(cab){
+      cab.setAttribute("aria-expanded","true");
+      state.ui.cats[cab.dataset.cat] = true;
+      saveState();
+    }
+  }
+  requestAnimationFrame(() => {
+    el.scrollIntoView({ behavior:"smooth", block:"center" });
+    el.classList.remove("card--flash");
+    void el.offsetWidth;                    // reinicia la animacion
+    el.classList.add("card--flash");
+  });
+}
+
+
+/* ===========================================================================
+   BLOQUE 11 · ARRANQUE
+   =========================================================================== */
+function render(){ renderCatalog(); renderPanel(); }
+
+document.getElementById("hideOwned").checked = !!state.ui.hideOwned;
+
+if(REPO_ESTADO === "cerrado"){
+  const nov = document.getElementById("novedades");
+  nov.hidden = false;
+  document.getElementById("novedadesBody").textContent =
+    "Todo lo que llegue tras el cierre del repositorio aparecerá aquí.";
+}
+
+render();
+</script>
+</body>
+</html>
