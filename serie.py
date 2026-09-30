@@ -171,6 +171,10 @@ SUELTO = {
         'GIMMICK/PROMOCIONALES/DX LEGEND RIDER EGGS KABUTO 20TH SET-Kabuto 20th Seed Eggs, Hercules Beetle Seed Eggs.jpg',
     'promo-shimamura-trainer':
         'GIMMICK/PROMOCIONALES/SHIMAMURA KIDS TRAINER KAMEN RIDER MY-TH-Hibiki Ride Eggs.jpg',
+    'promo-super-terebikun':
+        'GIMMICK/PROMOCIONALES/SUPER TEREBI-KUN-Ride Eggs 6 (Special ver.).jpg',
+    'promo-telemaga-geats':
+        'GIMMICK/PROMOCIONALES/TELEVI-KUN FEB-MAR-Geats Ride Eggs.jpg',
 
     'promo-store-tokyo':
         'GIMMICK/PROMOCIONALES/DX RIDER EGGS KAMEN RIDER STORE TOKYO SET-Myth Seed Eggs (Kamen Rider Store Tokyo ver.), Hato Seed Eggs.jpeg',

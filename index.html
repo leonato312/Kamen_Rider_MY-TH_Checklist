@@ -784,6 +784,7 @@ const PIEZAS_CATALOG = [
   { id:"ride-eggs-4",             name:"Ride Eggs 4",                   categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
   { id:"ride-eggs-4-special",     name:"Ride Eggs 4 (Special ver.)",    categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"special" },
   { id:"ride-eggs-6",             name:"Ride Eggs 6",                   categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
+  { id:"ride-eggs-6-special",     name:"Ride Eggs 6 (Special ver.)",    categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"special" },
   { id:"ride-eggs-8",             name:"Ride Eggs 8",                   categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
   { id:"ride-eggs-10",            name:"Ride Eggs 10",                  categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
   { id:"ride-eggs-11",            name:"Ride Eggs 11",                  categoria:"gimmick",      procedencia:"dx",     subtipo:"ride-eggs",         acabado:"estandar" },
@@ -798,6 +799,7 @@ const PIEZAS_CATALOG = [
   { id:"gotchard-ride-eggs",      name:"Gotchard Ride Eggs",            categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
   { id:"build-ride-eggs",         name:"Build Ride Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
   { id:"faiz-ride-eggs",          name:"Faiz Ride Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
+  { id:"geats-ride-eggs",         name:"Geats Ride Eggs",               categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
   { id:"gaim-ride-eggs",          name:"Gaim Ride Eggs",                categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
   { id:"hibiki-ride-eggs",        name:"Hibiki Ride Eggs",              categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-ride-eggs",  acabado:"estandar" },
   { id:"kabuto20th-seed-eggs",    name:"Kabuto 20th Seed Eggs",         categoria:"gimmick",      procedencia:"dx",     subtipo:"legend-seed-eggs",  acabado:"estandar" },
@@ -1406,6 +1408,25 @@ const PRODUCTS = [
     img:"GIMMICK/PROMOCIONALES/SHIMAMURA KIDS TRAINER KAMEN RIDER MY-TH-Hibiki Ride Eggs-thumb.webp",
     gallery:["GIMMICK/PROMOCIONALES/SHIMAMURA KIDS TRAINER KAMEN RIDER MY-TH-Hibiki Ride Eggs.webp"],
     contains:["hibiki-ride-eggs"] },
+
+  /* Confirmado con foto real en el escaneo de la propia revista (てれびくん
+     12月号増刊SUPERてれびくん) tras estar pendiente por falta de imagen. */
+  { id:"promo-super-terebikun", title:"SUPER TEREBI-KUN (Ride Eggs 6 Special ver.)",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-10-28", dateType:"release", price:2090,
+    img:"GIMMICK/PROMOCIONALES/SUPER TEREBI-KUN-Ride Eggs 6 (Special ver.)-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/SUPER TEREBI-KUN-Ride Eggs 6 (Special ver.).webp"],
+    contains:["ride-eggs-6-special"] },
+
+  /* Anunciado como "proximo numero" en el escaneo de てれびくん11・12月号:
+     てれびくん2・3月号 (18 dic 2026), trae Geats Ride Eggs. Precio de la
+     revista aun no publicado -no se inventa, N/R-. */
+  { id:"promo-telemaga-geats", title:"TEREBI-KUN FEB-MAR (Geats Ride Eggs)",
+    procedencia:"promo", entrega:"garantizada",
+    date:"2026-12-25", dateType:"release", price:null,
+    img:"GIMMICK/PROMOCIONALES/TELEVI-KUN FEB-MAR-Geats Ride Eggs-thumb.webp",
+    gallery:["GIMMICK/PROMOCIONALES/TELEVI-KUN FEB-MAR-Geats Ride Eggs.webp"],
+    contains:["geats-ride-eggs"] },
 
   { id:"promo-store-tokyo", title:"DX RIDER EGGS KAMEN RIDER STORE TOKYO SET",
     procedencia:"promo", entrega:"garantizada",
